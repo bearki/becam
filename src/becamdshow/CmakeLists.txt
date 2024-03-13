@@ -1,0 +1,26 @@
+# 配置相关源文件
+set(LIB_BECAMDSHOW_SRC becamdshow.cpp)
+# 配置制品输出目录
+set(LIB_INSTALL_PATH dist/libbecamdshow_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR})
+
+# 配置链接库
+link_libraries(strmiids)
+
+# # 配置静态库生成参数
+add_library(becamdshow_static STATIC ${LIB_BECAMDSHOW_SRC})
+# # 指定静态库输出文件名
+set_target_properties(becamdshow_static PROPERTIES OUTPUT_NAME "becamdshow")
+set_target_properties(becamdshow_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+
+# 配置动态库生成参数
+add_library(becamdshow_shared SHARED ${LIB_BECAMDSHOW_SRC})
+# 指定动态库输出文件名
+set_target_properties(becamdshow_shared PROPERTIES OUTPUT_NAME "becamdshow")
+set_target_properties(becamdshow_shared PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+
+# 指定make install后头文件存放目录
+install(FILES becamdshow.h DESTINATION ${LIB_INSTALL_PATH}/include)
+# 指定make install后静态库，动态库存放目录
+# ARCHIVE-静态库，LIBRATY-动态库，RUNTIME-可执行二进制文件
+install(TARGETS becamdshow_static ARCHIVE DESTINATION ${LIB_INSTALL_PATH}/lib)
+install(TARGETS becamdshow_shared LIBRARY DESTINATION ${LIB_INSTALL_PATH}/lib)

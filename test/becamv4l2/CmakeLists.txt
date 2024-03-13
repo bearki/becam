@@ -1,0 +1,5 @@
+# 编译为可执行文件
+add_executable(becamv4l2_test becamv4l2_test.cpp)
+
+# 指定需要链接的库
+# target_link_libraries(becamv4l2_test PRIVATE becamv4l2)

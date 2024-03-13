@@ -1,4 +1,4 @@
-#include "directshow.h"
+#include "becamdshow.h"
 
 #include <dshow.h>
 #include <setupapi.h>

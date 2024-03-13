@@ -1,0 +1,8 @@
+# 编译为可执行文件
+add_executable(becamdshow_test becamdshow_test.cpp)
+
+# 指定需要链接的库
+# 链接到静态库（注意：库名需要填写cmake add_library函数的第一个参数name，否则找不到库）
+# target_link_libraries(becamdshow_test becamdshow_static)
+# 链接到静态库（注意：库名需要填写cmake add_library函数的第一个参数name，否则找不到库）
+target_link_libraries(becamdshow_test becamdshow_shared)
