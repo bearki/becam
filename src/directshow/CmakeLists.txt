@@ -1,0 +1,26 @@
+# 配置相关源文件
+set(LIB_DIRECTSHOW_SRC directshow.cpp)
+# 配置制品输出目录
+set(LIB_OUTPUT_PATH dist/libdirectshow_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR})
+
+# 配置链接库
+link_libraries(strmiids)
+
+# # 配置静态库生成参数
+add_library(directshow_static STATIC ${LIB_DIRECTSHOW_SRC})
+# # 指定静态库输出文件名
+set_target_properties(directshow_static PROPERTIES OUTPUT_NAME "directshow")
+set_target_properties(directshow_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+
+# 配置动态库生成参数
+add_library(directshow_shared SHARED ${LIB_DIRECTSHOW_SRC})
+# 指定动态库输出文件名
+set_target_properties(directshow_shared PROPERTIES OUTPUT_NAME "directshow")
+set_target_properties(directshow_shared PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+
+# 指定make install后头文件存放目录
+install(FILES directshow.h DESTINATION ${LIB_OUTPUT_PATH}/include)
+# 指定make install后静态库，动态库存放目录
+# ARCHIVE-静态库，LIBRATY-动态库，RUNTIME-可执行二进制文件
+install(TARGETS directshow_static ARCHIVE DESTINATION ${LIB_OUTPUT_PATH}/lib)
+install(TARGETS directshow_shared LIBRARY DESTINATION ${LIB_OUTPUT_PATH}/lib)
