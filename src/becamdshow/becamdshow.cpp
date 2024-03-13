@@ -3,7 +3,6 @@
 #include <dshow.h>
 #include <setupapi.h>
 #include <windows.h>
-#include <streams.h>
 
 #include <iostream>
 
