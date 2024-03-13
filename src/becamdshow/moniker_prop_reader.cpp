@@ -33,6 +33,7 @@ public:
         if (this->propBag != nullptr)
         {
             this->propBag->Release();
+            this->propBag = nullptr;
         }
         // 释放UTF16属性值变量空间
         VariantClear(&friendNameUTF16);
