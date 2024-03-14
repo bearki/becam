@@ -12,7 +12,8 @@
  *
  * @return Becam接口句柄
  */
-BecamHandle BecamNew() {
+BecamHandle BecamNew()
+{
     // 创建Becam接口句柄
     return new BecamDirectShow();
 }
@@ -22,9 +23,11 @@ BecamHandle BecamNew() {
  *
  * @param handle Becam接口句柄
  */
-void BecamFree(BecamHandle *handle) {
+void BecamFree(BecamHandle *handle)
+{
     // 检查参数
-    if (handle == nullptr || *handle == nullptr) {
+    if (handle == nullptr || *handle == nullptr)
+    {
         // 参数错误
         return;
     }
@@ -45,9 +48,11 @@ void BecamFree(BecamHandle *handle) {
  * @param reply 输出参数
  * @return 状态码
  */
-StatusCode BecamGetDeviceList(BecamHandle handle, GetDeviceListReply *reply) {
+StatusCode BecamGetDeviceList(BecamHandle handle, GetDeviceListReply *reply)
+{
     // 检查句柄
-    if (handle == nullptr) {
+    if (handle == nullptr)
+    {
         return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
     }
 
@@ -63,9 +68,11 @@ StatusCode BecamGetDeviceList(BecamHandle handle, GetDeviceListReply *reply) {
  * @param handle Becam接口句柄
  * @param input 输入参数
  */
-void BecamFreeDeviceList(BecamHandle handle, GetDeviceListReply *input) {
+void BecamFreeDeviceList(BecamHandle handle, GetDeviceListReply *input)
+{
     // 检查句柄
-    if (handle == nullptr) {
+    if (handle == nullptr)
+    {
         return;
     }
 

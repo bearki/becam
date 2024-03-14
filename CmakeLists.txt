@@ -22,17 +22,17 @@ set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CXX_COMPILER g++)
 
 # 设置编译后的静态库文件的输出目录
-set(ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build/lib)
+set(ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
 # 设置编译后的动态库文件的输出目录
-set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build/lib)
+set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
 # 设置编译后的可执行文件的输出成目录
-set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build/bin)
+set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
 # 设定编译后生成的制品文件安装目录前缀
-set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/build/dist)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/build/dist)
 
 # 配置引用头文件目录
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include
-                    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+include_directories(${CMAKE_SOURCE_DIR}/include
+                    ${CMAKE_SOURCE_DIR}/src)
 # 配置引用库链接目录（静态库或动态库都行）
 link_directories(${ARCHIVE_OUTPUT_DIRECTORY}/lib
                  ${LIBRARY_OUTPUT_DIRECTORY}/lib)
@@ -42,14 +42,14 @@ message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 # 根据条件添加子目录
 if(CMAKE_SYSTEM_NAME MATCHES "windows") # windows环境下需要编译的内容
     # 增加子目录
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/becamdshow)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/becammf)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/becamdshow)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/becammf)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/src/becamdshow)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/test/becamdshow)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/src/becammf)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/test/becammf)
 elseif(CMAKE_SYSTEM_NAME MATCHES "linux") # linux环境下需要编译的内容
     # 增加子目录
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/becamv4l2)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/becamv4l2)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/src/becamv4l2)
+    add_subdirectory(${CMAKE_SOURCE_DIR}/test/becamv4l2)
 elseif(CMAKE_SYSTEM_NAME MATCHES "macosx") # mac环境下需要编译的内容
     # 增加子目录
 else()

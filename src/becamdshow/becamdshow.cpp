@@ -155,9 +155,7 @@ private:
                 // 分析失败，继续下一个
                 continue;
             }
-            if (pmt->majortype != MEDIATYPE_Video ||
-                pmt->formattype != FORMAT_VideoInfo ||
-                pmt->pbFormat == nullptr) {
+            if (pmt->majortype != MEDIATYPE_Video || pmt->formattype != FORMAT_VideoInfo || pmt->pbFormat == nullptr) {
                 // 信息不是想要的
                 continue;
             }
@@ -245,7 +243,8 @@ public:
         // 声明设备枚举器实例
         ICreateDevEnum *pDevEnum = nullptr;
         // 创建设备枚举器
-        auto res = CoCreateInstance(CLSID_SystemDeviceEnum, nullptr, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void **)&pDevEnum);
+        auto res = CoCreateInstance(CLSID_SystemDeviceEnum, nullptr, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum,
+                                    (void **)&pDevEnum);
         if (FAILED(res)) {
             // 创建设备枚举器失败
             return StatusCode::STATUS_CODE_ERR_CREATE_DEVICE_ENUMERATOR;
