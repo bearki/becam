@@ -1,5 +1,4 @@
-int main()
-{
-    // OK
-    return 0;
+int main() {
+	// OK
+	return 0;
 }

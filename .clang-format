@@ -13,8 +13,8 @@ ContinuationIndentWidth: 4 # 条件语句过长时，换行新行缩进为4
 
 # 空格相关设置
 SpaceBeforeParens: ControlStatements # 仅在控制语句（如 if、for、while 等）的左括号前添加空格
-SpacesInParentheses: true #控制在圆括号内两侧是否插入空格
-SpacesInSquareBrackets: true # 设置方括号（数组或容器索引操作符）内部两侧是否插入空格
+SpacesInParentheses: false #控制在圆括号内两侧是否插入空格
+SpacesInSquareBrackets: false # 设置方括号（数组或容器索引操作符）内部两侧是否插入空格
 SpaceBeforeAssignmentOperators: true # 控制赋值运算符（如 =、+=、-= 等）前是否添加空格
 SpaceAfterControlStatementKeyword: true # 控制在控制语句（如 if、for、while 等）的右括号后是否添加空格
 SpaceInsideEmptyParentheses: false # 确定空括号对内部是否插入空格
@@ -23,8 +23,7 @@ SpaceBeforeCtorInitializerColon: true # 类构造函数初始化列表冒号前�
 SpaceAfterCtorInitializerColon: true #类构造函数初始化列表冒号后是否添加空格
 
 # 常用配置
-AlignConsecutiveAssignments: true # 当多行连续赋值时，使等号对齐
-AllowShortIfStatementsOnASingleLine: All # 控制是否允许短小的函数定义或声明写在单行上
+AlignConsecutiveAssignments: false # 当多行连续赋值时，使等号对齐
 ColumnLimit: 120 # 每行字符数限制为120
 SortIncludes: true # 保证Include文件排序
 PointerAlignment: Left # 指针或引用的星号（*）或尖括号（&）相对于变量名称的位置
