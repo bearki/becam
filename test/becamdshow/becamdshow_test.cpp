@@ -1,5 +1,4 @@
 #include <becam/becam.h>
-
 #include <iostream>
 
 int main() {

@@ -1,5 +1,10 @@
+# 配置相关源文件
+set(SOURCES becammf_test.cpp)
+# 配置制品输出目录
+set(INSTALL_PATH libbecammf_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR})
+
 # 编译为可执行文件
-add_executable(becammf_test becammf_test.cpp)
+add_executable(becammf_test ${SOURCES})
 
 # 指定需要链接的库
 # target_link_libraries(becammf_test PRIVATE becammf)

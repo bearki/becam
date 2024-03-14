@@ -8,7 +8,7 @@ add_executable(becamdshow_test ${SOURCES})
 
 # 指定需要链接的库
 # 链接到静态库（注意：库名需要填写cmake add_library函数的第一个参数name，否则找不到库）
-target_link_libraries(becamdshow_test strmiids becamdshow)
+target_link_libraries(becamdshow_test becamdshow)
 
 # 指定make install后静态库，动态库，可执行文件存放目录
 # ARCHIVE-静态库，LIBRATY-动态库，RUNTIME-可执行二进制文件

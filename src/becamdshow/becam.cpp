@@ -1,11 +1,5 @@
 #include <becam/becam.h>
-#include <dshow.h>
-#include <setupapi.h>
-#include <windows.h>
-
-#include <iostream>
-
-#include "becamdshow.cpp"
+#include "BecamDirectShow.hpp"
 
 /**
  * @brief 初始化Becam接口句柄
