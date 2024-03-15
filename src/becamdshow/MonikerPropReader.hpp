@@ -12,9 +12,9 @@
 class MonikerPropReader {
 private:
 	// 属性名
-	LPCOLESTR propName;
+	LPCOLESTR propName = nullptr;
 	// 属性包实例
-	IPropertyBag* propBag;
+	IPropertyBag* propBag = nullptr;
 	// UTF16属性值
 	VARIANT friendNameUTF16;
 
@@ -24,12 +24,25 @@ public:
 	 *
 	 * @param propName 属性名
 	 */
-	MonikerPropReader(LPCOLESTR propName);
+	MonikerPropReader(LPCOLESTR propName) {
+		// 储存属性名
+		this->propName = propName;
+		// 初始化UTF16属性值变量空间
+		VariantInit(&this->friendNameUTF16);
+	};
 
 	/**
 	 * @brief 析构函数
 	 */
-	~MonikerPropReader();
+	~MonikerPropReader() {
+		// 属性包是否需要释放
+		if (this->propBag != nullptr) {
+			this->propBag->Release();
+			this->propBag = nullptr;
+		}
+		// 释放UTF16属性值变量空间
+		VariantClear(&friendNameUTF16);
+	};
 
 	/**
 	 * @brief 读取属性

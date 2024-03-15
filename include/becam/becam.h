@@ -12,16 +12,21 @@ typedef void* BecamHandle;
 
 // StatusCode 状态码定义
 enum StatusCode {
-	STATUS_CODE_SUCCESS,		  // 成功
-	STATUS_CODE_ERR_HANDLE_EMPTY, // Becam接口句柄未初始化
-	STATUS_CODE_ERR_INPUT_PARAM,  // 传入参数错误
-
-	STATUS_CODE_ERR_INIT_COM,				  // 初始化COM库失败
-	STATUS_CODE_ERR_CREATE_DEVICE_ENUMERATOR, // 创建设备枚举器失败
-	STATUS_CODE_ERR_DEVICE_ENUM,			  // 设备枚举失败
-	STATUS_CODE_ERR_GET_DEVICE_PROP,		  // 获取设备属性失败
-	STATUS_CODE_ERR_GET_VIDEO_FRAME,		  // 获取视频帧信息失败
-	STATUS_CODE_ERR_INTERNAL_PARAM,			  // 内部参数错误
+	STATUS_CODE_SUCCESS,				   // 成功
+	STATUS_CODE_NOT_FOUND_DEVICE,		   // 未找到设备
+	STATUS_CODE_ERR_HANDLE_EMPTY,		   // Becam接口句柄未初始化
+	STATUS_CODE_ERR_INPUT_PARAM,		   // 传入参数错误
+	STATUS_CODE_ERR_INTERNAL_PARAM,		   // 内部参数错误
+	STATUS_CODE_ERR_INIT_COM,			   // 初始化COM库失败（仅windows DirectShow实现存在该错误码）
+	STATUS_CODE_ERR_CREATE_ENUMERATOR,	   // 创建设备枚举器失败
+	STATUS_CODE_ERR_DEVICE_ENUM,		   // 设备枚举失败
+	STATUS_CODE_ERR_GET_DEVICE_PROP,	   // 获取设备属性失败
+	STATUS_CODE_ERR_GET_VIDEO_FRAME,	   // 获取视频帧信息失败
+	STATUS_CODE_ERR_SELECTED_DEVICE,	   // 选择设备失败
+	STATUS_CODE_ERR_CREATE_GRAPH_BUILDER,  // 创建图像构建器失败
+	STATUS_CODE_ERR_ADD_CAPTURE_FILTER,	   // 添加捕获过滤器失败
+	STATUS_CODE_ERR_CREATE_SAMPLE_GRABBER, // 创建样品采集器失败
+	STATUS_CODE_ERR_ADD_SAMPLE_GRABBER,	   // 添加样品采集器失败
 };
 
 // VideoFrameInfo 视频帧信息
