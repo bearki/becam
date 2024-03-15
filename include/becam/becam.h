@@ -95,6 +95,23 @@ _BECAM_API_ StatusCode BecamGetDeviceList(BecamHandle handle, GetDeviceListReply
  */
 _BECAM_API_ void BecamFreeDeviceList(BecamHandle handle, GetDeviceListReply* input);
 
+/**
+ * @brief 打开设备
+ *
+ * @param handle Becam接口句柄
+ * @param devicePath 设备路径
+ * @param frameInfo 视频帧信息
+ * @return 状态码
+ */
+_BECAM_API_ StatusCode BecamOpenDevice(BecamHandle handle, const char* devicePath, const VideoFrameInfo* frameInfo);
+
+/**
+ * @brief 关闭设备
+ *
+ * @param handle Becam接口句柄
+ */
+_BECAM_API_ void BecamCloseDevice(BecamHandle handle);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

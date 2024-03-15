@@ -637,3 +637,17 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 	// OK
 	return StatusCode::STATUS_CODE_SUCCESS;
 }
+
+/**
+ * @brief 关闭设备
+ */
+void BecamDirectShow::CloseDevice() {
+	// 检查设备是否已经打开了
+	if (this->openedDevice == nullptr) {
+		return;
+	}
+
+	// 释放已打开的设备
+	delete this->openedDevice;
+	this->openedDevice = nullptr;
+}

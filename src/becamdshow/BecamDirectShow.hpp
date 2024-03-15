@@ -141,6 +141,11 @@ public:
 	 * @return 状态码
 	 */
 	StatusCode OpenDevice(const std::string devicePath, const VideoFrameInfo* frameInfo);
+
+	/**
+	 * @brief 关闭设备
+	 */
+	void CloseDevice();
 };
 
 #endif

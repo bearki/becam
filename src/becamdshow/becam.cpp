@@ -68,3 +68,40 @@ void BecamFreeDeviceList(BecamHandle handle, GetDeviceListReply* input) {
 	// 执行相机列表释放
 	becamHandle->FreeDeviceList(input);
 }
+
+/**
+ * @brief 打开设备
+ *
+ * @param handle Becam接口句柄
+ * @param devicePath 设备路径
+ * @param frameInfo 视频帧信息
+ * @return 状态码
+ */
+StatusCode BecamOpenDevice(BecamHandle handle, const char* devicePath, const VideoFrameInfo* frameInfo) {
+	// 检查句柄
+	if (handle == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
+	}
+
+	// 转换句柄类型
+	BecamDirectShow* becamHandle = static_cast<BecamDirectShow*>(handle);
+	// 执行相机打开
+	return becamHandle->OpenDevice(devicePath, frameInfo);
+}
+
+/**
+ * @brief 关闭设备
+ *
+ * @param handle Becam接口句柄
+ */
+void BecamCloseDevice(BecamHandle handle) {
+	// 检查句柄
+	if (handle == nullptr) {
+		return;
+	}
+
+	// 转换句柄类型
+	BecamDirectShow* becamHandle = static_cast<BecamDirectShow*>(handle);
+	// 执行相机关闭
+	becamHandle->CloseDevice();
+}
