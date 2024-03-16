@@ -103,9 +103,10 @@ public:
 	/**
 	 * @brief 打开设备
 	 *
+	 * @param pCaptureOuputPin 捕获器输出端口
 	 * @return 状态码
 	 */
-	StatusCode Open(const AM_MEDIA_TYPE* mt);
+	StatusCode Open(IPin* pCaptureOuputPin);
 
 	/**
 	 * @brief 获取视频帧

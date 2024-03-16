@@ -85,15 +85,15 @@ IPin* BecamDirectShow::getPin(IBaseFilter* pFilter, PIN_DIRECTION dir) {
 	if (FAILED(pFilter->EnumPins(&enumPins)))
 		return nullptr;
 
-	IPin* pin;
-	while (enumPins->Next(1, &pin, nullptr) == S_OK) {
+	IPin* pCaptureOuputPin;
+	while (enumPins->Next(1, &pCaptureOuputPin, nullptr) == S_OK) {
 		PIN_DIRECTION d;
-		pin->QueryDirection(&d);
+		pCaptureOuputPin->QueryDirection(&d);
 		if (d == dir) {
 			enumPins->Release();
-			return pin;
+			return pCaptureOuputPin;
 		}
-		pin->Release();
+		pCaptureOuputPin->Release();
 	}
 	enumPins->Release();
 	return nullptr;
@@ -123,8 +123,8 @@ StatusCode BecamDirectShow::enumStreamCaps(IMoniker* pMoniker, std::function<boo
 	}
 
 	// 获取PIN接口
-	auto pin = this->getPin(pFilter, PINDIR_OUTPUT);
-	if (pin == nullptr) {
+	auto pCaptureOuputPin = this->getPin(pFilter, PINDIR_OUTPUT);
+	if (pCaptureOuputPin == nullptr) {
 		// 释放设备接口
 		pFilter->Release();
 		pFilter = nullptr;
@@ -134,11 +134,11 @@ StatusCode BecamDirectShow::enumStreamCaps(IMoniker* pMoniker, std::function<boo
 
 	// 获取流能力接口
 	IAMStreamConfig* pStreamConfig = nullptr;
-	res = pin->QueryInterface(IID_IAMStreamConfig, (void**)&pStreamConfig);
+	res = pCaptureOuputPin->QueryInterface(IID_IAMStreamConfig, (void**)&pStreamConfig);
 	if (FAILED(res)) {
 		// 释放PIN接口
-		pin->Release();
-		pin = nullptr;
+		pCaptureOuputPin->Release();
+		pCaptureOuputPin = nullptr;
 		// 释放设备接口
 		pFilter->Release();
 		pFilter = nullptr;
@@ -155,8 +155,8 @@ StatusCode BecamDirectShow::enumStreamCaps(IMoniker* pMoniker, std::function<boo
 		pStreamConfig->Release();
 		pStreamConfig = nullptr;
 		// 释放PIN接口
-		pin->Release();
-		pin = nullptr;
+		pCaptureOuputPin->Release();
+		pCaptureOuputPin = nullptr;
 		// 释放设备接口
 		pFilter->Release();
 		pFilter = nullptr;
@@ -174,6 +174,7 @@ StatusCode BecamDirectShow::enumStreamCaps(IMoniker* pMoniker, std::function<boo
 			// 分析失败，继续下一个
 			continue;
 		}
+
 		// 检查一下
 		if (pmt->majortype != MEDIATYPE_Video || pmt->formattype != FORMAT_VideoInfo || pmt->pbFormat == nullptr) {
 			// 释放AM_MEDIA_TYPE
@@ -182,23 +183,28 @@ StatusCode BecamDirectShow::enumStreamCaps(IMoniker* pMoniker, std::function<boo
 			// 信息不是想要的
 			continue;
 		}
-		// 执行回调，并检查回调结果
-		auto cbRes = callback(pmt);
+
+		// 是否需要停止枚举
+		if (!callback(pmt)) {
+			// 设置一下媒体类型
+			pStreamConfig->SetFormat(pmt);
+			// 释放AM_MEDIA_TYPE
+			_DeleteMediaType(pmt);
+			pmt = nullptr;
+			break;
+		}
+
 		// 释放AM_MEDIA_TYPE
 		_DeleteMediaType(pmt);
 		pmt = nullptr;
-		// 是否需要停止枚举
-		if (!cbRes) {
-			break;
-		}
 	}
 
 	// 释放流能力接口
 	pStreamConfig->Release();
 	pStreamConfig = nullptr;
 	// 释放PIN接口
-	pin->Release();
-	pin = nullptr;
+	pCaptureOuputPin->Release();
+	pCaptureOuputPin = nullptr;
 	// 释放设备接口
 	pFilter->Release();
 	pFilter = nullptr;
@@ -483,27 +489,27 @@ void BecamDirectShow::FreeDeviceList(GetDeviceListReply* input) {
 	// 遍历，执行释放操作
 	for (size_t i = 0; i < input->deviceInfoListSize; i++) {
 		// 获取引用
-		auto item = &input->deviceInfoList[i];
+		auto item = input->deviceInfoList[i];
 		// 释放友好名称
-		if (item->name != nullptr) {
-			delete item->name;
-			item->name = nullptr;
+		if (item.name != nullptr) {
+			delete item.name;
+			item.name = nullptr;
 		}
 		// 释放设备路径
-		if (item->devicePath != nullptr) {
-			delete item->devicePath;
-			item->devicePath = nullptr;
+		if (item.devicePath != nullptr) {
+			delete item.devicePath;
+			item.devicePath = nullptr;
 		}
 		// 释放位置信息
-		if (item->locationInfo != nullptr) {
-			delete item->locationInfo;
-			item->locationInfo = nullptr;
+		if (item.locationInfo != nullptr) {
+			delete item.locationInfo;
+			item.locationInfo = nullptr;
 		}
 		// 释放视频帧列表
-		if (item->frameInfoListSize > 0 && item->frameInfoList != nullptr) {
-			delete item->frameInfoList;
-			item->frameInfoListSize = 0;
-			item->frameInfoList = nullptr;
+		if (item.frameInfoListSize > 0 && item.frameInfoList != nullptr) {
+			delete item.frameInfoList;
+			item.frameInfoListSize = 0;
+			item.frameInfoList = nullptr;
 		}
 	}
 
@@ -531,15 +537,13 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 
 	// 声明捕获筛选器实例
 	IBaseFilter* pCaptureFilter = nullptr;
-	// 声明设备流能力实例
-	AM_MEDIA_TYPE* mt = nullptr;
 	// 预声明绑定结果
 	HRESULT res = S_OK;
 	// 回调中发生的错误码
 	auto callbackCode = StatusCode::STATUS_CODE_SUCCESS;
 	// 枚举设备，直到找到合适的设备
 	auto code =
-		this->enumDevices([this, devicePath, frameInfo, &pCaptureFilter, &mt, &res, &callbackCode](IMoniker* pMoniker) {
+		this->enumDevices([this, devicePath, frameInfo, &pCaptureFilter, &res, &callbackCode](IMoniker* pMoniker) {
 			// 获取设备路径
 			std::string tmpDevicePath = "";
 			callbackCode = this->getMonikerDevicePath(pMoniker, tmpDevicePath);
@@ -553,20 +557,10 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 				return true;
 			}
 
-			// 筛选设备流能力
-			callbackCode = this->filterMonikerStreamCaps(pMoniker, frameInfo, &mt);
-			if (callbackCode != StatusCode::STATUS_CODE_SUCCESS) {
-				// 失败了
-				return false;
-			}
-
 			// 绑定到捕获筛选器
 			res = pMoniker->BindToObject(NULL, NULL, IID_IBaseFilter, (void**)&pCaptureFilter);
 			if (FAILED(res)) {
-				// 释放流能力
-				_DeleteMediaType(mt);
-				mt = nullptr;
-				// 绑定设备实例事变
+				// 绑定设备实例失败
 				callbackCode = StatusCode::STATUS_CODE_ERR_SELECTED_DEVICE;
 				// 失败了
 				return false;
@@ -585,27 +579,143 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 		return callbackCode;
 	}
 
+	// 获取PIN接口
+	auto pCaptureOuputPin = this->getPin(pCaptureFilter, PINDIR_OUTPUT);
+	if (pCaptureOuputPin == nullptr) {
+		// 释放设备接口
+		pCaptureFilter->Release();
+		pCaptureFilter = nullptr;
+		// 获取PIN接口失败
+		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
+	}
+
+	// 获取流能力接口
+	IAMStreamConfig* pStreamConfig = nullptr;
+	res = pCaptureOuputPin->QueryInterface(IID_IAMStreamConfig, (void**)&pStreamConfig);
+	if (FAILED(res)) {
+		// 释放PIN接口
+		pCaptureOuputPin->Release();
+		pCaptureOuputPin = nullptr;
+		// 释放设备接口
+		pCaptureFilter->Release();
+		pCaptureFilter = nullptr;
+		// 获取流能力接口失败
+		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
+	}
+
+	// 声明用来接收支持的流能力总数量
+	int count, size;
+	// 获取流能力总数量
+	res = pStreamConfig->GetNumberOfCapabilities(&count, &size);
+	if (FAILED(res)) {
+		// 释放流能力接口
+		pStreamConfig->Release();
+		pStreamConfig = nullptr;
+		// 释放PIN接口
+		pCaptureOuputPin->Release();
+		pCaptureOuputPin = nullptr;
+		// 释放设备接口
+		pCaptureFilter->Release();
+		pCaptureFilter = nullptr;
+		// 获取流能力总数量失败
+		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
+	}
+
+	// 遍历所有流配置
+	for (int i = 0; i < count; ++i) {
+		// 获取流配置信息
+		AM_MEDIA_TYPE* pmt = NULL;
+		VIDEO_STREAM_CONFIG_CAPS scc;
+		res = pStreamConfig->GetStreamCaps(i, &pmt, reinterpret_cast<BYTE*>(&scc));
+		if (FAILED(res)) {
+			// 分析失败，继续下一个
+			continue;
+		}
+
+		// 检查一下
+		if (pmt->majortype != MEDIATYPE_Video || pmt->formattype != FORMAT_VideoInfo || pmt->pbFormat == nullptr) {
+			// 释放AM_MEDIA_TYPE
+			_DeleteMediaType(pmt);
+			pmt = nullptr;
+			// 信息不是想要的
+			continue;
+		}
+
+		// 提取信息
+		VIDEOINFOHEADER* videoInfoHdr = (VIDEOINFOHEADER*)pmt->pbFormat;
+		auto width = videoInfoHdr->bmiHeader.biWidth;		 // 提取宽度
+		auto height = videoInfoHdr->bmiHeader.biHeight;		 // 提取高度
+		auto fps = 10000000 / videoInfoHdr->AvgTimePerFrame; // 提取帧率
+		auto format = videoInfoHdr->bmiHeader.biCompression; // 提取格式
+		// 信息是否一致
+		if (frameInfo->width == width && frameInfo->height == height && frameInfo->fps == fps &&
+			frameInfo->format == format) {
+			// 设定媒体类型（包括分辨率，帧率，格式）
+			res = pStreamConfig->SetFormat(pmt);
+			// 释放AM_MEDIA_TYPE
+			_DeleteMediaType(pmt);
+			pmt = nullptr;
+			// 是否设置成功
+			if (FAILED(res)) {
+				// 释放流能力接口
+				pStreamConfig->Release();
+				pStreamConfig = nullptr;
+				// 释放PIN接口
+				pCaptureOuputPin->Release();
+				pCaptureOuputPin = nullptr;
+				// 释放设备接口
+				pCaptureFilter->Release();
+				pCaptureFilter = nullptr;
+				// 设置失败，结束吧
+				return StatusCode::STATUS_CODE_ERR_SET_MEDIA_TYPE;
+			}
+		}
+
+		// 释放AM_MEDIA_TYPE
+		_DeleteMediaType(pmt);
+		pmt = nullptr;
+		// 是否是最后一个了
+		if (i == count - 1) {
+			// 释放流能力接口
+			pStreamConfig->Release();
+			pStreamConfig = nullptr;
+			// 释放PIN接口
+			pCaptureOuputPin->Release();
+			pCaptureOuputPin = nullptr;
+			// 释放设备接口
+			pCaptureFilter->Release();
+			pCaptureFilter = nullptr;
+			// 没有匹配到流能力
+			return StatusCode::STATUS_CODE_ERR_NOMATCH_STREAM_CAPS;
+		}
+	}
+
 	// 关闭已打开的设备
 	if (this->openedDevice != nullptr) {
 		delete this->openedDevice;
 		this->openedDevice = nullptr;
 	}
 
+	// pCaptureFilter被BecamOpenedDevice托管了，外面不需要Release了
 	// 尝试打开设备
 	this->openedDevice = new BecamOpenedDevice(pCaptureFilter);
-	code = this->openedDevice->Open(mt);
-	// 释放流能力（媒体类型）
-	delete mt;
+	code = this->openedDevice->Open(pCaptureOuputPin);
 	// 是否打开成功
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
 		// 打开失败，关闭实例
 		delete this->openedDevice;
 		this->openedDevice = nullptr;
-		return code;
 	}
 
-	// OK
-	return StatusCode::STATUS_CODE_SUCCESS;
+	// 释放流能力接口
+	pStreamConfig->Release();
+	pStreamConfig = nullptr;
+	// 释放捕获器输出接口
+	pCaptureOuputPin->Release();
+	pCaptureOuputPin = nullptr;
+
+	// 返回结果
+	return code;
 }
 
 /**

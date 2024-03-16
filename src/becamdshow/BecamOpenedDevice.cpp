@@ -3,10 +3,10 @@
 /**
  * @brief 打开设备
  *
- * @param mt 媒体类型
+ * @param pCaptureOuputPin 捕获器输出端口
  * @return 状态码
  */
-StatusCode BecamOpenedDevice::Open(const AM_MEDIA_TYPE* mt) {
+StatusCode BecamOpenedDevice::Open(IPin* pCaptureOuputPin) {
 	// 检查捕获器是否已绑定
 	if (this->pCaptureFilter == nullptr) {
 		return StatusCode::STATUS_CODE_NOT_FOUND_DEVICE;
@@ -38,17 +38,12 @@ StatusCode BecamOpenedDevice::Open(const AM_MEDIA_TYPE* mt) {
 		// 创建样品采集器失败
 		return StatusCode::STATUS_CODE_ERR_CREATE_SAMPLE_GRABBER;
 	}
+
 	// 获取样品采集器接口
 	res = this->pSampleGrabber->QueryInterface(IID_ISampleGrabber, (void**)&this->pSampleGrabberIntf);
-	if (FAILED(res))
+	if (FAILED(res)) {
 		// 获取样品采集器接口失败
 		return StatusCode::STATUS_CODE_ERR_GET_SAMPLE_GRABBER_INFC;
-
-	// 设置媒体类型
-	res = this->pSampleGrabberIntf->SetMediaType(mt);
-	if (FAILED(res)) {
-		// 设置媒体类型失败
-		return StatusCode::STATUS_CODE_ERR_SET_MEDIA_TYPE;
 	}
 
 	// 将样品采集器添加到图像构建器
@@ -81,37 +76,22 @@ StatusCode BecamOpenedDevice::Open(const AM_MEDIA_TYPE* mt) {
 		return StatusCode::STATUS_CODE_ERR_ADD_NULL_RENDER;
 	}
 
-	// 捕获器输出
-	auto src = this->getPin(this->pCaptureFilter, PINDIR_OUTPUT);
-	if (src == nullptr) {
-		// 连接失败
-		return StatusCode::STATUS_CODE_ERR_CAPTURE_GRABBER;
-	}
-	// 采集器接收
+	// 采集器输入端口
 	auto dst = this->getPin(this->pSampleGrabber, PINDIR_INPUT);
 	if (dst == nullptr) {
-		// 释放引用
-		src->Release();
-		src = nullptr;
 		// 连接失败
 		return StatusCode::STATUS_CODE_ERR_CAPTURE_GRABBER;
 	}
-	// 连接捕获和采集
-	res = this->pGraphBuilder->Connect(src, dst);
-	if (FAILED(res)) {
-		/// 释放引用
-		src->Release();
-		src = nullptr;
-		dst->Release();
-		dst = nullptr;
-		// 连接失败
-		return StatusCode::STATUS_CODE_ERR_CAPTURE_GRABBER;
-	}
+	// 连接捕获器输出和采集器输入
+	res = this->pGraphBuilder->Connect(pCaptureOuputPin, dst);
 	/// 释放引用
-	src->Release();
-	src = nullptr;
 	dst->Release();
 	dst = nullptr;
+	// 检查连接结果
+	if (FAILED(res)) {
+		// 连接失败
+		return StatusCode::STATUS_CODE_ERR_CAPTURE_GRABBER;
+	}
 
 	// 采集器输出
 	auto grabber = getPin(this->pSampleGrabber, PINDIR_OUTPUT);
@@ -130,20 +110,16 @@ StatusCode BecamOpenedDevice::Open(const AM_MEDIA_TYPE* mt) {
 	}
 	// 连接采集和渲染STATUS_CODE_ERR_GRABBER_RENDER
 	res = this->pGraphBuilder->Connect(grabber, render);
-	if (FAILED(res)) {
-		// 释放引用
-		grabber->Release();
-		grabber = nullptr;
-		render->Release();
-		render = nullptr;
-		// 连接失败
-		return StatusCode::STATUS_CODE_ERR_GRABBER_RENDER;
-	}
 	// 释放引用
 	grabber->Release();
 	grabber = nullptr;
 	render->Release();
 	render = nullptr;
+	// 检查连接结果
+	if (FAILED(res)) {
+		// 连接失败
+		return StatusCode::STATUS_CODE_ERR_GRABBER_RENDER;
+	}
 
 	// 一堆东西都可以释放掉了
 	this->nullRender->Release();
