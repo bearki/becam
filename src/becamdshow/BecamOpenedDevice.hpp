@@ -69,6 +69,11 @@ public:
 	 * @brief 析构函数
 	 */
 	~BecamOpenedDevice() {
+		// 释放设备流能力
+		if (this->mt != nullptr) {
+			_DeleteMediaType(this->mt);
+			this->mt = nullptr;
+		}
 		// 释放媒体控制器
 		if (this->pMediaControl != nullptr) {
 			this->pMediaControl->StopWhenReady(); // 停止媒体捕获
@@ -98,11 +103,6 @@ public:
 			this->pGraphBuilder->Release();
 			this->pGraphBuilder = nullptr;
 		}
-		// 释放设备流能力
-		if (this->mt != nullptr) {
-			_DeleteMediaType(this->mt);
-			this->mt = nullptr;
-		}
 	};
 
 	/**
@@ -110,7 +110,23 @@ public:
 	 *
 	 * @return 状态码
 	 */
-	StatusCode BecamOpenedDevice::Open();
+	StatusCode Open();
+
+	/**
+	 * @brief 获取视频帧
+	 *
+	 * @param data 视频帧流
+	 * @param size 视频帧流大小
+	 * @return 状态码
+	 */
+	StatusCode GetFrame(uint8_t** data, size_t* size);
+
+	/**
+	 * @brief 释放视频帧
+	 *
+	 * @param data 视频帧流
+	 */
+	void FreeFrame(uint8_t** data);
 };
 
 #endif

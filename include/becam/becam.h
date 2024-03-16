@@ -35,6 +35,8 @@ enum StatusCode {
 	STATUS_CODE_ERR_ADD_NULL_RENDER,		 // 添加空渲染器到图像构建器失败
 	STATUS_CODE_ERR_CAPTURE_GRABBER,		 // 连接捕获器和采集器失败
 	STATUS_CODE_ERR_GRABBER_RENDER,			 // 连接采集器和渲染器失败
+	STATUS_CODE_ERR_DEVICE_NOT_OPEN,		 // 设备未打开
+	STATUS_CODE_ERR_FRAME_EMPTY,			 // 视频帧为空
 };
 
 // VideoFrameInfo 视频帧信息
@@ -111,6 +113,24 @@ _BECAM_API_ StatusCode BecamOpenDevice(BecamHandle handle, const char* devicePat
  * @param handle Becam接口句柄
  */
 _BECAM_API_ void BecamCloseDevice(BecamHandle handle);
+
+/**
+ * @brief 获取视频帧
+ *
+ * @param handle Becam接口句柄
+ * @param data 视频帧流
+ * @param size 视频帧流大小
+ * @return 状态码
+ */
+_BECAM_API_ StatusCode BecamGetFrame(BecamHandle handle, uint8_t** data, size_t* size);
+
+/**
+ * @brief 释放视频帧
+ *
+ * @param handle Becam接口句柄
+ * @param data 视频帧流
+ */
+_BECAM_API_ void BecamFreeFrame(BecamHandle handle, uint8_t** data);
 
 #ifdef __cplusplus
 }

@@ -146,6 +146,22 @@ public:
 	 * @brief 关闭设备
 	 */
 	void CloseDevice();
+
+	/**
+	 * @brief 获取视频帧
+	 *
+	 * @param data 视频帧流
+	 * @param size 视频帧流大小
+	 * @return 状态码
+	 */
+	StatusCode GetFrame(uint8_t** data, size_t* size);
+
+	/**
+	 * @brief 释放视频帧
+	 *
+	 * @param data 视频帧流
+	 */
+	void FreeFrame(uint8_t** data);
 };
 
 #endif

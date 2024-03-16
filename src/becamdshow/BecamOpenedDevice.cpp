@@ -165,4 +165,52 @@ StatusCode BecamOpenedDevice::Open() {
 	// 开始消耗帧
 	this->pSampleGrabberIntf->SetBufferSamples(true);
 	this->pMediaControl->Run();
+
+	// OK
+	return StatusCode::STATUS_CODE_SUCCESS;
+}
+
+/**
+ * @brief 获取视频帧
+ *
+ * @param data 视频帧流
+ * @param size 视频帧流大小
+ * @return 状态码
+ */
+StatusCode BecamOpenedDevice::GetFrame(uint8_t** data, size_t* size) {
+	// 检查入参
+	if (data == nullptr || size == nullptr) {
+		// 参数错误
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
+
+	// 检查样品采集器回调是否赋值
+	if (this->sampleGrabberCallback == nullptr) {
+		// 没有回调
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
+	}
+
+	// 获取帧
+	return this->sampleGrabberCallback->GetFrame(data, size);
+}
+
+/**
+ * @brief 释放视频帧
+ *
+ * @param data 视频帧流
+ */
+void BecamOpenedDevice::FreeFrame(uint8_t** data) {
+	// 检查参数
+	if (data == nullptr || *data == nullptr) {
+		return;
+	}
+
+	// 检查样品采集器回调是否赋值
+	if (this->sampleGrabberCallback == nullptr) {
+		// 没有回调
+		return;
+	}
+
+	// 释放帧
+	this->sampleGrabberCallback->FreeFrame(data);
 }

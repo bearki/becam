@@ -371,7 +371,7 @@ StatusCode BecamDirectShow::filterMonikerStreamCaps(IMoniker* pMoniker, const Vi
 	}
 
 	// 置零
-	reply = nullptr;
+	*reply = nullptr;
 	// 执行流能力枚举
 	auto code = this->enumStreamCaps(pMoniker, [input, &reply](AM_MEDIA_TYPE* pmt) {
 		// 提取信息
@@ -397,7 +397,7 @@ StatusCode BecamDirectShow::filterMonikerStreamCaps(IMoniker* pMoniker, const Vi
 	}
 
 	// 检查资源是否有枚举到
-	if (reply == nullptr) {
+	if (*reply == nullptr) {
 		// 没有匹配到流能力
 		return StatusCode::STATUS_CODE_ERR_NOMATCH_STREAM_CAPS;
 	}
@@ -650,4 +650,46 @@ void BecamDirectShow::CloseDevice() {
 	// 释放已打开的设备
 	delete this->openedDevice;
 	this->openedDevice = nullptr;
+}
+
+/**
+ * @brief 获取视频帧
+ *
+ * @param data 视频帧流
+ * @param size 视频帧流大小
+ * @return 状态码
+ */
+StatusCode BecamDirectShow::GetFrame(uint8_t** data, size_t* size) {
+	// 检查入参
+	if (data == nullptr || size == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
+
+	// 检查设备是否打开
+	if (this->openedDevice == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
+	}
+
+	// 获取视频帧
+	return this->openedDevice->GetFrame(data, size);
+}
+
+/**
+ * @brief 释放视频帧
+ *
+ * @param data 视频帧流
+ */
+void BecamDirectShow::FreeFrame(uint8_t** data) {
+	// 检查入参
+	if (data == nullptr || *data == nullptr) {
+		return;
+	}
+
+	// 检查设备是否打开
+	if (this->openedDevice == nullptr) {
+		return;
+	}
+
+	// 释放视频帧
+	this->openedDevice->FreeFrame(data);
 }

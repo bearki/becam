@@ -105,3 +105,41 @@ void BecamCloseDevice(BecamHandle handle) {
 	// 执行相机关闭
 	becamHandle->CloseDevice();
 }
+
+/**
+ * @brief 获取视频帧
+ *
+ * @param handle Becam接口句柄
+ * @param data 视频帧流
+ * @param size 视频帧流大小
+ * @return 状态码
+ */
+StatusCode BecamGetFrame(BecamHandle handle, uint8_t** data, size_t* size) {
+	// 检查句柄
+	if (handle == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
+	}
+
+	// 转换句柄类型
+	BecamDirectShow* becamHandle = static_cast<BecamDirectShow*>(handle);
+	// 执行获取视频帧
+	return becamHandle->GetFrame(data, size);
+}
+
+/**
+ * @brief 释放视频帧
+ *
+ * @param handle Becam接口句柄
+ * @param data 视频帧流
+ */
+void BecamFreeFrame(BecamHandle handle, uint8_t** data) {
+	// 检查句柄
+	if (handle == nullptr) {
+		return;
+	}
+
+	// 转换句柄类型
+	BecamDirectShow* becamHandle = static_cast<BecamDirectShow*>(handle);
+	// 执行释放视频帧
+	becamHandle->FreeFrame(data);
+}

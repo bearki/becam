@@ -6,7 +6,7 @@
 // -------------------- 重写Dshow函数，在新开发环境上不提供了 -------------------- //
 
 // Release the format block for a media type.
-void _FreeMediaType(AM_MEDIA_TYPE& mt) {
+static void _FreeMediaType(AM_MEDIA_TYPE& mt) {
 	if (mt.cbFormat != 0) {
 		CoTaskMemFree((PVOID)mt.pbFormat);
 		mt.cbFormat = 0;
@@ -20,7 +20,7 @@ void _FreeMediaType(AM_MEDIA_TYPE& mt) {
 }
 
 // Delete a media type structure that was allocated on the heap.
-void _DeleteMediaType(AM_MEDIA_TYPE* pmt) {
+static void _DeleteMediaType(AM_MEDIA_TYPE* pmt) {
 	if (pmt != NULL) {
 		_FreeMediaType(*pmt);
 		CoTaskMemFree(pmt);
