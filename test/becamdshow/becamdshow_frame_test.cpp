@@ -1,6 +1,7 @@
 #include <becam/becam.h>
 #include <fstream>
 #include <iostream>
+#include <windows.h>
 
 int main() {
 	// 初始化句柄
@@ -50,7 +51,7 @@ int main() {
 					  << "fps: " << element.fps << ", "
 					  << "format: " << element.format << std::endl;
 			// 提取一个帧信息
-			if (devicePath.empty() && element.width == 352) {
+			if (devicePath.empty() && element.width == 800 && element.fps == 60) {
 				devicePath = item.devicePath;
 				frameInfo = element;
 			}
@@ -76,13 +77,12 @@ int main() {
 	// 来个死循环
 	while (true) {
 		// 按帧率睡眠
-		_sleep(1000 / frameInfo.fps);
+		Sleep(DWORD(1000 / frameInfo.fps));
 		// 获取一帧
 		uint8_t* data = nullptr;
 		size_t size = 0;
-		BecamGetFrame(handle, &data, &size);
-
-		if (size == 0) {
+		res = BecamGetFrame(handle, &data, &size);
+		if (res != StatusCode::STATUS_CODE_SUCCESS) {
 			std::cout << "Frame empty. 000000000000000000000000000000000000000000000000000" << std::endl;
 			continue;
 		} else {
