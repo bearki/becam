@@ -23,11 +23,18 @@ private:
 	double updateAt = 0;
 
 public:
+	// 构造函数
 	inline SampleGrabberCallback() {
 		// 初始化一个4MB大小的缓冲区
 		this->bufferCap = 4 * 1024 * 1024;
 		this->bufferLen = 0;
 		this->buffer = new uint8_t[this->bufferCap];
+	}
+
+	// 析构函数
+	inline ~SampleGrabberCallback() {
+		// 释放缓冲区
+		delete[] this->buffer;
 	}
 
 	HRESULT SampleCB(double sampleTime, IMediaSample* sample) { return S_OK; };
@@ -82,6 +89,7 @@ public:
 		std::cout << "updateAt: " << this->updateAt << std::endl;
 
 		// 缓冲区有内容，开辟指定大小的空间
+		*size = this->bufferLen;
 		*data = new uint8_t[this->bufferLen];
 		// 拷贝内容
 		memcpy(*data, this->buffer, this->bufferLen);

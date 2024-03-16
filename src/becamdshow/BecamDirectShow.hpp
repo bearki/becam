@@ -18,25 +18,13 @@ private:
 	// 已打开设备实例
 	BecamOpenedDevice* openedDevice = nullptr;
 
-	// 回调结果枚举
-	enum CbRes {
-		// 释放资源并继续枚举（默认行为）
-		FREE_AND_NOBREAK,
-		// 释放资源并终止枚举
-		FREE_AND_BREAK,
-		// 保留资源并继续枚举
-		NOFREE_AND_NOBREAK,
-		// 保留资源并终止枚举
-		NOFREE_AND_BREAK,
-	};
-
 	/**
 	 * @brief 枚举设备列表
 	 *
-	 * @param callback [in] 回调函数（将依据回调结果处理资源及剩余枚举）
+	 * @param callback [in] 回调函数（回调结束将立即释放IMoniker，回调返回false将立即停止枚举）
 	 * @return 状态码
 	 */
-	StatusCode enumDevices(std::function<CbRes(IMoniker*)> callback);
+	StatusCode enumDevices(std::function<bool(IMoniker*)> callback);
 
 	// 枚举针脚
 	IPin* getPin(IBaseFilter* pFilter, PIN_DIRECTION dir);
@@ -45,10 +33,10 @@ private:
 	 * @brief 枚举设备支持的流能力
 	 *
 	 * @param pMoniker [in] 设备实例
-	 * @param callback [in] 回调函数（将依据回调结果处理资源及剩余枚举）
+	 * @param callback [in] 回调函数（回调结束将立即释放AM_MEDIA_TYPE，回调返回false将立即停止枚举）
 	 * @return 状态码
 	 */
-	StatusCode enumStreamCaps(IMoniker* pMoniker, std::function<CbRes(AM_MEDIA_TYPE*)> callback);
+	StatusCode enumStreamCaps(IMoniker* pMoniker, std::function<bool(AM_MEDIA_TYPE*)> callback);
 
 	/**
 	 * @brief 获取设备友好名称

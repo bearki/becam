@@ -24,6 +24,7 @@ static void _DeleteMediaType(AM_MEDIA_TYPE* pmt) {
 	if (pmt != NULL) {
 		_FreeMediaType(*pmt);
 		CoTaskMemFree(pmt);
+		pmt = nullptr;
 	}
 }
 

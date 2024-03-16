@@ -3,16 +3,13 @@
 /**
  * @brief 打开设备
  *
+ * @param mt 媒体类型
  * @return 状态码
  */
-StatusCode BecamOpenedDevice::Open() {
+StatusCode BecamOpenedDevice::Open(const AM_MEDIA_TYPE* mt) {
 	// 检查捕获器是否已绑定
 	if (this->pCaptureFilter == nullptr) {
 		return StatusCode::STATUS_CODE_NOT_FOUND_DEVICE;
-	}
-	// 检查设备流能力
-	if (this->mt == nullptr) {
-		return StatusCode::STATUS_CODE_ERR_NOMATCH_STREAM_CAPS;
 	}
 
 	// ----------------------------- 画布基础容器构建 ----------------------------- //
@@ -48,7 +45,7 @@ StatusCode BecamOpenedDevice::Open() {
 		return StatusCode::STATUS_CODE_ERR_GET_SAMPLE_GRABBER_INFC;
 
 	// 设置媒体类型
-	res = this->pSampleGrabberIntf->SetMediaType(this->mt);
+	res = this->pSampleGrabberIntf->SetMediaType(mt);
 	if (FAILED(res)) {
 		// 设置媒体类型失败
 		return StatusCode::STATUS_CODE_ERR_SET_MEDIA_TYPE;

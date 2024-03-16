@@ -8,10 +8,10 @@
 /**
  * @brief 枚举设备列表
  *
- * @param callback [in] 回调函数（回调完成IMoniker将立即释放，回调返回false将立即停止枚举）
+ * @param callback [in] 回调函数（回调结束将立即释放IMoniker，回调返回false将立即停止枚举）
  * @return 状态码
  */
-StatusCode BecamDirectShow::enumDevices(std::function<CbRes(IMoniker*)> callback) {
+StatusCode BecamDirectShow::enumDevices(std::function<bool(IMoniker*)> callback) {
 	// 检查COM库是否初始化成功
 	if (!this->comInited) {
 		// COM库初始化失败了
@@ -54,34 +54,17 @@ StatusCode BecamDirectShow::enumDevices(std::function<CbRes(IMoniker*)> callback
 	// 设备实例
 	IMoniker* pMoniker = nullptr;
 	// 是否查询到设备
-	ULONG pceltFetched = 0;
+	ULONG _pceltFetched = 0;
 	// 遍历枚举所有设备
-	while (pEnum->Next(1, &pMoniker, &pceltFetched) == S_OK) {
+	while (pEnum->Next(1, &pMoniker, &_pceltFetched) == S_OK) {
 		// 回调枚举出来的设备
 		auto cbRes = callback(pMoniker);
-		if (cbRes == CbRes::FREE_AND_NOBREAK) {
-			// 释放设备实例
-			pMoniker->Release();
-			// 继续枚举
-			continue;
-		} else if (CbRes::FREE_AND_BREAK) {
-			// 释放设备实例
-			pMoniker->Release();
-			// 终止枚举
+		// 释放设备实例
+		pMoniker->Release();
+		pMoniker = nullptr;
+		// 是否需要停止枚举
+		if (!cbRes) {
 			break;
-		} else if (cbRes == CbRes::NOFREE_AND_NOBREAK) {
-			// 不释放AM_MEDIA_TYPE
-			// 继续枚举
-			continue;
-		} else if (cbRes == CbRes::NOFREE_AND_BREAK) {
-			// 不释放AM_MEDIA_TYPE
-			// 终止枚举
-			break;
-		} else {
-			// 释放设备实例
-			pMoniker->Release();
-			// 继续枚举
-			continue;
 		}
 	}
 
@@ -120,10 +103,10 @@ IPin* BecamDirectShow::getPin(IBaseFilter* pFilter, PIN_DIRECTION dir) {
  * @brief 枚举设备支持的流能力
  *
  * @param pMoniker [in] 设备实例
- * @param callback [in] 回调函数（将依据回调结果处理资源及剩余枚举）
+ * @param callback [in] 回调函数（回调结束将立即释放AM_MEDIA_TYPE，回调返回false将立即停止枚举）
  * @return 状态码
  */
-StatusCode BecamDirectShow::enumStreamCaps(IMoniker* pMoniker, std::function<CbRes(AM_MEDIA_TYPE*)> callback) {
+StatusCode BecamDirectShow::enumStreamCaps(IMoniker* pMoniker, std::function<bool(AM_MEDIA_TYPE*)> callback) {
 	// 检查参数
 	if (pMoniker == nullptr || callback == nullptr) {
 		// 参数错误
@@ -195,34 +178,18 @@ StatusCode BecamDirectShow::enumStreamCaps(IMoniker* pMoniker, std::function<CbR
 		if (pmt->majortype != MEDIATYPE_Video || pmt->formattype != FORMAT_VideoInfo || pmt->pbFormat == nullptr) {
 			// 释放AM_MEDIA_TYPE
 			_DeleteMediaType(pmt);
+			pmt = nullptr;
 			// 信息不是想要的
 			continue;
 		}
 		// 执行回调，并检查回调结果
 		auto cbRes = callback(pmt);
-		if (cbRes == CbRes::FREE_AND_NOBREAK) {
-			// 释放AM_MEDIA_TYPE
-			_DeleteMediaType(pmt);
-			// 继续枚举
-			continue;
-		} else if (CbRes::FREE_AND_BREAK) {
-			// 释放AM_MEDIA_TYPE
-			_DeleteMediaType(pmt);
-			// 终止枚举
+		// 释放AM_MEDIA_TYPE
+		_DeleteMediaType(pmt);
+		pmt = nullptr;
+		// 是否需要停止枚举
+		if (!cbRes) {
 			break;
-		} else if (cbRes == CbRes::NOFREE_AND_NOBREAK) {
-			// 不释放AM_MEDIA_TYPE
-			// 继续枚举
-			continue;
-		} else if (cbRes == CbRes::NOFREE_AND_BREAK) {
-			// 不释放AM_MEDIA_TYPE
-			// 终止枚举
-			break;
-		} else {
-			// 释放AM_MEDIA_TYPE
-			_DeleteMediaType(pmt);
-			// 继续枚举
-			continue;
 		}
 	}
 
@@ -334,7 +301,7 @@ StatusCode BecamDirectShow::getMonikerStreamCaps(IMoniker* pMoniker, VideoFrameI
 		// 插入到列表中
 		replyVec.insert(replyVec.end(), info);
 		// 始终继续查找下一个
-		return CbRes::FREE_AND_NOBREAK;
+		return true;
 	});
 	// 是否失败了
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
@@ -365,7 +332,7 @@ StatusCode BecamDirectShow::getMonikerStreamCaps(IMoniker* pMoniker, VideoFrameI
 StatusCode BecamDirectShow::filterMonikerStreamCaps(IMoniker* pMoniker, const VideoFrameInfo* input,
 													AM_MEDIA_TYPE** reply) {
 	// 检查参数
-	if (pMoniker == nullptr || input == nullptr || reply == nullptr) {
+	if (pMoniker == nullptr || input == nullptr) {
 		// 参数错误
 		return StatusCode::STATUS_CODE_ERR_INTERNAL_PARAM;
 	}
@@ -383,12 +350,12 @@ StatusCode BecamDirectShow::filterMonikerStreamCaps(IMoniker* pMoniker, const Vi
 		// 信息是否一致
 		if (input->width == width && input->height == height && input->fps == fps && input->format == format) {
 			// 信息一致,保留并返回资源
-			*reply = pmt;
+			*reply = new AM_MEDIA_TYPE(*pmt);
 			// 保留资源，终止枚举
-			return CbRes::NOFREE_AND_BREAK;
+			return false;
 		}
 		// 继续查找下一个
-		return CbRes::FREE_AND_NOBREAK;
+		return true;
 	});
 	// 检查结果
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
@@ -431,7 +398,7 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 		auto code = this->getMonikerFriendlyName(pMoniker, friendlyName);
 		if (code != StatusCode::STATUS_CODE_SUCCESS) {
 			// 继续枚举
-			return CbRes::FREE_AND_NOBREAK;
+			return true;
 		}
 
 		// 获取设备路径
@@ -439,7 +406,7 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 		code = this->getMonikerDevicePath(pMoniker, devicePath);
 		if (code != StatusCode::STATUS_CODE_SUCCESS) {
 			// 继续枚举
-			return CbRes::FREE_AND_NOBREAK;
+			return true;
 		}
 
 		// 获取设备位置信息
@@ -451,7 +418,7 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 		code = this->getMonikerStreamCaps(pMoniker, &list, &listSize);
 		if (code != StatusCode::STATUS_CODE_SUCCESS) {
 			// 继续枚举
-			return CbRes::FREE_AND_NOBREAK;
+			return true;
 		}
 
 		// 构建设备信息
@@ -479,7 +446,7 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 		deviceVec.insert(deviceVec.end(), deviceInfo);
 
 		// 继续枚举
-		return CbRes::FREE_AND_NOBREAK;
+		return true;
 	});
 
 	// 是否枚举失败
@@ -578,19 +545,19 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 			callbackCode = this->getMonikerDevicePath(pMoniker, tmpDevicePath);
 			if (callbackCode != StatusCode::STATUS_CODE_SUCCESS) {
 				// 失败了
-				return CbRes::FREE_AND_BREAK;
+				return false;
 			}
 			// 是否是这个设备
 			if (tmpDevicePath != devicePath) {
 				// 不是这个设备，继续查
-				return CbRes::FREE_AND_NOBREAK;
+				return true;
 			}
 
 			// 筛选设备流能力
 			callbackCode = this->filterMonikerStreamCaps(pMoniker, frameInfo, &mt);
 			if (callbackCode != StatusCode::STATUS_CODE_SUCCESS) {
 				// 失败了
-				return CbRes::FREE_AND_BREAK;
+				return false;
 			}
 
 			// 绑定到捕获筛选器
@@ -602,11 +569,11 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 				// 绑定设备实例事变
 				callbackCode = StatusCode::STATUS_CODE_ERR_SELECTED_DEVICE;
 				// 失败了
-				return CbRes::FREE_AND_BREAK;
+				return false;
 			}
 
 			// 找到后立即结束枚举
-			return CbRes::FREE_AND_BREAK;
+			return false;
 		});
 
 	// 检查设备枚举状态码
@@ -625,8 +592,11 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 	}
 
 	// 尝试打开设备
-	this->openedDevice = new BecamOpenedDevice(pCaptureFilter, mt);
-	code = this->openedDevice->Open();
+	this->openedDevice = new BecamOpenedDevice(pCaptureFilter);
+	code = this->openedDevice->Open(mt);
+	// 释放流能力（媒体类型）
+	delete mt;
+	// 是否打开成功
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
 		// 打开失败，关闭实例
 		delete this->openedDevice;

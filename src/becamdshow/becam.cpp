@@ -28,7 +28,8 @@ void BecamFree(BecamHandle* handle) {
 	// 释放Becam接口句柄
 	delete becamHandle;
 
-	// 释放Becam接口句柄
+	// 置空
+	becamHandle = nullptr;
 	*handle = nullptr;
 }
 

@@ -19,8 +19,6 @@ class BecamOpenedDevice {
 private:
 	// 捕获筛选器（选中的设备）
 	IBaseFilter* pCaptureFilter = nullptr;
-	// 当前使用的设备流能力
-	AM_MEDIA_TYPE* mt = nullptr;
 	// 图像构建器（画布）
 	IGraphBuilder* pGraphBuilder = nullptr;
 	// 样品采集器（采集器）
@@ -60,20 +58,12 @@ public:
 	 *
 	 * @param pCaptureFilter 捕获筛选器
 	 */
-	BecamOpenedDevice(IBaseFilter* pCaptureFilter, AM_MEDIA_TYPE* mt) {
-		this->pCaptureFilter = pCaptureFilter;
-		this->mt = mt;
-	};
+	BecamOpenedDevice(IBaseFilter* pCaptureFilter) { this->pCaptureFilter = pCaptureFilter; };
 
 	/**
 	 * @brief 析构函数
 	 */
 	~BecamOpenedDevice() {
-		// 释放设备流能力
-		if (this->mt != nullptr) {
-			_DeleteMediaType(this->mt);
-			this->mt = nullptr;
-		}
 		// 释放媒体控制器
 		if (this->pMediaControl != nullptr) {
 			this->pMediaControl->StopWhenReady(); // 停止媒体捕获
@@ -103,6 +93,11 @@ public:
 			this->pGraphBuilder->Release();
 			this->pGraphBuilder = nullptr;
 		}
+		// 释放采集器回调实例
+		if (this->sampleGrabberCallback != nullptr) {
+			delete this->sampleGrabberCallback;
+			this->sampleGrabberCallback = nullptr;
+		}
 	};
 
 	/**
@@ -110,7 +105,7 @@ public:
 	 *
 	 * @return 状态码
 	 */
-	StatusCode Open();
+	StatusCode Open(const AM_MEDIA_TYPE* mt);
 
 	/**
 	 * @brief 获取视频帧

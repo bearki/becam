@@ -1,4 +1,5 @@
 #include <becam/becam.h>
+#include <fstream>
 #include <iostream>
 
 int main() {
@@ -22,7 +23,7 @@ int main() {
 		// 选中的设备路径
 		std::string devicePath = "";
 		// 选中的视频帧信息
-		VideoFrameInfo* frameInfo = nullptr;
+		VideoFrameInfo frameInfo = {0};
 
 		// 打印一下设备列表
 		for (size_t i = 0; i < reply.deviceInfoListSize; i++) {
@@ -49,10 +50,9 @@ int main() {
 						  << "fps: " << element.fps << ", "
 						  << "format: " << element.format << std::endl;
 				// 提取一个帧信息
-				if (frameInfo == nullptr) {
+				if (devicePath.empty()) {
 					devicePath = item.devicePath;
-					frameInfo = new VideoFrameInfo();
-					*frameInfo = element;
+					frameInfo = element;
 				}
 			}
 		}
@@ -62,29 +62,48 @@ int main() {
 
 		// 当前选中的设别路径和帧信息
 		std::cout << "\n\nSelected device path: " << devicePath << std::endl;
-		if (frameInfo == nullptr) {
-			std::cout << "Selected frame info: nullptr" << std::endl;
+		std::cout << "Selected frame info: " << frameInfo.width << "x" << frameInfo.height << ", " << frameInfo.fps
+				  << ", " << frameInfo.format << std::endl;
+
+		/*
+
+		// 打开设备
+		res = BecamOpenDevice(handle, devicePath.c_str(), &frameInfo);
+		if (res != StatusCode::STATUS_CODE_SUCCESS) {
+			std::cerr << "Failed to open device. errno: " << res << std::endl;
 		} else {
-			std::cout << "Selected frame info: " << frameInfo->width << "x" << frameInfo->height << ", "
-					  << frameInfo->fps << ", " << frameInfo->format << std::endl;
+			// 获取100帧
+			for (size_t i = 0; i < 1000; i++) {
+				uint8_t* data = nullptr;
+				size_t size = 0;
+				BecamGetFrame(handle, &data, &size);
 
-			// 打开设备
-			res = BecamOpenDevice(handle, devicePath.c_str(), frameInfo);
-			if (res != StatusCode::STATUS_CODE_SUCCESS) {
-				std::cerr << "Failed to open device. errno: " << res << std::endl;
-			} else {
-				// 获取100帧
-				for (size_t i = 0; i < 100; i++) {
-					uint8_t* data = nullptr;
-					size_t size = 0;
-					BecamGetFrame(handle, &data, &size);
-					BecamFreeFrame(handle, &data);
+				if (size == 0) {
+					std::cout << "Frame empty. 000000000000000000000000000000000000000000000000000" << std::endl;
 				}
-			}
 
-			// 释放帧信息
-			delete frameInfo;
+				// 数据写入到文件
+				// 打开或创建一个文件以二进制模式写入
+				std::ofstream ofs("output.jpg", std::ios::binary | std::ios::out);
+
+				// 检查文件是否成功打开
+				if (ofs.is_open()) {
+					// 将字节数组写入文件
+					ofs.write((char*)data, static_cast<std::streamsize>(size));
+					// 检查是否所有数据都已成功写入
+					if (!ofs) {
+						std::cerr << "Error writing to file!" << std::endl;
+					}
+					// 关闭文件流
+					ofs.close();
+				} else {
+					std::cerr << "Unable to open file for writing." << std::endl;
+				}
+				BecamFreeFrame(handle, &data);
+			}
 		}
+
+		*/
 
 		// 释放句柄
 		BecamFree(&handle);
