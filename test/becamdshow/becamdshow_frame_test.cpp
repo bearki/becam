@@ -50,7 +50,7 @@ int main() {
 					  << "fps: " << element.fps << ", "
 					  << "format: " << element.format << std::endl;
 			// 提取一个帧信息
-			if (devicePath.empty() && element.width == 1280) {
+			if (devicePath.empty() && element.width == 352) {
 				devicePath = item.devicePath;
 				frameInfo = element;
 			}
@@ -75,6 +75,8 @@ int main() {
 
 	// 来个死循环
 	while (true) {
+		// 按帧率睡眠
+		_sleep(1000 / frameInfo.fps);
 		// 获取一帧
 		uint8_t* data = nullptr;
 		size_t size = 0;
@@ -83,6 +85,8 @@ int main() {
 		if (size == 0) {
 			std::cout << "Frame empty. 000000000000000000000000000000000000000000000000000" << std::endl;
 			continue;
+		} else {
+			std::cout << "OK, Write Size: " << size << std::endl;
 		}
 
 		// 数据写入到文件

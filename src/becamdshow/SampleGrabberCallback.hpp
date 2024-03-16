@@ -19,14 +19,14 @@ private:
 	uint32_t bufferCap = 0;
 	// 声明图像缓冲区当前使用量
 	uint32_t bufferLen = 0;
-	// 声明图像最新更新时间
-	double updateAt = 0;
+	// 图像是否有更新
+	bool bufferUpdated = false;
 
 public:
 	// 构造函数
 	inline SampleGrabberCallback() {
-		// 初始化一个4MB大小的缓冲区
-		this->bufferCap = 4 * 1024 * 1024;
+		// 初始化一个1MB大小的缓冲区
+		this->bufferCap = 1 * 1024 * 1024;
 		this->bufferLen = 0;
 		this->buffer = new uint8_t[this->bufferCap];
 	}
@@ -39,6 +39,11 @@ public:
 
 	HRESULT SampleCB(double sampleTime, IMediaSample* sample) { return S_OK; };
 	HRESULT BufferCB(double sampleTime, BYTE* buffer, LONG bufferLen) {
+		// 视频帧是否有效
+		if (buffer == nullptr || bufferLen == 0) {
+			return S_OK;
+		}
+
 		// 加个锁先
 		std::unique_lock<std::mutex> lock(this->mtx);
 		// 检查缓冲区容量是否充足
@@ -51,9 +56,10 @@ public:
 		}
 
 		// 拷贝内容
-		this->updateAt = sampleTime;
 		this->bufferLen = bufferLen;
 		memcpy(this->buffer, buffer, bufferLen);
+		// 将缓冲区标记为已更新
+		this->bufferUpdated = true;
 
 		// OK
 		return S_OK;
@@ -85,14 +91,18 @@ public:
 			return StatusCode::STATUS_CODE_ERR_FRAME_EMPTY;
 		}
 
-		// 检查缓冲区是否为过期内容
-		std::cout << "updateAt: " << this->updateAt << std::endl;
+		// 看下缓冲区是否有更新
+		if (!this->bufferUpdated) {
+			return StatusCode::STATUS_CODE_ERR_FRAME_NOT_UPDATE;
+		}
 
 		// 缓冲区有内容，开辟指定大小的空间
 		*size = this->bufferLen;
 		*data = new uint8_t[this->bufferLen];
 		// 拷贝内容
 		memcpy(*data, this->buffer, this->bufferLen);
+		// 将缓冲区标记为未更新
+		this->bufferUpdated = false;
 
 		// OK
 		return StatusCode::STATUS_CODE_SUCCESS;

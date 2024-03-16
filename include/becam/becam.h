@@ -37,6 +37,7 @@ enum StatusCode {
 	STATUS_CODE_ERR_GRABBER_RENDER,			 // 连接采集器和渲染器失败
 	STATUS_CODE_ERR_DEVICE_NOT_OPEN,		 // 设备未打开
 	STATUS_CODE_ERR_FRAME_EMPTY,			 // 视频帧为空
+	STATUS_CODE_ERR_FRAME_NOT_UPDATE,		 // 视频帧未更新
 };
 
 // VideoFrameInfo 视频帧信息

@@ -66,16 +66,6 @@ private:
 	 */
 	StatusCode getMonikerStreamCaps(IMoniker* pMoniker, VideoFrameInfo** reply, size_t* replySize);
 
-	/**
-	 * @brief 筛选设备支持的流能力
-	 *
-	 * @param pMoniker [in] 设备实例
-	 * @param input [in] 视频帧信息
-	 * @param reply [out] 设备流能力资源实例（外部请使用reply->Release()释放资源）
-	 * @return 状态码
-	 */
-	StatusCode filterMonikerStreamCaps(IMoniker* pMoniker, const VideoFrameInfo* input, AM_MEDIA_TYPE** reply);
-
 public:
 	/**
 	 * @brief Construct a new Becam Direct Show object

@@ -328,58 +328,6 @@ StatusCode BecamDirectShow::getMonikerStreamCaps(IMoniker* pMoniker, VideoFrameI
 }
 
 /**
- * @brief 筛选设备支持的流能力
- *
- * @param pMoniker [in] 设备实例
- * @param input [in] 视频帧信息
- * @param reply [out] 设备流能力资源实例（外部请使用reply->Release()释放资源）
- * @return 状态码
- */
-StatusCode BecamDirectShow::filterMonikerStreamCaps(IMoniker* pMoniker, const VideoFrameInfo* input,
-													AM_MEDIA_TYPE** reply) {
-	// 检查参数
-	if (pMoniker == nullptr || input == nullptr) {
-		// 参数错误
-		return StatusCode::STATUS_CODE_ERR_INTERNAL_PARAM;
-	}
-
-	// 置零
-	*reply = nullptr;
-	// 执行流能力枚举
-	auto code = this->enumStreamCaps(pMoniker, [input, &reply](AM_MEDIA_TYPE* pmt) {
-		// 提取信息
-		VIDEOINFOHEADER* videoInfoHdr = (VIDEOINFOHEADER*)pmt->pbFormat;
-		auto width = videoInfoHdr->bmiHeader.biWidth;		 // 提取宽度
-		auto height = videoInfoHdr->bmiHeader.biHeight;		 // 提取高度
-		auto fps = 10000000 / videoInfoHdr->AvgTimePerFrame; // 提取帧率
-		auto format = videoInfoHdr->bmiHeader.biCompression; // 提取格式
-		// 信息是否一致
-		if (input->width == width && input->height == height && input->fps == fps && input->format == format) {
-			// 信息一致,保留并返回资源
-			*reply = new AM_MEDIA_TYPE(*pmt);
-			// 保留资源，终止枚举
-			return false;
-		}
-		// 继续查找下一个
-		return true;
-	});
-	// 检查结果
-	if (code != StatusCode::STATUS_CODE_SUCCESS) {
-		// 失败了
-		return code;
-	}
-
-	// 检查资源是否有枚举到
-	if (*reply == nullptr) {
-		// 没有匹配到流能力
-		return StatusCode::STATUS_CODE_ERR_NOMATCH_STREAM_CAPS;
-	}
-
-	// OK
-	return StatusCode::STATUS_CODE_SUCCESS;
-}
-
-/**
  * @brief 获取设备列表
  *
  * @param reply [out] 响应参数
