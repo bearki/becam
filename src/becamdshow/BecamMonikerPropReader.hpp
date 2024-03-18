@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef _BECAM_MONIKER_PROP_READER_H_
 #define _BECAM_MONIKER_PROP_READER_H_
 

@@ -1,3 +1,4 @@
+#pragma once
 
 #ifndef _BECAM_SAMPLE_GRABBER_CALLBACK_H_
 #define _BECAM_SAMPLE_GRABBER_CALLBACK_H_

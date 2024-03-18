@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef _BECAM_OPENED_DEVICE_H_
 #define _BECAM_OPENED_DEVICE_H_
 

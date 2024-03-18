@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef _BECAM_AM_MEDIA_TYPE_H_
 #define _BECAM_AM_MEDIA_TYPE_H_
 

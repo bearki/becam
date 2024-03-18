@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef _BECAM_DIRECT_SHOW_H_
 #define _BECAM_DIRECT_SHOW_H_
 

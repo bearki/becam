@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef _BECAM_STRING_CONVERT_H_
 #define _BECAM_STRING_CONVERT_H_
 
