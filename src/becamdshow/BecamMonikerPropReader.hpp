@@ -1,5 +1,5 @@
-#ifndef _BECAMDSHOW_MONIKER_PROP_READER_H_
-#define _BECAMDSHOW_MONIKER_PROP_READER_H_
+#ifndef _BECAM_MONIKER_PROP_READER_H_
+#define _BECAM_MONIKER_PROP_READER_H_
 
 #include <becam/becam.h>
 #include <strmif.h>
@@ -9,7 +9,7 @@
  * @brief 设备实例属性读取器
  *
  */
-class MonikerPropReader {
+class BecamMonikerPropReader {
 private:
 	// 属性名
 	LPCOLESTR propName = nullptr;
@@ -24,25 +24,12 @@ public:
 	 *
 	 * @param propName 属性名
 	 */
-	MonikerPropReader(LPCOLESTR propName) {
-		// 储存属性名
-		this->propName = propName;
-		// 初始化UTF16属性值变量空间
-		VariantInit(&this->friendNameUTF16);
-	};
+	BecamMonikerPropReader(LPCOLESTR propName);
 
 	/**
 	 * @brief 析构函数
 	 */
-	~MonikerPropReader() {
-		// 属性包是否需要释放
-		if (this->propBag != nullptr) {
-			this->propBag->Release();
-			this->propBag = nullptr;
-		}
-		// 释放UTF16属性值变量空间
-		VariantClear(&friendNameUTF16);
-	};
+	~BecamMonikerPropReader();
 
 	/**
 	 * @brief 读取属性

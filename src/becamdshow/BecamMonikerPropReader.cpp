@@ -1,4 +1,29 @@
-#include "MonikerPropReader.hpp"
+#include "BecamMonikerPropReader.hpp"
+
+/**
+ * @brief 构造函数
+ *
+ * @param propName 属性名
+ */
+BecamMonikerPropReader::BecamMonikerPropReader(LPCOLESTR propName) {
+	// 储存属性名
+	this->propName = propName;
+	// 初始化UTF16属性值变量空间
+	VariantInit(&this->friendNameUTF16);
+};
+
+/**
+ * @brief 析构函数
+ */
+BecamMonikerPropReader::~BecamMonikerPropReader() {
+	// 属性包是否需要释放
+	if (this->propBag != nullptr) {
+		this->propBag->Release();
+		this->propBag = nullptr;
+	}
+	// 释放UTF16属性值变量空间
+	VariantClear(&friendNameUTF16);
+};
 
 /**
  * @brief 读取属性
@@ -6,7 +31,7 @@
  * @return
  * 状态码和UTF16属性值引用（外部无需管理，脱离MonikerPropReader作用域会自动释放）
  */
-std::pair<StatusCode, VARIANT> MonikerPropReader::read(IMoniker* pMoniker) {
+std::pair<StatusCode, VARIANT> BecamMonikerPropReader::read(IMoniker* pMoniker) {
 	// 绑定属性包
 	auto res = pMoniker->BindToStorage(nullptr, nullptr, IID_IPropertyBag, (void**)&this->propBag);
 	if (FAILED(res)) {

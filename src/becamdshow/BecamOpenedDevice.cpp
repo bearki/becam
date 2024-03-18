@@ -1,89 +1,138 @@
 #include "BecamOpenedDevice.hpp"
 
+// 枚举针脚
+IPin* getPin(IBaseFilter* pFilter, PIN_DIRECTION dir) {
+	IEnumPins* enumPins;
+	if (FAILED(pFilter->EnumPins(&enumPins)))
+		return nullptr;
+
+	IPin* pin;
+	while (enumPins->Next(1, &pin, nullptr) == S_OK) {
+		PIN_DIRECTION d;
+		pin->QueryDirection(&d);
+		if (d == dir) {
+			enumPins->Release();
+			return pin;
+		}
+		pin->Release();
+	}
+	enumPins->Release();
+	return nullptr;
+}
+
+/**
+ * @brief 构造函数
+ *
+ * @param captureFilter 捕获筛选器
+ */
+BecamOpenedDevice::BecamOpenedDevice() {}
+
+/**
+ * @brief 析构函数
+ */
+BecamOpenedDevice::~BecamOpenedDevice() {
+	// // 释放媒体控制器
+	// if (this->pMediaControl != nullptr) {
+	// 	this->pMediaControl->StopWhenReady(); // 停止媒体捕获
+	// 	this->pMediaControl->Release();
+	// 	this->pMediaControl = nullptr;
+	// }
+	// // 将样品采集器从图像构建器中移除
+	// if (this->pSampleGrabber != nullptr && this->pGraphBuilder != nullptr) {
+	// 	this->pGraphBuilder->RemoveFilter(this->pSampleGrabber);
+	// }
+	// // 释放样品采集器
+	// if (this->pSampleGrabber != nullptr) {
+	// 	this->pSampleGrabber->Release();
+	// 	this->pSampleGrabber = nullptr;
+	// }
+	// // 将捕获筛选器从图像构建器移除
+	// if (this->captureFilter != nullptr && this->pGraphBuilder != nullptr) {
+	// 	this->pGraphBuilder->RemoveFilter(this->captureFilter);
+	// }
+	// // 释放捕获筛选器
+	// if (this->captureFilter != nullptr) {
+	// 	this->captureFilter->Release();
+	// 	this->captureFilter = nullptr;
+	// }
+	// // 释放图像构建器
+	// if (this->pGraphBuilder != nullptr) {
+	// 	this->pGraphBuilder->Release();
+	// 	this->pGraphBuilder = nullptr;
+	// }
+	// // 释放采集器回调实例
+	// if (this->sampleGrabberCallback != nullptr) {
+	// 	delete this->sampleGrabberCallback;
+	// 	this->sampleGrabberCallback = nullptr;
+	// }
+}
+
 /**
  * @brief 打开设备
  *
- * @param pCaptureOuputPin 捕获器输出端口
+ * @param captureFilter 捕获过滤器（相机）
+ * @param captureOuputPin 捕获筛选器输出端口
  * @return 状态码
  */
-StatusCode BecamOpenedDevice::Open(IPin* pCaptureOuputPin) {
-	// 检查捕获器是否已绑定
-	if (this->pCaptureFilter == nullptr) {
-		return StatusCode::STATUS_CODE_NOT_FOUND_DEVICE;
-	}
-
-	// ----------------------------- 画布基础容器构建 ----------------------------- //
+StatusCode BecamOpenedDevice::Open(IBaseFilter* captureFilter, IPin* captureOuputPin) {
+	// ----------------------------- 创建各个组件实例 ----------------------------- //
 
 	// 创建图像构建器（画布）
-	auto res = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder,
-								(void**)&this->pGraphBuilder);
+	auto res =
+		CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void**)&this->graphBuilder);
 	if (FAILED(res)) {
 		// 创建图像构建器失败
 		return StatusCode::STATUS_CODE_ERR_CREATE_GRAPH_BUILDER;
 	}
 
-	// 将捕获筛选器添加到图构建器（链接画布和相机）
-	res = this->pGraphBuilder->AddFilter(this->pCaptureFilter, L"Video Capture Filter");
-	if (FAILED(res)) {
-		// 添加捕获过滤器失败
-		return StatusCode::STATUS_CODE_ERR_ADD_CAPTURE_FILTER;
-	}
-
-	// ----------------------------- 采集格式配置 ----------------------------- //
-
-	// 创建样品采集器
+	// 创建视频帧抓取器（过滤器）
 	res = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter,
-						   (void**)&this->pSampleGrabber);
+						   (void**)&this->sampleGrabber);
 	if (FAILED(res)) {
-		// 创建样品采集器失败
+		// 创建视频帧抓取器失败
 		return StatusCode::STATUS_CODE_ERR_CREATE_SAMPLE_GRABBER;
 	}
 
-	// 获取样品采集器接口
-	res = this->pSampleGrabber->QueryInterface(IID_ISampleGrabber, (void**)&this->pSampleGrabberIntf);
-	if (FAILED(res)) {
-		// 获取样品采集器接口失败
-		return StatusCode::STATUS_CODE_ERR_GET_SAMPLE_GRABBER_INFC;
-	}
-
-	// 将样品采集器添加到图像构建器
-	res = this->pGraphBuilder->AddFilter(this->pSampleGrabber, L"Sample Grabber");
-	if (FAILED(res)) {
-		// 添加样品采集器失败
-		return StatusCode::STATUS_CODE_ERR_ADD_SAMPLE_GRABBER;
-	}
-
-	// --------------------------- 控制、输入、输出--------------------------- //
-
-	// 创建媒体控制（开关）
-	res = pGraphBuilder->QueryInterface(IID_IMediaControl, (void**)&this->pMediaControl);
-	if (FAILED(res)) {
-		// 创建媒体控制器失败
-		return StatusCode::STATUS_CODE_ERR_CREATE_MEDIA_CONTROL;
-	}
-
-	// 创建空渲染器
+	// 创建空渲染器（输出）
 	res = CoCreateInstance(CLSID_NullRenderer, nullptr, CLSCTX_INPROC, IID_IBaseFilter, (void**)&this->nullRender);
 	if (FAILED(res)) {
 		// 创建空渲染器失败
 		return StatusCode::STATUS_CODE_ERR_CREATE_NULL_RENDER;
 	}
 
+	// ------------------------------ 关联各组件实例 ----------------------------- //
+
+	// 将相机捕获器添加到图像构建器
+	res = this->graphBuilder->AddFilter(captureFilter, L"Video Capture Filter");
+	if (FAILED(res)) {
+		// 添加捕获过滤器失败
+		return StatusCode::STATUS_CODE_ERR_ADD_CAPTURE_FILTER;
+	}
+
+	// 将视频帧抓取器（过滤器）添加到图像构建器
+	res = this->graphBuilder->AddFilter(this->sampleGrabber, L"Sample Grabber");
+	if (FAILED(res)) {
+		// 添加样品采集器失败
+		return StatusCode::STATUS_CODE_ERR_ADD_SAMPLE_GRABBER;
+	}
+
 	// 将空渲染器添加到图像构建器
-	res = this->pGraphBuilder->AddFilter(this->nullRender, L"bull");
+	res = this->graphBuilder->AddFilter(this->nullRender, L"bull");
 	if (FAILED(res)) {
 		// 创建空渲染器失败
 		return StatusCode::STATUS_CODE_ERR_ADD_NULL_RENDER;
 	}
 
+	// ----------------------- 连接各实例的输入、输出端点 ----------------------- //
+
 	// 采集器输入端口
-	auto dst = this->getPin(this->pSampleGrabber, PINDIR_INPUT);
+	auto dst = getPin(this->sampleGrabber, PINDIR_INPUT);
 	if (dst == nullptr) {
 		// 连接失败
 		return StatusCode::STATUS_CODE_ERR_CAPTURE_GRABBER;
 	}
 	// 连接捕获器输出和采集器输入
-	res = this->pGraphBuilder->Connect(pCaptureOuputPin, dst);
+	res = this->graphBuilder->Connect(captureOuputPin, dst);
 	/// 释放引用
 	dst->Release();
 	dst = nullptr;
@@ -94,7 +143,7 @@ StatusCode BecamOpenedDevice::Open(IPin* pCaptureOuputPin) {
 	}
 
 	// 采集器输出
-	auto grabber = getPin(this->pSampleGrabber, PINDIR_OUTPUT);
+	auto grabber = getPin(this->sampleGrabber, PINDIR_OUTPUT);
 	if (FAILED(res)) {
 		// 连接失败
 		return StatusCode::STATUS_CODE_ERR_GRABBER_RENDER;
@@ -109,7 +158,7 @@ StatusCode BecamOpenedDevice::Open(IPin* pCaptureOuputPin) {
 		return StatusCode::STATUS_CODE_ERR_GRABBER_RENDER;
 	}
 	// 连接采集和渲染STATUS_CODE_ERR_GRABBER_RENDER
-	res = this->pGraphBuilder->Connect(grabber, render);
+	res = this->graphBuilder->Connect(grabber, render);
 	// 释放引用
 	grabber->Release();
 	grabber = nullptr;
@@ -124,20 +173,31 @@ StatusCode BecamOpenedDevice::Open(IPin* pCaptureOuputPin) {
 	// 一堆东西都可以释放掉了
 	this->nullRender->Release();
 	this->nullRender = nullptr;
-	this->pCaptureFilter->Release();
-	this->pCaptureFilter = nullptr;
-	this->pSampleGrabber->Release();
-	this->pSampleGrabber = nullptr;
-	this->pGraphBuilder->Release();
-	this->pGraphBuilder = nullptr;
+	this->sampleGrabber->Release();
+	this->sampleGrabber = nullptr;
+	this->graphBuilder->Release();
+	this->graphBuilder = nullptr;
+
+	// 获取视频帧抓取器接口
+	res = this->sampleGrabber->QueryInterface(IID_ISampleGrabber, (void**)&this->sampleGrabberIntf);
+	if (FAILED(res)) {
+		// 获取视频帧抓取器接口失败
+		return StatusCode::STATUS_CODE_ERR_GET_SAMPLE_GRABBER_INFC;
+	}
+	// 创建媒体控制（开关）
+	res = graphBuilder->QueryInterface(IID_IMediaControl, (void**)&this->mediaControl);
+	if (FAILED(res)) {
+		// 创建媒体控制器失败
+		return StatusCode::STATUS_CODE_ERR_CREATE_MEDIA_CONTROL;
+	}
 
 	// 配置回调，然后就结束了
-	this->sampleGrabberCallback = new SampleGrabberCallback();
-	this->pSampleGrabberIntf->SetCallback(this->sampleGrabberCallback, 1);
+	this->sampleGrabberCallback = new BecamSampleGrabberCallback();
+	this->sampleGrabberIntf->SetCallback(this->sampleGrabberCallback, 1);
 
 	// 开始消耗帧
-	this->pSampleGrabberIntf->SetBufferSamples(true);
-	this->pMediaControl->Run();
+	this->sampleGrabberIntf->SetBufferSamples(true);
+	this->mediaControl->Run();
 
 	// OK
 	return StatusCode::STATUS_CODE_SUCCESS;

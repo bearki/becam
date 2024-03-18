@@ -1,5 +1,5 @@
-#ifndef _BECAMDSHOW_STRING_CONVERT_H_
-#define _BECAMDSHOW_STRING_CONVERT_H_
+#ifndef _BECAM_STRING_CONVERT_H_
+#define _BECAM_STRING_CONVERT_H_
 
 #include <string>
 #include <stringapiset.h>

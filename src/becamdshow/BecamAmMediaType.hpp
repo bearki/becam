@@ -1,5 +1,5 @@
-#ifndef _DSHOW_AM_MEDIA_TYPE_H_
-#define _DSHOW_AM_MEDIA_TYPE_H_
+#ifndef _BECAM_AM_MEDIA_TYPE_H_
+#define _BECAM_AM_MEDIA_TYPE_H_
 
 #include <strmif.h>
 
