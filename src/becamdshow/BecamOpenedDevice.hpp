@@ -17,6 +17,10 @@ EXTERN_C const CLSID CLSID_NullRenderer;
  */
 class BecamOpenedDevice {
 private:
+	// 当前使用的帧率
+	uint32_t fps = 0;
+	// 捕获筛选器（相机）
+	IBaseFilter* captureFilter = nullptr;
 	// 图像构建器（画布）
 	IGraphBuilder* graphBuilder = nullptr;
 	// 视频帧抓取器（处理）
@@ -33,8 +37,11 @@ private:
 public:
 	/**
 	 * @brief 构造函数
+	 *
+	 * @param captureFilter 捕获筛选器（相机）
+	 * @param frameInfo 视频帧信息
 	 */
-	BecamOpenedDevice();
+	BecamOpenedDevice(IBaseFilter* captureFilter, const VideoFrameInfo frameInfo);
 
 	/**
 	 * @brief 析构函数
@@ -44,11 +51,10 @@ public:
 	/**
 	 * @brief 打开设备
 	 *
-	 * @param captureFilter 捕获过滤器（相机）
 	 * @param captureOuputPin 捕获筛选器输出端口
 	 * @return 状态码
 	 */
-	StatusCode Open(IBaseFilter* captureFilter, IPin* captureOuputPin);
+	StatusCode Open(IPin* captureOuputPin);
 
 	/**
 	 * @brief 获取视频帧

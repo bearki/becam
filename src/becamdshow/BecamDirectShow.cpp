@@ -22,15 +22,18 @@ BecamDirectShow::BecamDirectShow() {
  * @brief 析构函数
  */
 BecamDirectShow::~BecamDirectShow() {
-	// 释放COM库
-	if (this->comInited) {
-		CoUninitialize();
-		this->comInited = false;
-	}
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
 	// 释放已打开的设备
 	if (this->openedDevice != nullptr) {
 		delete this->openedDevice;
 		this->openedDevice = nullptr;
+	}
+	// 释放COM库
+	if (this->comInited) {
+		CoUninitialize();
+		this->comInited = false;
 	}
 }
 
@@ -516,6 +519,9 @@ StatusCode BecamDirectShow::setCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
  * @return 状态码
  */
 StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
 	// 检查入参
 	if (reply == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
@@ -657,6 +663,9 @@ void BecamDirectShow::FreeDeviceList(GetDeviceListReply* input) {
  * @return 状态码
  */
 StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const VideoFrameInfo* frameInfo) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
 	// 检查入参
 	if (devicePath.empty() || frameInfo == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
@@ -715,15 +724,13 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 	}
 
 	// 尝试打开设备
-	this->openedDevice = new BecamOpenedDevice();
-	code = this->openedDevice->Open(captureFilter, captureOuputPin);
+	// captureFilter将被BecamOpenedDevice接管，外部无需释放
+	this->openedDevice = new BecamOpenedDevice(captureFilter, *frameInfo);
+	code = this->openedDevice->Open(captureOuputPin);
 
 	// 释放捕获筛选器的输出端口
 	captureOuputPin->Release();
 	captureOuputPin = nullptr;
-	// 释放捕获筛选器
-	captureFilter->Release();
-	captureFilter = nullptr;
 
 	// 是否打开成功
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
@@ -740,6 +747,9 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
  * @brief 关闭设备
  */
 void BecamDirectShow::CloseDevice() {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
 	// 检查设备是否已经打开了
 	if (this->openedDevice == nullptr) {
 		return;
@@ -758,6 +768,9 @@ void BecamDirectShow::CloseDevice() {
  * @return 状态码
  */
 StatusCode BecamDirectShow::GetFrame(uint8_t** data, size_t* size) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
 	// 检查入参
 	if (data == nullptr || size == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
@@ -778,6 +791,9 @@ StatusCode BecamDirectShow::GetFrame(uint8_t** data, size_t* size) {
  * @param data 视频帧流
  */
 void BecamDirectShow::FreeFrame(uint8_t** data) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
 	// 检查入参
 	if (data == nullptr || *data == nullptr) {
 		return;

@@ -13,19 +13,12 @@
  */
 class BecamDirectShow {
 private:
+	// 声明互斥锁
+	std::mutex mtx;
 	// COM库是否初始化成功
 	bool comInited = false;
 	// 已打开设备实例
 	BecamOpenedDevice* openedDevice = nullptr;
-
-	/**
-	 * @brief 获取捕获筛选器的输出端口
-	 *
-	 * @param captureFilter [in] 捕获筛选器实例
-	 * @param dir [in] 输出方向
-	 * @return 捕获筛选器的输出端口
-	 */
-	static IPin* getPin(IBaseFilter* captureFilter, PIN_DIRECTION dir);
 
 	/**
 	 * @brief 枚举设备列表
@@ -117,6 +110,15 @@ public:
 	 * @brief 析构函数
 	 */
 	~BecamDirectShow();
+
+	/**
+	 * @brief 获取捕获筛选器的输出端口
+	 *
+	 * @param captureFilter [in] 捕获筛选器实例
+	 * @param dir [in] 输出方向
+	 * @return 捕获筛选器的输出端口
+	 */
+	static IPin* getPin(IBaseFilter* captureFilter, PIN_DIRECTION dir);
 
 	/**
 	 * @brief 获取设备列表

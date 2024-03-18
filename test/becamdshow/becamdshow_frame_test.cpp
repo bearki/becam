@@ -76,14 +76,12 @@ int main() {
 
 	// 来个死循环
 	while (true) {
-		// 按帧率睡眠
-		Sleep(DWORD(1000 / frameInfo.fps));
 		// 获取一帧
 		uint8_t* data = nullptr;
 		size_t size = 0;
 		res = BecamGetFrame(handle, &data, &size);
 		if (res != StatusCode::STATUS_CODE_SUCCESS) {
-			std::cout << "Frame empty. 000000000000000000000000000000000000000000000000000" << std::endl;
+			std::cout << "Frame empty. 000000000000000000000000000000000000000000000000000, Code:" << res << std::endl;
 			continue;
 		} else {
 			std::cout << "OK, Write Size: " << size << std::endl;
@@ -105,7 +103,6 @@ int main() {
 		} else {
 			std::cerr << "Unable to open file for writing." << std::endl;
 		}
-
 		// 释放帧
 		BecamFreeFrame(handle, &data);
 	}
