@@ -48,9 +48,9 @@ public:
 		return E_NOINTERFACE;
 	}
 	// 采集样品回调
-	inline HRESULT SampleCB(double sampleTime, IMediaSample* sample) { return S_OK; };
+	STDMETHODIMP SampleCB(double sampleTime, IMediaSample* sample) override;
 	// 采集缓冲区回调
-	HRESULT BufferCB(double sampleTime, BYTE* buffer, LONG bufferLen);
+	STDMETHODIMP BufferCB(double sampleTime, BYTE* buffer, LONG bufferLen) override;
 
 	/**
 	 * @brief 获取视频帧

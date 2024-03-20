@@ -1,8 +1,3 @@
-# 配置相关源文件
-# set(SOURCES becamdshow_test.cpp)
-# 配置制品输出目录
-set(INSTALL_PATH libbecamdshow_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR})
-
 # 编译为可执行文件
 add_executable(becamdshow_init_test becamdshow_init_test.cpp)
 add_executable(becamdshow_get_list_test becamdshow_get_list_test.cpp)
@@ -17,6 +12,7 @@ target_link_libraries(becamdshow_open_test becamdshow)
 target_link_libraries(becamdshow_frame_test becamdshow)
 
 # 指定make install后静态库，动态库，可执行文件存放目录
+set(INSTALL_PATH libbecamdshow_${BUILD_OS}_${BUILD_ARCH})
 # ARCHIVE-静态库，LIBRATY-动态库，RUNTIME-可执行二进制文件
 install(TARGETS becamdshow_init_test RUNTIME DESTINATION ${INSTALL_PATH}/bin)
 install(TARGETS becamdshow_get_list_test RUNTIME DESTINATION ${INSTALL_PATH}/bin)

@@ -26,10 +26,13 @@ BecamSampleGrabberCallback::~BecamSampleGrabberCallback() {
 	this->bufferUpdated = false;
 }
 
+// 采集样品回调
+STDMETHODIMP BecamSampleGrabberCallback::SampleCB(double sampleTime, IMediaSample* sample) { return S_OK; };
+
 /**
  * @brief 采集器缓冲区回调
  */
-HRESULT BecamSampleGrabberCallback::BufferCB(double sampleTime, BYTE* buffer, LONG bufferLen) {
+STDMETHODIMP BecamSampleGrabberCallback::BufferCB(double sampleTime, BYTE* buffer, LONG bufferLen) {
 	// 视频帧是否有效
 	if (buffer == nullptr || bufferLen == 0) {
 		return S_OK;

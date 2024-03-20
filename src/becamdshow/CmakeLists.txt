@@ -5,7 +5,7 @@ set(SOURCES becam.cpp
             BecamOpenedDevice.cpp
             BecamSampleGrabberCallback.cpp)
 # 配置制品输出目录
-set(INSTALL_PATH libbecamdshow_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR})
+
 
 # 配置链接库
 link_libraries(strmiids)
@@ -13,8 +13,10 @@ link_libraries(strmiids)
 # # 配置静态库生成参数
 add_library(becamdshow STATIC ${SOURCES})
 
-# 指定make install后头文件存放目录
+
+# 指定make install后头文件、静态库，动态库，可执行文件存放目录
+set(INSTALL_PATH libbecamdshow_${BUILD_OS}_${BUILD_ARCH})
+# 头文件
 install(FILES ${CMAKE_SOURCE_DIR}/include/becam/becam.h DESTINATION ${INSTALL_PATH}/include)
-# 指定make install后静态库，动态库，可执行文件存放目录
 # ARCHIVE-静态库，LIBRATY-动态库，RUNTIME-可执行二进制文件
 install(TARGETS becamdshow ARCHIVE DESTINATION ${INSTALL_PATH}/lib)
