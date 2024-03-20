@@ -11,7 +11,7 @@
 typedef void* BecamHandle;
 
 // StatusCode 状态码定义
-enum StatusCode {
+typedef enum {
 	STATUS_CODE_SUCCESS,					 // 成功
 	STATUS_CODE_NOT_FOUND_DEVICE,			 // 未找到设备
 	STATUS_CODE_ERR_HANDLE_EMPTY,			 // Becam接口句柄未初始化
@@ -38,30 +38,30 @@ enum StatusCode {
 	STATUS_CODE_ERR_DEVICE_NOT_OPEN,		 // 设备未打开
 	STATUS_CODE_ERR_FRAME_EMPTY,			 // 视频帧为空
 	STATUS_CODE_ERR_FRAME_NOT_UPDATE,		 // 视频帧未更新
-};
+} StatusCode;
 
 // VideoFrameInfo 视频帧信息
-struct VideoFrameInfo {
-	int32_t format; // 格式
-	int32_t width;	// 分辨率宽度
-	int32_t height; // 分辨率高度
-	int32_t fps;	// 分辨率帧率
-};
+typedef struct {
+	uint32_t format; // 格式
+	uint32_t width;	 // 分辨率宽度
+	uint32_t height; // 分辨率高度
+	uint32_t fps;	 // 分辨率帧率
+} VideoFrameInfo;
 
 // DeviceInfo 设备信息
-struct DeviceInfo {
+typedef struct {
 	char* name;					   // 设备友好名称
 	char* devicePath;			   // 设备路径
 	char* locationInfo;			   // 设备位置信息
 	size_t frameInfoListSize;	   // 支持的视频帧数量
 	VideoFrameInfo* frameInfoList; // 支持的视频帧列表
-};
+} DeviceInfo;
 
 // GetDeviceListReply 获取设备列表响应参数
-struct GetDeviceListReply {
+typedef struct {
 	size_t deviceInfoListSize;	// 设备数量
 	DeviceInfo* deviceInfoList; // 设备信息列表
-};
+} GetDeviceListReply;
 
 #ifdef __cplusplus
 extern "C" {
