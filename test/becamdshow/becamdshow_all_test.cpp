@@ -67,48 +67,45 @@ int main() {
 		std::cout << "Selected frame info: " << frameInfo.width << "x" << frameInfo.height << ", " << frameInfo.fps
 				  << ", " << frameInfo.format << std::endl;
 
-		// 循环5次打开相机
-		for (size_t i = 0; i < 1; i++) {
-			// 打开设备
-			res = BecamOpenDevice(handle, devicePath.c_str(), &frameInfo);
+		// 打开设备
+		res = BecamOpenDevice(handle, devicePath.c_str(), &frameInfo);
+		if (res != StatusCode::STATUS_CODE_SUCCESS) {
+			std::cerr << "Failed to open device. errno: " << res << std::endl;
+			return 1;
+		}
+
+		// 循环100次取流
+		for (size_t j = 0; j < 100; j++) {
+			// 获取一帧
+			uint8_t* data = nullptr;
+			size_t size = 0;
+			res = BecamGetFrame(handle, &data, &size);
 			if (res != StatusCode::STATUS_CODE_SUCCESS) {
-				std::cerr << "Failed to open device. errno: " << res << std::endl;
-				return 1;
+				std::cout << "Frame empty. 000000000000000000000000000000000000000000000000000, Code:" << res
+						  << std::endl;
+				continue;
+			} else {
+				std::cout << "OK, Write Size: " << size << std::endl;
 			}
 
-			// 循环100次取流
-			for (size_t j = 0; j < 100; j++) {
-				// 获取一帧
-				uint8_t* data = nullptr;
-				size_t size = 0;
-				res = BecamGetFrame(handle, &data, &size);
-				if (res != StatusCode::STATUS_CODE_SUCCESS) {
-					std::cout << "Frame empty. 000000000000000000000000000000000000000000000000000, Code:" << res
-							  << std::endl;
-					continue;
-				} else {
-					std::cout << "OK, Write Size: " << size << std::endl;
+			// 数据写入到文件
+			// 打开或创建一个文件以二进制模式写入
+			std::ofstream ofs("output.jpg", std::ios::binary | std::ios::out);
+			// 检查文件是否成功打开
+			if (ofs.is_open()) {
+				// 将字节数组写入文件
+				ofs.write((char*)data, static_cast<std::streamsize>(size));
+				// 检查是否所有数据都已成功写入
+				if (!ofs) {
+					std::cerr << "Error writing to file!" << std::endl;
 				}
-
-				// 数据写入到文件
-				// 打开或创建一个文件以二进制模式写入
-				std::ofstream ofs("output.jpg", std::ios::binary | std::ios::out);
-				// 检查文件是否成功打开
-				if (ofs.is_open()) {
-					// 将字节数组写入文件
-					ofs.write((char*)data, static_cast<std::streamsize>(size));
-					// 检查是否所有数据都已成功写入
-					if (!ofs) {
-						std::cerr << "Error writing to file!" << std::endl;
-					}
-					// 关闭文件流
-					ofs.close();
-				} else {
-					std::cerr << "Unable to open file for writing." << std::endl;
-				}
-				// 释放帧
-				BecamFreeFrame(handle, &data);
+				// 关闭文件流
+				ofs.close();
+			} else {
+				std::cerr << "Unable to open file for writing." << std::endl;
 			}
+			// 释放帧
+			BecamFreeFrame(handle, &data);
 
 			// 关闭设备
 			BecamCloseDevice(handle);

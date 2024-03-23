@@ -46,8 +46,11 @@ BecamDirectShow::~BecamDirectShow() {
  */
 IPin* BecamDirectShow::getPin(IBaseFilter* captureFilter, PIN_DIRECTION dir) {
 	IEnumPins* enumPins;
-	if (FAILED(captureFilter->EnumPins(&enumPins)))
+	auto res = captureFilter->EnumPins(&enumPins);
+	if (FAILED(res)) {
+		std::cerr << "getPin->EnumPins failed, HRESULT: " << res << std::endl;
 		return nullptr;
+	}
 
 	IPin* captureOuputPin;
 	while (enumPins->Next(1, &captureOuputPin, nullptr) == S_OK) {
@@ -88,6 +91,7 @@ StatusCode BecamDirectShow::enumDevices(std::function<bool(IMoniker*)> callback)
 		CoCreateInstance(CLSID_SystemDeviceEnum, nullptr, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void**)&pDevEnum);
 	if (FAILED(res)) {
 		// 创建设备枚举器失败
+		std::cerr << "enumDevices->CoCreateInstance(CLSID_SystemDeviceEnum) failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_CREATE_ENUMERATOR;
 	}
 
@@ -106,6 +110,8 @@ StatusCode BecamDirectShow::enumDevices(std::function<bool(IMoniker*)> callback)
 			return StatusCode::STATUS_CODE_NOT_FOUND_DEVICE;
 		}
 		// 设备枚举失败
+		std::cerr << "enumDevices->CreateClassEnumerator(CLSID_VideoInputDeviceCategory) failed, HRESULT: " << res
+				  << std::endl;
 		return StatusCode::STATUS_CODE_ERR_DEVICE_ENUM;
 	}
 
@@ -156,6 +162,7 @@ StatusCode BecamDirectShow::getMonikerFriendlyName(IMoniker* moniker, std::strin
 	auto res = reader.read(moniker);
 	if (res.first != StatusCode::STATUS_CODE_SUCCESS) {
 		// 失败
+		std::cerr << "getMonikerFriendlyName->read failed, CODE: " << res.first << std::endl;
 		return res.first;
 	}
 
@@ -186,6 +193,7 @@ StatusCode BecamDirectShow::getMonikerDevicePath(IMoniker* moniker, std::string&
 	auto res = reader.read(moniker);
 	if (res.first != StatusCode::STATUS_CODE_SUCCESS) {
 		// 失败
+		std::cerr << "getMonikerDevicePath->read failed, CODE: " << res.first << std::endl;
 		return res.first;
 	}
 
@@ -232,9 +240,11 @@ StatusCode BecamDirectShow::getDevice(const std::string devicePath, IMoniker*& m
 
 	// 是否异常
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		std::cerr << "getDevice->enumDevices failed, CODE: " << code << std::endl;
 		return code;
 	}
 	if (errCode != StatusCode::STATUS_CODE_SUCCESS) {
+		std::cerr << "getDevice->enumDevices callback failed, CODE: " << errCode << std::endl;
 		return errCode;
 	}
 
@@ -263,6 +273,7 @@ StatusCode BecamDirectShow::getDeviceStreamCaps(IAMStreamConfig* streamConfig,
 	auto res = streamConfig->GetNumberOfCapabilities(&count, &size);
 	if (FAILED(res)) {
 		// 获取流能力总数量失败
+		std::cerr << "getDeviceStreamCaps->GetNumberOfCapabilities failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 
@@ -274,6 +285,7 @@ StatusCode BecamDirectShow::getDeviceStreamCaps(IAMStreamConfig* streamConfig,
 		res = streamConfig->GetStreamCaps(i, &pmt, reinterpret_cast<BYTE*>(&scc));
 		if (FAILED(res)) {
 			// 分析失败，继续下一个
+			std::cerr << "getDeviceStreamCaps->GetStreamCaps failed, HRESULT: " << res << std::endl;
 			continue;
 		}
 
@@ -322,6 +334,7 @@ StatusCode BecamDirectShow::getDeviceStreamCaps(IPin* captureOuputPin, std::func
 	auto res = captureOuputPin->QueryInterface(IID_IAMStreamConfig, (void**)&streamConfig);
 	if (FAILED(res)) {
 		// 获取流配置失败
+		std::cerr << "getDeviceStreamCaps->QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 
@@ -355,6 +368,7 @@ StatusCode BecamDirectShow::getDeviceStreamCaps(IBaseFilter* captureFilter,
 	auto captureOuputPin = this->getPin(captureFilter, PINDIR_OUTPUT);
 	if (captureOuputPin == nullptr) {
 		// 获取捕获筛选器的输出端点失败
+		std::cerr << "getDeviceStreamCaps->getPin failed" << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 
@@ -391,6 +405,7 @@ StatusCode BecamDirectShow::getDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	// 检查是否绑定成功
 	if (FAILED(res)) {
 		// 绑定设备实例失败
+		std::cerr << "getDeviceStreamCaps->BindToObject failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_SELECTED_DEVICE;
 	}
 
@@ -423,6 +438,7 @@ StatusCode BecamDirectShow::getDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	// 是否失败了
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
 		// 失败了
+		std::cerr << "getDeviceStreamCaps->getDeviceStreamCaps failed, CODE: " << code << std::endl;
 		return code;
 	}
 
@@ -457,6 +473,8 @@ StatusCode BecamDirectShow::setCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 	auto res = captureOuputPin->QueryInterface(IID_IAMStreamConfig, (void**)&streamConfig);
 	if (FAILED(res)) {
 		// 获取流配置失败
+		std::cerr << "setCaptureOuputPinStreamCaps->QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res
+				  << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 
@@ -486,6 +504,7 @@ StatusCode BecamDirectShow::setCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 				errCode = StatusCode::STATUS_CODE_SUCCESS;
 			} else {
 				// 设定失败
+				std::cerr << "setCaptureOuputPinStreamCaps->SetFormat failed, HRESULT: " << res << std::endl;
 				errCode = StatusCode::STATUS_CODE_ERR_SET_MEDIA_TYPE;
 			}
 			// 不管是否成功都要结束枚举
@@ -502,9 +521,12 @@ StatusCode BecamDirectShow::setCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 
 	// 检查结果
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		std::cerr << "setCaptureOuputPinStreamCaps->getDeviceStreamCaps failed, CODE: " << code << std::endl;
 		return code;
 	}
 	if (errCode != StatusCode::STATUS_CODE_SUCCESS) {
+		std::cerr << "setCaptureOuputPinStreamCaps->getDeviceStreamCaps callback failed, CODE: " << errCode
+				  << std::endl;
 		return errCode;
 	}
 
@@ -593,6 +615,7 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 
 	// 是否枚举失败
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		std::cerr << "GetDeviceList->enumDevices failed, CODE: " << code << std::endl;
 		return code;
 	}
 
@@ -679,6 +702,7 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 	// 筛选设备
 	auto code = this->getDevice(devicePath, moniker);
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		std::cerr << "OpenDevice->getDevice failed, CODE: " << code << std::endl;
 		return code;
 	}
 
@@ -691,6 +715,7 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 	// 检查是否绑定成功
 	if (FAILED(res)) {
 		// 绑定设备实例失败
+		std::cerr << "OpenDevice->BindToObject failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_SELECTED_DEVICE;
 	}
 
@@ -701,6 +726,7 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 		captureFilter->Release();
 		captureFilter = nullptr;
 		// 获取PIN接口失败
+		std::cerr << "OpenDevice->getPin failed" << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 
@@ -714,6 +740,7 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 		captureFilter->Release();
 		captureFilter = nullptr;
 		// 配置设备流能力失败
+		std::cerr << "OpenDevice->setCaptureOuputPinStreamCaps failed, CODE: " << code << std::endl;
 		return code;
 	}
 
@@ -737,6 +764,7 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 		// 打开失败，关闭实例
 		delete this->openedDevice;
 		this->openedDevice = nullptr;
+		std::cerr << "OpenDevice->Open failed, CODE: " << code << std::endl;
 	}
 
 	// 返回结果
