@@ -17,8 +17,6 @@ class BecamDirectShow {
 private:
 	// 声明互斥锁
 	std::mutex mtx;
-	// COM库是否初始化成功
-	bool comInited = false;
 	// 已打开设备实例
 	BecamOpenedDevice* openedDevice = nullptr;
 

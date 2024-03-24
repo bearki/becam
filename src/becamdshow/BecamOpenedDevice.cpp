@@ -63,6 +63,8 @@ BecamOpenedDevice::~BecamOpenedDevice() {
 		this->captureFilter->Release();
 		this->captureFilter = nullptr;
 	}
+	// 释放COM库
+	CoUninitialize();
 }
 
 /**
@@ -220,8 +222,8 @@ StatusCode BecamOpenedDevice::GetFrame(uint8_t** data, size_t* size) {
 		auto code = StatusCode::STATUS_CODE_SUCCESS;
 		// 根据帧率计算最大尝试次数
 		int32_t maxTry = 1000 / this->fps;
-		// 尝试最大等待两帧耗时
-		for (size_t i = 0; i < maxTry * 2; i++) {
+		// 尝试最大等待5帧耗时
+		for (size_t i = 0; i < maxTry * 5; i++) {
 			// 获取帧
 			code = this->sampleGrabberCallback->GetFrame(data, size);
 			if (code == StatusCode::STATUS_CODE_SUCCESS) {

@@ -8,15 +8,7 @@
 /**
  * @brief 构造函数
  */
-BecamDirectShow::BecamDirectShow() {
-	// 初始化COM库
-	auto res = CoInitialize(nullptr);
-	if (SUCCEEDED(res)) {
-		this->comInited = true;
-	} else {
-		this->comInited = false;
-	}
-}
+BecamDirectShow::BecamDirectShow() {}
 
 /**
  * @brief 析构函数
@@ -29,11 +21,6 @@ BecamDirectShow::~BecamDirectShow() {
 	if (this->openedDevice != nullptr) {
 		delete this->openedDevice;
 		this->openedDevice = nullptr;
-	}
-	// 释放COM库
-	if (this->comInited) {
-		CoUninitialize();
-		this->comInited = false;
 	}
 }
 
@@ -73,12 +60,6 @@ IPin* BecamDirectShow::getPin(IBaseFilter* captureFilter, PIN_DIRECTION dir) {
  * @return 状态码
  */
 StatusCode BecamDirectShow::enumDevices(std::function<bool(IMoniker*)> callback) {
-	// 检查COM库是否初始化成功
-	if (!this->comInited) {
-		// COM库初始化失败了
-		return StatusCode::STATUS_CODE_ERR_INIT_COM;
-	}
-
 	// 检查回调是否有效
 	if (callback == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_INTERNAL_PARAM;
@@ -549,6 +530,13 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
 
+	// 检查COM库是否初始化成功
+	auto res = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	if (FAILED(res)) {
+		// COM库初始化失败了
+		return StatusCode::STATUS_CODE_ERR_INIT_COM;
+	}
+
 	// 设备数量置空
 	reply->deviceInfoListSize = 0;
 	reply->deviceInfoList = nullptr;
@@ -612,6 +600,9 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 		// 继续枚举
 		return true;
 	});
+
+	// 释放COM库
+	CoUninitialize();
 
 	// 是否枚举失败
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
@@ -697,11 +688,20 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
 
+	// 检查COM库是否初始化成功
+	auto res = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	if (FAILED(res)) {
+		// COM库初始化失败了
+		return StatusCode::STATUS_CODE_ERR_INIT_COM;
+	}
+
 	// 声明设备实例
 	IMoniker* moniker;
 	// 筛选设备
 	auto code = this->getDevice(devicePath, moniker);
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		// 释放COM库
+		CoUninitialize();
 		std::cerr << "OpenDevice->getDevice failed, CODE: " << code << std::endl;
 		return code;
 	}
@@ -709,11 +709,13 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 	// 声明捕获筛选器实例
 	IBaseFilter* captureFilter = nullptr;
 	// 绑定到捕获筛选器实例
-	auto res = moniker->BindToObject(NULL, NULL, IID_IBaseFilter, (void**)&captureFilter);
+	res = moniker->BindToObject(NULL, NULL, IID_IBaseFilter, (void**)&captureFilter);
 	// 释放设备实例
 	moniker->Release();
 	// 检查是否绑定成功
 	if (FAILED(res)) {
+		// 释放COM库
+		CoUninitialize();
 		// 绑定设备实例失败
 		std::cerr << "OpenDevice->BindToObject failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_SELECTED_DEVICE;
@@ -725,6 +727,8 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 		// 释放捕获筛选器实例
 		captureFilter->Release();
 		captureFilter = nullptr;
+		// 释放COM库
+		CoUninitialize();
 		// 获取PIN接口失败
 		std::cerr << "OpenDevice->getPin failed" << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
@@ -739,6 +743,8 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 		// 释放捕获筛选器实例
 		captureFilter->Release();
 		captureFilter = nullptr;
+		// 释放COM库
+		CoUninitialize();
 		// 配置设备流能力失败
 		std::cerr << "OpenDevice->setCaptureOuputPinStreamCaps failed, CODE: " << code << std::endl;
 		return code;
@@ -764,6 +770,8 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 		// 打开失败，关闭实例
 		delete this->openedDevice;
 		this->openedDevice = nullptr;
+		// 释放COM库
+		CoUninitialize();
 		std::cerr << "OpenDevice->Open failed, CODE: " << code << std::endl;
 	}
 
