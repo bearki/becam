@@ -1,6 +1,7 @@
 # 配置相关源文件
 set(SOURCES becam.cpp 
             BecamDirectShow.cpp 
+            BecamEnumDevice.cpp
             BecamMonikerPropReader.cpp 
             BecamOpenedDevice.cpp
             BecamSampleGrabberCallback.cpp)

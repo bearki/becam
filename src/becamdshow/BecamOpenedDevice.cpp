@@ -1,14 +1,20 @@
 #include "BecamOpenedDevice.hpp"
 #include "BecamDirectShow.hpp"
+#include "BecamEnumDevice.hpp"
 
 /**
  * @brief 构造函数
- *
- * @param captureFilter 捕获筛选器
  */
-BecamOpenedDevice::BecamOpenedDevice(IBaseFilter* captureFilter, const VideoFrameInfo frameInfo) {
-	this->captureFilter = captureFilter;
-	this->fps = frameInfo.fps;
+BecamOpenedDevice::BecamOpenedDevice() {
+	// 初始化COM库
+	auto res = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	if (FAILED(res)) {
+		// COM库初始化失败了
+		this->comInited = false;
+	} else {
+		// COM库初始化成功了
+		this->comInited = true;
+	}
 }
 
 /**
@@ -58,26 +64,78 @@ BecamOpenedDevice::~BecamOpenedDevice() {
 		this->graphBuilder->Release();
 		this->graphBuilder = nullptr;
 	}
+	// 释放捕获筛选器输出端口
+	if (this->captureOuputPin != nullptr) {
+		this->captureOuputPin->Release();
+		this->captureOuputPin = nullptr;
+	}
 	// 释放捕获筛选器（相机）
 	if (this->captureFilter != nullptr) {
 		this->captureFilter->Release();
 		this->captureFilter = nullptr;
 	}
-	// 释放COM库
-	CoUninitialize();
+	// 是否需要释放COM库
+	if (this->comInited) {
+		// 释放COM库
+		CoUninitialize();
+		// 重置标记
+		this->comInited = false;
+	}
 }
 
 /**
  * @brief 打开设备
  *
- * @param captureOuputPin 捕获筛选器输出端口
+ * @param devicePath [in] 设备路径
+ * @param frameInfo [in] 设置的视频帧信息
  * @return 状态码
  */
-StatusCode BecamOpenedDevice::Open(IPin* captureOuputPin) {
+StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFrameInfo* frameInfo) {
+	// 构建设备枚举类（不要初始化COM库）
+	auto enumDevice = BecamEnumDevice(false);
+
+	// 声明设备实例
+	IMoniker* moniker;
+	// 筛选设备
+	auto code = enumDevice.GetDeviceRef(devicePath, moniker);
+	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		// 释放COM库
+		CoUninitialize();
+		std::cerr << "BecamOpenedDevice::Open -> GetDeviceRef failed, CODE: " << code << std::endl;
+		return code;
+	}
+
+	// 绑定到捕获筛选器实例
+	auto res = moniker->BindToObject(NULL, NULL, IID_IBaseFilter, (void**)&this->captureFilter);
+	// 释放设备实例
+	moniker->Release();
+	// 检查是否绑定成功
+	if (FAILED(res)) {
+		// 绑定设备实例失败
+		std::cerr << "BecamOpenedDevice::Open -> BindToObject failed, HRESULT: " << res << std::endl;
+		return StatusCode::STATUS_CODE_ERR_SELECTED_DEVICE;
+	}
+
+	// 获取捕获筛选器的输出端口
+	this->captureOuputPin = BecamEnumDevice::GetPin(this->captureFilter, PINDIR_OUTPUT);
+	if (this->captureOuputPin == nullptr) {
+		// 获取PIN接口失败
+		std::cerr << "BecamOpenedDevice::Open -> GetPin failed" << std::endl;
+		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
+	}
+
+	// 配置设备流能力
+	code = BecamEnumDevice::SetCaptureOuputPinStreamCaps(this->captureOuputPin, *frameInfo);
+	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		// 配置设备流能力失败
+		std::cerr << "BecamOpenedDevice::Open -> SetCaptureOuputPinStreamCaps failed, CODE: " << code << std::endl;
+		return code;
+	}
+
 	// ----------------------------- 创建各个组件实例 ----------------------------- //
 
 	// 创建图像构建器（画布）
-	auto res =
+	res =
 		CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void**)&this->graphBuilder);
 	if (FAILED(res)) {
 		// 创建图像构建器失败
@@ -125,14 +183,16 @@ StatusCode BecamOpenedDevice::Open(IPin* captureOuputPin) {
 	// ----------------------- 连接各实例的输入、输出端口 ----------------------- //
 
 	// 采集器输入端口
-	auto dst = BecamDirectShow::getPin(this->sampleGrabber, PINDIR_INPUT);
+	auto dst = BecamEnumDevice::GetPin(this->sampleGrabber, PINDIR_INPUT);
 	if (dst == nullptr) {
 		// 连接失败
 		return StatusCode::STATUS_CODE_ERR_CAPTURE_GRABBER;
 	}
 	// 连接捕获器输出和采集器输入
-	res = this->graphBuilder->Connect(captureOuputPin, dst);
-	/// 释放引用
+	res = this->graphBuilder->Connect(this->captureOuputPin, dst);
+	// 释放引用
+	this->captureOuputPin->Release();
+	this->captureOuputPin = nullptr;
 	dst->Release();
 	dst = nullptr;
 	// 检查连接结果
@@ -142,13 +202,13 @@ StatusCode BecamOpenedDevice::Open(IPin* captureOuputPin) {
 	}
 
 	// 采集器输出端口
-	auto grabber = BecamDirectShow::getPin(this->sampleGrabber, PINDIR_OUTPUT);
+	auto grabber = BecamEnumDevice::GetPin(this->sampleGrabber, PINDIR_OUTPUT);
 	if (FAILED(res)) {
 		// 连接失败
 		return StatusCode::STATUS_CODE_ERR_GRABBER_RENDER;
 	}
 	// 空渲染器输入端口
-	auto render = BecamDirectShow::getPin(this->nullRender, PINDIR_INPUT);
+	auto render = BecamEnumDevice::GetPin(this->nullRender, PINDIR_INPUT);
 	if (FAILED(res)) {
 		// 释放引用
 		grabber->Release();
@@ -189,7 +249,7 @@ StatusCode BecamOpenedDevice::Open(IPin* captureOuputPin) {
 	this->sampleGrabberIntf->SetCallback(this->sampleGrabberCallback, 1);
 
 	// 开始消耗帧，然后就结束了
-	this->sampleGrabberIntf->SetBufferSamples(false);
+	this->sampleGrabberIntf->SetBufferSamples(true);
 	this->mediaControl->Run();
 
 	// OK
@@ -216,29 +276,22 @@ StatusCode BecamOpenedDevice::GetFrame(uint8_t** data, size_t* size) {
 		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
 	}
 
-	// 是否存在帧率
-	if (this->fps > 0) {
-		// 每次取帧的状态码
-		auto code = StatusCode::STATUS_CODE_SUCCESS;
-		// 根据帧率计算最大尝试次数
-		int32_t maxTry = 1000 / this->fps;
-		// 尝试最大等待5帧耗时
-		for (size_t i = 0; i < maxTry * 5; i++) {
-			// 获取帧
-			code = this->sampleGrabberCallback->GetFrame(data, size);
-			if (code == StatusCode::STATUS_CODE_SUCCESS) {
-				// 取到了，立即返回正常结果
-				return code;
-			}
-			// 延迟1ms
-			Sleep(1);
+	// 每次取帧的状态码
+	auto code = StatusCode::STATUS_CODE_SUCCESS;
+	// 最多尝试50次
+	for (size_t i = 0; i < 50; i++) {
+		// 获取帧
+		code = this->sampleGrabberCallback->GetFrame(data, size);
+		if (code == StatusCode::STATUS_CODE_SUCCESS) {
+			// 取到了，立即返回正常结果
+			return code;
 		}
-		// 返回异常结果
-		return code;
+		// 延迟1ms
+		Sleep(1);
 	}
 
-	// 获取帧
-	return this->sampleGrabberCallback->GetFrame(data, size);
+	// 返回异常结果
+	return code;
 }
 
 /**

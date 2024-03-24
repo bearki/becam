@@ -51,7 +51,7 @@ int main() {
 					  << "fps: " << element.fps << ", "
 					  << "format: " << element.format << std::endl;
 			// 提取一个帧信息
-			if (devicePath.empty() && element.width == 1920 && element.fps == 30) {
+			if (devicePath.empty() && element.width == 1920) {
 				devicePath = item.devicePath;
 				frameInfo = element;
 			}
