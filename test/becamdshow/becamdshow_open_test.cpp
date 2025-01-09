@@ -35,14 +35,23 @@ int main() {
 		if (item.devicePath) {
 			std::cout << "\nDevicePath: " << item.devicePath;
 		}
-		if (item.locationInfo) {
-			std::cout << "\nLocationInfo: " << item.locationInfo;
-		}
 		std::cout << std::endl;
+
+		// 获取设备支持的视频帧信息
+		GetDeviceConfigListReply configReply = {0};
+		res = BecamGetDeviceConfigList(handle, item.devicePath, &configReply);
+		if (res != StatusCode::STATUS_CODE_SUCCESS) {
+			std::cerr << "Failed to get device config list. errno: " << res << std::endl;
+			// 释放列表
+			BecamFreeDeviceList(handle, &reply);
+			BecamFree(&handle);
+			return 1;
+		}
+
 		// 遍历视频帧信息
-		for (size_t j = 0; j < item.frameInfoListSize; j++) {
+		for (size_t j = 0; j < configReply.videoFrameInfoListSize; j++) {
 			// 获取帧信息
-			auto element = item.frameInfoList[j];
+			auto element = configReply.videoFrameInfoList[j];
 			// 打印一下
 			std::cout << "\t"
 					  << "width: " << element.width << ", "
@@ -55,15 +64,16 @@ int main() {
 				frameInfo = element;
 			}
 		}
+		// 释放支持的配置列表
+		BecamFreeDeviceConfigList(handle, &configReply);
 	}
-
 	// 释放列表
 	BecamFreeDeviceList(handle, &reply);
 
 	// 当前选中的设别路径和帧信息
 	std::cout << "\n\nSelected device path: " << devicePath << std::endl;
-	std::cout << "Selected frame info: " << frameInfo.width << "x" << frameInfo.height << ", " << frameInfo.fps << ", "
-			  << frameInfo.format << std::endl;
+	std::cout << "Selected frame info: " << frameInfo.width << "x" << frameInfo.height << ", " << frameInfo.fps << ", " << frameInfo.format
+			  << std::endl;
 
 	// 来个死循环
 	while (true) {

@@ -1,9 +1,7 @@
 #include "BecamMonikerPropReader.hpp"
 
 /**
- * @brief 构造函数
- *
- * @param propName 属性名
+ * @implements 实现构造函数
  */
 BecamMonikerPropReader::BecamMonikerPropReader(LPCOLESTR propName) {
 	// 储存属性名
@@ -13,7 +11,7 @@ BecamMonikerPropReader::BecamMonikerPropReader(LPCOLESTR propName) {
 };
 
 /**
- * @brief 析构函数
+ * @implements 实现析构函数
  */
 BecamMonikerPropReader::~BecamMonikerPropReader() {
 	// 属性包是否需要释放
@@ -26,10 +24,7 @@ BecamMonikerPropReader::~BecamMonikerPropReader() {
 };
 
 /**
- * @brief 读取属性
- * @param pMoniker 设备实例
- * @return
- * 状态码和UTF16属性值引用（外部无需管理，脱离MonikerPropReader作用域会自动释放）
+ * @implements 实现读取属性
  */
 std::pair<StatusCode, VARIANT> BecamMonikerPropReader::read(IMoniker* pMoniker) {
 	// 绑定属性包

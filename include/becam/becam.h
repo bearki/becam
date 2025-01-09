@@ -50,11 +50,8 @@ typedef struct {
 
 // DeviceInfo 设备信息
 typedef struct {
-	char* name;					   // 设备友好名称
-	char* devicePath;			   // 设备路径
-	char* locationInfo;			   // 设备位置信息
-	size_t frameInfoListSize;	   // 支持的视频帧数量
-	VideoFrameInfo* frameInfoList; // 支持的视频帧列表
+	char* name;		  // 设备友好名称
+	char* devicePath; // 设备唯一标识符
 } DeviceInfo;
 
 // GetDeviceListReply 获取设备列表响应参数
@@ -62,6 +59,12 @@ typedef struct {
 	size_t deviceInfoListSize;	// 设备数量
 	DeviceInfo* deviceInfoList; // 设备信息列表
 } GetDeviceListReply;
+
+// GetDeviceConfigListReply 获取设备配置列表响应参数
+typedef struct {
+	size_t videoFrameInfoListSize;		// 视频帧信息数量
+	VideoFrameInfo* videoFrameInfoList; // 视频帧信息列表
+} GetDeviceConfigListReply;
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,6 +100,24 @@ _BECAM_API_ StatusCode BecamGetDeviceList(BecamHandle handle, GetDeviceListReply
  * @param input 输入参数
  */
 _BECAM_API_ void BecamFreeDeviceList(BecamHandle handle, GetDeviceListReply* input);
+
+/**
+ * @brief 获取设备配置列表
+ *
+ * @param handle Becam接口句柄
+ * @param device 选中的设备
+ * @param reply 输出参数
+ * @return 状态码
+ */
+_BECAM_API_ StatusCode BecamGetDeviceConfigList(BecamHandle handle, const char* devicePath, GetDeviceConfigListReply* reply);
+
+/**
+ * @brief 释放设备配置列表
+ *
+ * @param handle Becam接口句柄
+ * @param input 输入参数
+ */
+_BECAM_API_ void BecamFreeDeviceConfigList(BecamHandle handle, GetDeviceConfigListReply* input);
 
 /**
  * @brief 打开设备

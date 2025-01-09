@@ -1,19 +1,16 @@
 # 配置相关源文件
 set(SOURCES becam.cpp 
             BecamDirectShow.cpp 
-            BecamEnumDevice.cpp
+            BecamDeviceEnum.cpp
             BecamMonikerPropReader.cpp 
             BecamOpenedDevice.cpp
             BecamSampleGrabberCallback.cpp)
-# 配置制品输出目录
-
 
 # 配置链接库
 link_libraries(strmiids)
 
 # # 配置静态库生成参数
 add_library(becamdshow STATIC ${SOURCES})
-
 
 # 指定make install后头文件、静态库，动态库，可执行文件存放目录
 set(INSTALL_PATH libbecamdshow_${BUILD_OS}_${BUILD_ARCH})

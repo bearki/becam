@@ -1,7 +1,7 @@
 #include "BecamSampleGrabberCallback.hpp"
 
 /**
- * @brief 构造函数
+ * @implements 实现构造函数
  */
 BecamSampleGrabberCallback::BecamSampleGrabberCallback() {
 	// 初始化一个1MB大小的缓冲区
@@ -11,7 +11,7 @@ BecamSampleGrabberCallback::BecamSampleGrabberCallback() {
 }
 
 /**
- * @brief 析构函数
+ * @implements 实现析构函数
  */
 BecamSampleGrabberCallback::~BecamSampleGrabberCallback() {
 	// 加个锁先
@@ -30,7 +30,7 @@ BecamSampleGrabberCallback::~BecamSampleGrabberCallback() {
 STDMETHODIMP BecamSampleGrabberCallback::SampleCB(double sampleTime, IMediaSample* sample) { return S_OK; };
 
 /**
- * @brief 采集器缓冲区回调
+ * @implements 实现采集器缓冲区回调
  */
 STDMETHODIMP BecamSampleGrabberCallback::BufferCB(double sampleTime, BYTE* buffer, LONG bufferLen) {
 	// 视频帧是否有效
@@ -60,11 +60,7 @@ STDMETHODIMP BecamSampleGrabberCallback::BufferCB(double sampleTime, BYTE* buffe
 }
 
 /**
- * @brief 获取视频帧
- *
- * @param data 视频帧流
- * @param size 视频帧流大小
- * @return 状态码
+ * @implements 实现获取视频帧
  */
 StatusCode BecamSampleGrabberCallback::GetFrame(uint8_t** data, size_t* size) {
 	// 加个锁先
@@ -93,9 +89,7 @@ StatusCode BecamSampleGrabberCallback::GetFrame(uint8_t** data, size_t* size) {
 }
 
 /**
- * @brief 释放视频帧
- *
- * @param data 视频帧流
+ * @implements 实现释放视频帧
  */
 void BecamSampleGrabberCallback::FreeFrame(uint8_t** data) {
 	// 检查参数

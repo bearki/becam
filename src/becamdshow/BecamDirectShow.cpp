@@ -3,16 +3,16 @@
 #include "BecamMonikerPropReader.hpp"
 #include "BecamStringConvert.hpp"
 
-#include "BecamEnumDevice.hpp"
+#include "BecamDeviceEnum.hpp"
 #include <vector>
 
 /**
- * @brief 构造函数
+ * @implements 实现构造函数
  */
 BecamDirectShow::BecamDirectShow() {}
 
 /**
- * @brief 析构函数
+ * @implements 实现析构函数
  */
 BecamDirectShow::~BecamDirectShow() {
 	// 加个锁先
@@ -26,10 +26,7 @@ BecamDirectShow::~BecamDirectShow() {
 }
 
 /**
- * @brief 获取设备列表
- *
- * @param reply [out] 响应参数
- * @return 状态码
+ * @implements 实现获取设备列表
  */
 StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 	// 加个锁先
@@ -47,12 +44,12 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 	// 声明vector来储存设备列表
 	std::vector<DeviceInfo> deviceVec;
 	// 初始化设备枚举类
-	auto enumDevice = BecamEnumDevice(true);
+	auto deviceEnum = BecamDeviceEnum(true);
 	// 开始枚举设备
-	auto code = enumDevice.EnumVideoDevices([this, &deviceVec](IMoniker* moniker) {
+	auto code = deviceEnum.EnumVideoDevices([this, &deviceVec](IMoniker* moniker) {
 		// 获取设备友好名称
 		std::string friendlyName = "";
-		auto code = BecamEnumDevice::GetMonikerFriendlyName(moniker, friendlyName);
+		auto code = BecamDeviceEnum::GetMonikerFriendlyName(moniker, friendlyName);
 		if (code != StatusCode::STATUS_CODE_SUCCESS) {
 			// 继续枚举
 			return true;
@@ -60,19 +57,7 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 
 		// 获取设备路径
 		std::string devicePath = "";
-		code = BecamEnumDevice::GetMonikerDevicePath(moniker, devicePath);
-		if (code != StatusCode::STATUS_CODE_SUCCESS) {
-			// 继续枚举
-			return true;
-		}
-
-		// 获取设备位置信息
-		std::string locationInfo = "";
-
-		// 获取设备流能力
-		VideoFrameInfo* list = nullptr;
-		size_t listSize = 0;
-		code = BecamEnumDevice::GetDeviceStreamCaps(moniker, &list, &listSize);
+		code = BecamDeviceEnum::GetMonikerDevicePath(moniker, devicePath);
 		if (code != StatusCode::STATUS_CODE_SUCCESS) {
 			// 继续枚举
 			return true;
@@ -90,14 +75,6 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 			deviceInfo.devicePath = new char[devicePath.size() + 1];
 			memcpy(deviceInfo.devicePath, devicePath.c_str(), devicePath.size() + 1);
 		}
-		// 转换为C字符串
-		if (locationInfo.size() > 0) {
-			deviceInfo.locationInfo = nullptr;
-			memcpy(deviceInfo.locationInfo, locationInfo.c_str(), locationInfo.size() + 1);
-		}
-		// 赋值视频帧信息
-		deviceInfo.frameInfoListSize = listSize;
-		deviceInfo.frameInfoList = list;
 
 		// 追加到结果中
 		deviceVec.insert(deviceVec.end(), deviceInfo);
@@ -123,9 +100,7 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 }
 
 /**
- * @brief 释放设备列表
- *
- * @param input [in] 输入参数
+ * @implements 实现释放设备列表
  */
 void BecamDirectShow::FreeDeviceList(GetDeviceListReply* input) {
 	// 检查
@@ -150,17 +125,6 @@ void BecamDirectShow::FreeDeviceList(GetDeviceListReply* input) {
 			delete item.devicePath;
 			item.devicePath = nullptr;
 		}
-		// 释放位置信息
-		if (item.locationInfo != nullptr) {
-			delete item.locationInfo;
-			item.locationInfo = nullptr;
-		}
-		// 释放视频帧列表
-		if (item.frameInfoListSize > 0 && item.frameInfoList != nullptr) {
-			delete item.frameInfoList;
-			item.frameInfoListSize = 0;
-			item.frameInfoList = nullptr;
-		}
 	}
 
 	// 释放整个列表
@@ -170,11 +134,66 @@ void BecamDirectShow::FreeDeviceList(GetDeviceListReply* input) {
 }
 
 /**
- * @brief 打开指定设备
- *
- * @param devicePath [in] 设备路径
- * @param frameInfo [in] 设置的视频帧信息
- * @return 状态码
+ * @implements 实现获取设备配置列表
+ */
+StatusCode BecamDirectShow::GetDeviceConfigList(const std::string devicePath, GetDeviceConfigListReply* reply) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 检查入参
+	if (devicePath.empty() || reply == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
+
+	// 初始化设备枚举类
+	auto deviceEnum = BecamDeviceEnum(true);
+	// 声明设备实例
+	IMoniker* moniker = nullptr;
+	// 获取指定设备的引用
+	auto code = deviceEnum.GetDeviceRef(devicePath, moniker);
+	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		return code;
+	}
+
+	// 获取设备流能力
+	VideoFrameInfo* list = nullptr;
+	size_t listSize = 0;
+	code = BecamDeviceEnum::GetDeviceStreamCaps(moniker, &list, &listSize);
+	// 释放设备实例
+	moniker->Release();
+	moniker = nullptr;
+	// 检查
+	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		return code;
+	}
+
+	// 赋值查询结果
+	reply->videoFrameInfoListSize = listSize;
+	reply->videoFrameInfoList = list;
+
+	// OK
+	return StatusCode::STATUS_CODE_SUCCESS;
+}
+
+/**
+ * @implements 实现释放设备配置列表
+ */
+void BecamDirectShow::FreeDeviceConfigList(GetDeviceConfigListReply* input) {
+	// 检查
+	if (input == nullptr) {
+		return;
+	}
+	if (input->videoFrameInfoListSize <= 0 || input->videoFrameInfoList == nullptr) {
+		return;
+	}
+	// 释放整个列表
+	delete input->videoFrameInfoList;
+	input->videoFrameInfoListSize = 0;
+	input->videoFrameInfoList = nullptr;
+}
+
+/**
+ * @implements 实现打开指定设备
  */
 StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const VideoFrameInfo* frameInfo) {
 	// 加个锁先
@@ -210,7 +229,7 @@ StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const Video
 }
 
 /**
- * @brief 关闭设备
+ * @implements 实现关闭设备
  */
 void BecamDirectShow::CloseDevice() {
 	// 加个锁先
@@ -227,11 +246,7 @@ void BecamDirectShow::CloseDevice() {
 }
 
 /**
- * @brief 获取视频帧
- *
- * @param data 视频帧流
- * @param size 视频帧流大小
- * @return 状态码
+ * @implements 实现获取视频帧
  */
 StatusCode BecamDirectShow::GetFrame(uint8_t** data, size_t* size) {
 	// 加个锁先
@@ -252,9 +267,7 @@ StatusCode BecamDirectShow::GetFrame(uint8_t** data, size_t* size) {
 }
 
 /**
- * @brief 释放视频帧
- *
- * @param data 视频帧流
+ * @implements 实现释放视频帧
  */
 void BecamDirectShow::FreeFrame(uint8_t** data) {
 	// 加个锁先

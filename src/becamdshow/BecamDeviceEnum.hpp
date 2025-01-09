@@ -11,7 +11,7 @@
 /**
  * @brief 枚举设备
  */
-class BecamEnumDevice {
+class BecamDeviceEnum {
 private:
 	// COM库是否已初始化
 	bool comInited = false;
@@ -26,12 +26,12 @@ public:
 	 *
 	 * @param initCom [in] 是否初始化COM库
 	 */
-	BecamEnumDevice(bool initCom = true);
+	BecamDeviceEnum(bool initCom = true);
 
 	/**
 	 * @brief 析构函数
 	 */
-	~BecamEnumDevice();
+	~BecamDeviceEnum();
 
 	/**
 	 * @brief 枚举所有视频设备
@@ -65,7 +65,7 @@ public:
 	 * @param moniker [out] 设备实例
 	 * @return 状态码
 	 */
-	StatusCode GetDeviceRef(std::string devicePath, IMoniker*& moniker);
+	StatusCode GetDeviceRef(const std::string devicePath, IMoniker*& moniker);
 
 	/**
 	 * @brief 获取捕获筛选器的输出端口

@@ -35,6 +35,7 @@ public:
 
 	/**
 	 * @brief 读取属性
+	 * 
 	 * @param pMoniker 设备实例
 	 * @return 状态码和UTF16属性值引用（外部无需管理，脱离MonikerPropReader作用域会自动释放）
 	 */

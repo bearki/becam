@@ -47,6 +47,22 @@ public:
 	void FreeDeviceList(GetDeviceListReply* input);
 
 	/**
+	 * @brief 获取设备配置列表
+	 *
+	 * @param devicePath [in] 设备路径
+	 * @param reply [out] 输出参数
+	 * @return 状态码
+	 */
+	StatusCode GetDeviceConfigList(const std::string devicePath, GetDeviceConfigListReply* reply);
+
+	/**
+	 * @brief 释放设备配置列表
+	 *
+	 * @param input [in] 输入参数
+	 */
+	void FreeDeviceConfigList(GetDeviceConfigListReply* input);
+
+	/**
 	 * @brief 打开指定设备
 	 *
 	 * @param devicePath [in] 设备路径

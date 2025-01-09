@@ -1,17 +1,17 @@
 
-#include "BecamEnumDevice.hpp"
+#include "BecamDeviceEnum.hpp"
 #include "BecamAmMediaType.hpp"
 #include "BecamMonikerPropReader.hpp"
 #include "BecamStringConvert.hpp"
 #include <iostream>
 
 /**
- * @brief 构造函数
+ * @implements 实现构造函数
  */
-BecamEnumDevice::BecamEnumDevice(bool initCom) {
+BecamDeviceEnum::BecamDeviceEnum(bool initCom) {
 	// 是否需要初始化COM库
 	if (initCom) {
-		// 初始化COM库
+		// 初始化COM库（每个线程都需要单独初始化一下COM库）
 		auto res = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 		if (FAILED(res)) {
 			// COM库初始化失败了
@@ -25,9 +25,9 @@ BecamEnumDevice::BecamEnumDevice(bool initCom) {
 }
 
 /**
- * @brief 析构函数
+ * @implements 实现析构函数
  */
-BecamEnumDevice::~BecamEnumDevice() {
+BecamDeviceEnum::~BecamDeviceEnum() {
 	// 释放视频输入设备枚举器实例
 	if (this->videoInputEnumInstance != nullptr) {
 		// 释放视频输入设备枚举器实例
@@ -52,12 +52,9 @@ BecamEnumDevice::~BecamEnumDevice() {
 }
 
 /**
- * @brief 枚举所有视频设备
- *
- * @param callback [in] 回调函数（回调结束将立即释放IMoniker，回调返回false将立即停止枚举）
- * @return 状态码
+ * @implements 实现枚举所有视频设备
  */
-StatusCode BecamEnumDevice::EnumVideoDevices(std::function<bool(IMoniker*)> callback) {
+StatusCode BecamDeviceEnum::EnumVideoDevices(std::function<bool(IMoniker*)> callback) {
 	// 检查回调是否有效
 	if (callback == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_INTERNAL_PARAM;
@@ -67,18 +64,15 @@ StatusCode BecamEnumDevice::EnumVideoDevices(std::function<bool(IMoniker*)> call
 	HRESULT res;
 
 	// 创建设备枚举器
-	res = CoCreateInstance(CLSID_SystemDeviceEnum, nullptr, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum,
-						   (void**)&this->devEnumInstance);
+	res = CoCreateInstance(CLSID_SystemDeviceEnum, nullptr, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void**)&this->devEnumInstance);
 	if (FAILED(res)) {
 		// 创建设备枚举器失败
-		std::cerr << "BecamEnumDevice::EnumVideoDevices -> CoCreateInstance(CLSID_SystemDeviceEnum) failed, HRESULT: "
-				  << res << std::endl;
+		std::cerr << "BecamDeviceEnum::EnumVideoDevices -> CoCreateInstance(CLSID_SystemDeviceEnum) failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_CREATE_ENUMERATOR;
 	}
 
 	// 枚举视频捕获设备
-	res =
-		this->devEnumInstance->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &this->videoInputEnumInstance, 0);
+	res = this->devEnumInstance->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &this->videoInputEnumInstance, 0);
 	// 错误码是否为空设备
 	if (FAILED(res) || res == S_FALSE) {
 		// 分类枚举器创建成功了，但是没有设备
@@ -87,7 +81,7 @@ StatusCode BecamEnumDevice::EnumVideoDevices(std::function<bool(IMoniker*)> call
 			return StatusCode::STATUS_CODE_NOT_FOUND_DEVICE;
 		}
 		// 设备枚举失败
-		std::cerr << "BecamEnumDevice::EnumVideoDevices -> CreateClassEnumerator(CLSID_VideoInputDeviceCategory) "
+		std::cerr << "BecamDeviceEnum::EnumVideoDevices -> CreateClassEnumerator(CLSID_VideoInputDeviceCategory) "
 					 "failed, HRESULT: "
 				  << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_DEVICE_ENUM;
@@ -115,13 +109,9 @@ StatusCode BecamEnumDevice::EnumVideoDevices(std::function<bool(IMoniker*)> call
 }
 
 /**
- * @brief 获取设备友好名称
- *
- * @param moniker [in] 设备实例
- * @param friendlyName [out] 设备友好名称
- * @return 状态码
+ * @implements 实现获取设备友好名称
  */
-StatusCode BecamEnumDevice::GetMonikerFriendlyName(IMoniker* moniker, std::string& friendlyName) {
+StatusCode BecamDeviceEnum::GetMonikerFriendlyName(IMoniker* moniker, std::string& friendlyName) {
 	// 检查参数
 	if (moniker == nullptr) {
 		// 参数错误
@@ -133,7 +123,7 @@ StatusCode BecamEnumDevice::GetMonikerFriendlyName(IMoniker* moniker, std::strin
 	auto res = reader.read(moniker);
 	if (res.first != StatusCode::STATUS_CODE_SUCCESS) {
 		// 失败
-		std::cerr << "BecamEnumDevice::GetMonikerFriendlyName -> read failed, CODE: " << res.first << std::endl;
+		std::cerr << "BecamDeviceEnum::GetMonikerFriendlyName -> read failed, CODE: " << res.first << std::endl;
 		return res.first;
 	}
 
@@ -146,13 +136,9 @@ StatusCode BecamEnumDevice::GetMonikerFriendlyName(IMoniker* moniker, std::strin
 }
 
 /**
- * @brief 获取设备路径
- *
- * @param moniker [in] 设备实例
- * @param devicePath [out] 设备路径
- * @return 状态码
+ * @implements 实现获取设备路径
  */
-StatusCode BecamEnumDevice::GetMonikerDevicePath(IMoniker* moniker, std::string& devicePath) {
+StatusCode BecamDeviceEnum::GetMonikerDevicePath(IMoniker* moniker, std::string& devicePath) {
 	// 检查参数
 	if (moniker == nullptr) {
 		// 参数错误
@@ -164,7 +150,7 @@ StatusCode BecamEnumDevice::GetMonikerDevicePath(IMoniker* moniker, std::string&
 	auto res = reader.read(moniker);
 	if (res.first != StatusCode::STATUS_CODE_SUCCESS) {
 		// 失败
-		std::cerr << "BecamEnumDevice::GetMonikerDevicePath -> read failed, CODE: " << res.first << std::endl;
+		std::cerr << "BecamDeviceEnum::GetMonikerDevicePath -> read failed, CODE: " << res.first << std::endl;
 		return res.first;
 	}
 
@@ -177,12 +163,9 @@ StatusCode BecamEnumDevice::GetMonikerDevicePath(IMoniker* moniker, std::string&
 }
 
 /**
- * @brief 获取设备引用
- * @param devicePath [in] 设备路径
- * @param moniker [out] 设备实例
- * @return 状态码
+ * @implements 实现获取设备引用
  */
-StatusCode BecamEnumDevice::GetDeviceRef(std::string devicePath, IMoniker*& moniker) {
+StatusCode BecamDeviceEnum::GetDeviceRef(const std::string devicePath, IMoniker*& moniker) {
 	// 回调中的错误码
 	StatusCode errCode = StatusCode::STATUS_CODE_SUCCESS;
 	// 枚举设备
@@ -211,12 +194,11 @@ StatusCode BecamEnumDevice::GetDeviceRef(std::string devicePath, IMoniker*& moni
 
 	// 是否异常
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamEnumDevice::GetDeviceRef -> EnumVideoDevices failed, CODE: " << code << std::endl;
+		std::cerr << "BecamDeviceEnum::GetDeviceRef -> EnumVideoDevices failed, CODE: " << code << std::endl;
 		return code;
 	}
 	if (errCode != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamEnumDevice::GetDeviceRef -> EnumVideoDevices callback failed, CODE: " << errCode
-				  << std::endl;
+		std::cerr << "BecamDeviceEnum::GetDeviceRef -> EnumVideoDevices callback failed, CODE: " << errCode << std::endl;
 		return errCode;
 	}
 
@@ -225,17 +207,13 @@ StatusCode BecamEnumDevice::GetDeviceRef(std::string devicePath, IMoniker*& moni
 }
 
 /**
- * @brief 获取捕获筛选器的输出端口
- *
- * @param captureFilter [in] 捕获筛选器实例
- * @param dir [in] 输出方向
- * @return 捕获筛选器的输出端口
+ * @implements 实现获取捕获筛选器的输出端口
  */
-IPin* BecamEnumDevice::GetPin(IBaseFilter* captureFilter, PIN_DIRECTION dir) {
+IPin* BecamDeviceEnum::GetPin(IBaseFilter* captureFilter, PIN_DIRECTION dir) {
 	IEnumPins* enumPins;
 	auto res = captureFilter->EnumPins(&enumPins);
 	if (FAILED(res)) {
-		std::cerr << "BecamEnumDevice::GetPin -> EnumPins failed, HRESULT: " << res << std::endl;
+		std::cerr << "BecamDeviceEnum::GetPin -> EnumPins failed, HRESULT: " << res << std::endl;
 		return nullptr;
 	}
 
@@ -255,14 +233,9 @@ IPin* BecamEnumDevice::GetPin(IBaseFilter* captureFilter, PIN_DIRECTION dir) {
 }
 
 /**
- * @brief 获取设备支持的流能力
- *
- * @param streamConfig [in] 设备流配置实例
- * @param callback [in] 回调函数（回调结束将立即释放AM_MEDIA_TYPE，回调返回false将立即停止枚举）
- * @return 状态码
+ * @implements 实现获取设备支持的流能力
  */
-StatusCode BecamEnumDevice::GetDeviceStreamCaps(IAMStreamConfig* streamConfig,
-												std::function<bool(AM_MEDIA_TYPE*)> callback) {
+StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IAMStreamConfig* streamConfig, std::function<bool(AM_MEDIA_TYPE*)> callback) {
 	// 检查参数
 	if (streamConfig == nullptr || callback == nullptr) {
 		// 参数错误
@@ -275,8 +248,7 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IAMStreamConfig* streamConfig,
 	auto res = streamConfig->GetNumberOfCapabilities(&count, &size);
 	if (FAILED(res)) {
 		// 获取流能力总数量失败
-		std::cerr << "BecamEnumDevice::GetDeviceStreamCaps -> GetNumberOfCapabilities failed, HRESULT: " << res
-				  << std::endl;
+		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> GetNumberOfCapabilities failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 
@@ -288,7 +260,7 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IAMStreamConfig* streamConfig,
 		res = streamConfig->GetStreamCaps(i, &pmt, reinterpret_cast<BYTE*>(&scc));
 		if (FAILED(res)) {
 			// 分析失败，继续下一个
-			std::cerr << "BecamEnumDevice::GetDeviceStreamCaps -> GetStreamCaps failed, HRESULT: " << res << std::endl;
+			std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> GetStreamCaps failed, HRESULT: " << res << std::endl;
 			continue;
 		}
 
@@ -319,13 +291,9 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IAMStreamConfig* streamConfig,
 }
 
 /**
- * @brief 获取设备支持的流能力
- *
- * @param captureOuputPin [in] 捕获筛选器的输出端点
- * @param callback [in] 回调函数（回调结束将立即释放AM_MEDIA_TYPE，回调返回false将立即停止枚举）
- * @return 状态码
+ * @implements 实现获取设备支持的流能力
  */
-StatusCode BecamEnumDevice::GetDeviceStreamCaps(IPin* captureOuputPin, std::function<bool(AM_MEDIA_TYPE*)> callback) {
+StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IPin* captureOuputPin, std::function<bool(AM_MEDIA_TYPE*)> callback) {
 	// 检查参数
 	if (captureOuputPin == nullptr || callback == nullptr) {
 		// 参数错误
@@ -337,13 +305,12 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IPin* captureOuputPin, std::func
 	auto res = captureOuputPin->QueryInterface(IID_IAMStreamConfig, (void**)&streamConfig);
 	if (FAILED(res)) {
 		// 获取流配置失败
-		std::cerr << "BecamEnumDevice::GetDeviceStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: "
-				  << res << std::endl;
+		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 
 	// 调用重载方法
-	auto code = BecamEnumDevice::GetDeviceStreamCaps(streamConfig, callback);
+	auto code = BecamDeviceEnum::GetDeviceStreamCaps(streamConfig, callback);
 
 	// 释放设备流配置
 	streamConfig->Release();
@@ -354,14 +321,9 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IPin* captureOuputPin, std::func
 }
 
 /**
- * @brief 枚举设备支持的流能力
- *
- * @param captureFilter [in] 捕获筛选器实例
- * @param callback [in] 回调函数（回调结束将立即释放AM_MEDIA_TYPE，回调返回false将立即停止枚举）
- * @return 状态码
+ * @implements 实现枚举设备支持的流能力
  */
-StatusCode BecamEnumDevice::GetDeviceStreamCaps(IBaseFilter* captureFilter,
-												std::function<bool(AM_MEDIA_TYPE*)> callback) {
+StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IBaseFilter* captureFilter, std::function<bool(AM_MEDIA_TYPE*)> callback) {
 	// 检查参数
 	if (captureFilter == nullptr || callback == nullptr) {
 		// 参数错误
@@ -369,15 +331,15 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IBaseFilter* captureFilter,
 	}
 
 	// 获取捕获筛选器的输出端点
-	auto captureOuputPin = BecamEnumDevice::GetPin(captureFilter, PINDIR_OUTPUT);
+	auto captureOuputPin = BecamDeviceEnum::GetPin(captureFilter, PINDIR_OUTPUT);
 	if (captureOuputPin == nullptr) {
 		// 获取捕获筛选器的输出端点失败
-		std::cerr << "BecamEnumDevice::GetDeviceStreamCaps -> GetPin failed" << std::endl;
+		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> GetPin failed" << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 
 	// 调用重载函数
-	auto code = BecamEnumDevice::GetDeviceStreamCaps(captureOuputPin, callback);
+	auto code = BecamDeviceEnum::GetDeviceStreamCaps(captureOuputPin, callback);
 
 	// 释放捕获筛选器的输出端点
 	captureOuputPin->Release();
@@ -388,14 +350,9 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IBaseFilter* captureFilter,
 }
 
 /**
- * @brief 获取设备支持的流能力
- *
- * @param moniker [in]设备实例
- * @param reply [out] 设备流能力列表
- * @param replySize [out] 设备流能力列表大小
- * @return 状态码
+ * @implements 实现获取设备支持的流能力
  */
-StatusCode BecamEnumDevice::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInfo** reply, size_t* replySize) {
+StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInfo** reply, size_t* replySize) {
 	// 检查参数
 	if (moniker == nullptr || reply == nullptr || replySize == nullptr) {
 		// 参数错误
@@ -409,7 +366,7 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	// 检查是否绑定成功
 	if (FAILED(res)) {
 		// 绑定设备实例失败
-		std::cerr << "BecamEnumDevice::GetDeviceStreamCaps -> BindToObject failed, HRESULT: " << res << std::endl;
+		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> BindToObject failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_SELECTED_DEVICE;
 	}
 
@@ -420,7 +377,7 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	std::vector<VideoFrameInfo> replyVec;
 
 	// 执行流能力枚举
-	auto code = BecamEnumDevice::GetDeviceStreamCaps(captureFilter, [&replyVec](AM_MEDIA_TYPE* pmt) {
+	auto code = BecamDeviceEnum::GetDeviceStreamCaps(captureFilter, [&replyVec](AM_MEDIA_TYPE* pmt) {
 		// 提取信息
 		VIDEOINFOHEADER* videoInfoHdr = (VIDEOINFOHEADER*)pmt->pbFormat;
 		// 构建信息
@@ -442,7 +399,7 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	// 是否失败了
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
 		// 失败了
-		std::cerr << "BecamEnumDevice::GetDeviceStreamCaps -> GetDeviceStreamCaps failed, CODE: " << code << std::endl;
+		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> GetDeviceStreamCaps failed, CODE: " << code << std::endl;
 		return code;
 	}
 
@@ -459,13 +416,9 @@ StatusCode BecamEnumDevice::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 }
 
 /**
- * @brief 设置设备支持的流能力
- *
- * @param captureOuputPin [in] 捕获筛选器的输出端点
- * @param frameInfo [in] 视频帧信息
- * @return 状态码
+ * @implements 实现设置设备支持的流能力
  */
-StatusCode BecamEnumDevice::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, const VideoFrameInfo frameInfo) {
+StatusCode BecamDeviceEnum::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, const VideoFrameInfo frameInfo) {
 	// 检查参数
 	if (captureOuputPin == nullptr) {
 		// 参数错误
@@ -477,50 +430,45 @@ StatusCode BecamEnumDevice::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 	auto res = captureOuputPin->QueryInterface(IID_IAMStreamConfig, (void**)&streamConfig);
 	if (FAILED(res)) {
 		// 获取流配置失败
-		std::cerr
-			<< "BecamEnumDevice::SetCaptureOuputPinStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: "
-			<< res << std::endl;
+		std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 
 	// 回调中的状态（默认为未找到对应的流能力信息）
 	auto errCode = StatusCode::STATUS_CODE_ERR_NOMATCH_STREAM_CAPS;
 	// 遍历设备所有流能力
-	auto code =
-		BecamEnumDevice::GetDeviceStreamCaps(streamConfig, [streamConfig, frameInfo, &errCode](AM_MEDIA_TYPE* pmt) {
-			// 检查一下
-			if (pmt->majortype != MEDIATYPE_Video || pmt->formattype != FORMAT_VideoInfo || pmt->pbFormat == nullptr) {
-				// 信息不是想要的
-				return true;
-			}
-
-			// 提取信息
-			VIDEOINFOHEADER* videoInfoHdr = (VIDEOINFOHEADER*)pmt->pbFormat;
-			auto width = videoInfoHdr->bmiHeader.biWidth;		 // 提取宽度
-			auto height = videoInfoHdr->bmiHeader.biHeight;		 // 提取高度
-			auto fps = 10000000 / videoInfoHdr->AvgTimePerFrame; // 提取帧率
-			auto format = videoInfoHdr->bmiHeader.biCompression; // 提取格式
-			// 信息是否一致
-			if (frameInfo.width == width && frameInfo.height == height && frameInfo.fps == fps &&
-				frameInfo.format == format) {
-				// 设定媒体类型（包括分辨率，帧率，格式）
-				auto res = streamConfig->SetFormat(pmt);
-				if (SUCCEEDED(res)) {
-					// 设定成功
-					errCode = StatusCode::STATUS_CODE_SUCCESS;
-				} else {
-					// 设定失败
-					std::cerr << "BecamEnumDevice::SetCaptureOuputPinStreamCaps -> SetFormat failed, HRESULT: " << res
-							  << std::endl;
-					errCode = StatusCode::STATUS_CODE_ERR_SET_MEDIA_TYPE;
-				}
-				// 不管是否成功都要结束枚举
-				return false;
-			}
-
-			// 继续找下一个
+	auto code = BecamDeviceEnum::GetDeviceStreamCaps(streamConfig, [streamConfig, frameInfo, &errCode](AM_MEDIA_TYPE* pmt) {
+		// 检查一下
+		if (pmt->majortype != MEDIATYPE_Video || pmt->formattype != FORMAT_VideoInfo || pmt->pbFormat == nullptr) {
+			// 信息不是想要的
 			return true;
-		});
+		}
+
+		// 提取信息
+		VIDEOINFOHEADER* videoInfoHdr = (VIDEOINFOHEADER*)pmt->pbFormat;
+		auto width = videoInfoHdr->bmiHeader.biWidth;		 // 提取宽度
+		auto height = videoInfoHdr->bmiHeader.biHeight;		 // 提取高度
+		auto fps = 10000000 / videoInfoHdr->AvgTimePerFrame; // 提取帧率
+		auto format = videoInfoHdr->bmiHeader.biCompression; // 提取格式
+		// 信息是否一致
+		if (frameInfo.width == width && frameInfo.height == height && frameInfo.fps == fps && frameInfo.format == format) {
+			// 设定媒体类型（包括分辨率，帧率，格式）
+			auto res = streamConfig->SetFormat(pmt);
+			if (SUCCEEDED(res)) {
+				// 设定成功
+				errCode = StatusCode::STATUS_CODE_SUCCESS;
+			} else {
+				// 设定失败
+				std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> SetFormat failed, HRESULT: " << res << std::endl;
+				errCode = StatusCode::STATUS_CODE_ERR_SET_MEDIA_TYPE;
+			}
+			// 不管是否成功都要结束枚举
+			return false;
+		}
+
+		// 继续找下一个
+		return true;
+	});
 
 	// 释放设备流配置
 	streamConfig->Release();
@@ -528,13 +476,11 @@ StatusCode BecamEnumDevice::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 
 	// 检查结果
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamEnumDevice::SetCaptureOuputPinStreamCaps -> GetDeviceStreamCaps failed, CODE: " << code
-				  << std::endl;
+		std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> GetDeviceStreamCaps failed, CODE: " << code << std::endl;
 		return code;
 	}
 	if (errCode != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamEnumDevice::SetCaptureOuputPinStreamCaps -> GetDeviceStreamCaps callback failed, CODE: "
-				  << errCode << std::endl;
+		std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> GetDeviceStreamCaps callback failed, CODE: " << errCode << std::endl;
 		return errCode;
 	}
 

@@ -24,7 +24,7 @@ SpaceAfterCtorInitializerColon: true #类构造函数初始化列表冒号后是
 
 # 常用配置
 AlignConsecutiveAssignments: false # 当多行连续赋值时，使等号对齐
-ColumnLimit: 120 # 每行字符数限制为120
+ColumnLimit: 140 # 每行字符数限制为140
 SortIncludes: true # 保证Include文件排序
 PointerAlignment: Left # 指针或引用的星号（*）或尖括号（&）相对于变量名称的位置
 AccessModifierOffset: -4 # 控制访问限定符（如 public、private、protected）与变量或函数名称之间的空格数
