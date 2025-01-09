@@ -71,8 +71,11 @@ process {
     Write-Host "--------------------------- 执行Make Install ---------------------------"
     mingw32-make -C "${ProjectRootPath}/build" install
 
+    # 执行压缩
+    Compress-Archive -Path "${ProjectRootPath}/dist/libbecamdshow_windows_${BuildArch}/*" -DestinationPath "${ProjectRootPath}/dist/libbecamdshow_windows_${BuildArch}.zip"
+}
+
+end {
     # 构建结束
     Write-Host "------------------------------- 构建:结束 -------------------------------"
 }
-
-end {}
