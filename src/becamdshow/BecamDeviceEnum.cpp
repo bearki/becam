@@ -2,8 +2,9 @@
 #include "BecamDeviceEnum.hpp"
 #include "BecamAmMediaType.hpp"
 #include "BecamMonikerPropReader.hpp"
-#include <pkg/StringConvert.hpp>
 #include <iostream>
+#include <pkg/StringConvert.hpp>
+#include <vector>
 
 /**
  * @implements 实现构造函数
@@ -128,8 +129,7 @@ StatusCode BecamDeviceEnum::GetMonikerFriendlyName(IMoniker* moniker, std::strin
 	}
 
 	// UTF16转换为UTF8
-	// 一般可以加一下第二个参数，顺便切换编码
-	friendlyName = WcharToChar(res.second.bstrVal, CP_UTF8);
+	friendlyName = WStringToString(res.second.bstrVal);
 
 	// OK
 	return StatusCode::STATUS_CODE_SUCCESS;
@@ -155,8 +155,7 @@ StatusCode BecamDeviceEnum::GetMonikerDevicePath(IMoniker* moniker, std::string&
 	}
 
 	// UTF16转换为UTF8
-	// 一般可以加一下第二个参数，顺便切换编码
-	devicePath = WcharToChar(res.second.bstrVal, CP_UTF8);
+	devicePath = WStringToString(res.second.bstrVal);
 
 	// OK
 	return StatusCode::STATUS_CODE_SUCCESS;
@@ -384,7 +383,8 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 		VideoFrameInfo info = {0};
 		info.width = videoInfoHdr->bmiHeader.biWidth;		 // 提取宽度
 		info.height = videoInfoHdr->bmiHeader.biHeight;		 // 提取高度
-		info.fps = 10000000 / videoInfoHdr->AvgTimePerFrame; // 提取帧率
+		auto fps = 10000000 / videoInfoHdr->AvgTimePerFrame; // 提取帧率
+		info.fps = static_cast<uint32_t>(fps);
 		info.format = videoInfoHdr->bmiHeader.biCompression; // 提取格式
 		// 插入到列表中
 		replyVec.insert(replyVec.end(), info);
@@ -430,7 +430,8 @@ StatusCode BecamDeviceEnum::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 	auto res = captureOuputPin->QueryInterface(IID_IAMStreamConfig, (void**)&streamConfig);
 	if (FAILED(res)) {
 		// 获取流配置失败
-		std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res << std::endl;
+		std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res
+				  << std::endl;
 		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
 	}
 

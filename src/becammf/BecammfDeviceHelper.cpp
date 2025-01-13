@@ -109,7 +109,7 @@ StatusCode BecammfDeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& replyS
 		WCHAR* friendlyNameW = nullptr;
 		UINT32 friendlyNameLength = 0;
 		device->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &friendlyNameW, &friendlyNameLength);
-		auto friendlyName = WcharToChar(friendlyNameW, CP_UTF8);
+		auto friendlyName = WStringToString(friendlyNameW);
 		if (friendlyNameW != nullptr) {
 			CoTaskMemFree(friendlyNameW);
 		}
@@ -124,7 +124,7 @@ StatusCode BecammfDeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& replyS
 			// 忽略该设备，继续下一个设备
 			continue;
 		}
-		auto symbolicLink = WcharToChar(symbolicLinkW, CP_UTF8);
+		auto symbolicLink = WStringToString(symbolicLinkW);
 		if (symbolicLinkW != nullptr) {
 			CoTaskMemFree(symbolicLinkW);
 		}

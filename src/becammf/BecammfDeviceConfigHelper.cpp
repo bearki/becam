@@ -149,12 +149,12 @@ StatusCode BecammfDeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply
 		}
 
 		// 添加到列表中
-		frameList.push_back(VideoFrameInfo{
-			format : frameFormat,
-			width : width,
-			height : height,
-			fps : numerator / denominator,
-		});
+		auto info = VideoFrameInfo{0};
+		info.format = frameFormat;
+		info.width = width;
+		info.height = height;
+		info.fps = numerator / denominator;
+		frameList.push_back(info);
 
 		// 释放媒体资源类型
 		SafeRelease(&pType);

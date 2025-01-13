@@ -12,6 +12,11 @@ if (NOT CMAKE_SYSTEM_NAME)
     set(CMAKE_SYSTEM_PROCESSOR x86_64)
 endif()
 
+# 修复MSVC编译警告
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 # 设置编译后的静态库文件的输出目录
 set(ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
 # 设置编译后的动态库文件的输出目录
@@ -37,8 +42,10 @@ message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 # 根据条件添加子目录
 if(CMAKE_SYSTEM_NAME MATCHES "Windows") # windows环境下需要编译的内容
     # 增加子目录
-    add_subdirectory(${CMAKE_SOURCE_DIR}/src/becamdshow)
-    add_subdirectory(${CMAKE_SOURCE_DIR}/test/becamdshow)
+    if(MINGW)
+        add_subdirectory(${CMAKE_SOURCE_DIR}/src/becamdshow)
+        add_subdirectory(${CMAKE_SOURCE_DIR}/test/becamdshow)
+    endif()
     add_subdirectory(${CMAKE_SOURCE_DIR}/src/becammf)
     add_subdirectory(${CMAKE_SOURCE_DIR}/test/becammf)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Linux") # linux环境下需要编译的内容

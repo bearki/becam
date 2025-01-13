@@ -60,7 +60,7 @@ StatusCode BecamMediaFoundation::GetDeviceConfigList(const std::string devicePat
 	}
 
 	// 初始化设备助手类
-	auto deviceHelper = BecammfDeviceHelper();
+	BecammfDeviceHelper deviceHelper;
 	// 激活指定设备
 	auto code = deviceHelper.ActivateDevice(devicePath);
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
