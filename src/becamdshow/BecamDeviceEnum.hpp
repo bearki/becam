@@ -107,11 +107,11 @@ public:
 	 * @brief 获取设备支持的流能力
 	 *
 	 * @param moniker [in]设备实例
-	 * @param reply [out] 设备流能力列表
-	 * @param replySize [out] 设备流能力列表大小
+	 * @param reply [out] 视频帧信息列表引用
+	 * @param replySize [out] 视频帧信息列表大小引用
 	 * @return 状态码
 	 */
-	static StatusCode GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInfo** reply, size_t* replySize);
+	static StatusCode GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInfo*& reply, size_t& replySize);
 
 	/**
 	 * @brief 设置设备支持的流能力

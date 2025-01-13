@@ -1,0 +1,91 @@
+#include "BecamMediaFoundation.hpp"
+#include <becam/becam.h>
+
+/**
+ * @implements 实现初始化Becam接口句柄
+ */
+BecamHandle BecamNew() {
+	// 创建Becam接口句柄
+	return new BecamMediaFoundation();
+}
+
+/**
+ * @implements 实现释放Becam接口句柄
+ */
+void BecamFree(BecamHandle* handle) {
+	// 检查参数
+	if (handle == nullptr || *handle == nullptr) {
+		// 参数错误
+		return;
+	}
+
+	// 获取Becam接口句柄
+	auto becamHandle = static_cast<BecamMediaFoundation*>(*handle);
+	// 释放Becam接口句柄
+	delete becamHandle;
+
+	// 置空
+	becamHandle = nullptr;
+	*handle = nullptr;
+}
+
+/**
+ * @implements 实现获取设备列表
+ */
+StatusCode BecamGetDeviceList(BecamHandle handle, GetDeviceListReply* reply) {
+	// 检查句柄
+	if (handle == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
+	}
+
+	// 转换句柄类型
+	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
+	// 获取相机列表
+	return becamHandle->GetDeviceList(reply);
+}
+
+/**
+ * @implements 实现释放设备列表
+ */
+void BecamFreeDeviceList(BecamHandle handle, GetDeviceListReply* input) {
+	// 检查句柄
+	if (handle == nullptr) {
+		return;
+	}
+	// 转换句柄类型
+	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
+	// 执行相机列表释放
+	becamHandle->FreeDeviceList(input);
+}
+
+/**
+ * @implements 实现获取设备配置列表
+ */
+StatusCode BecamGetDeviceConfigList(BecamHandle handle, const char* devicePath, GetDeviceConfigListReply* reply) {
+	// 检查句柄
+	if (handle == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
+	}
+	// 检查设备路径
+	if (devicePath == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
+	// 转换句柄类型
+	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
+	// 执行获取设备配置列表
+	return becamHandle->GetDeviceConfigList(devicePath, reply);
+}
+
+/**
+ * @implements 实现释放设备配置列表
+ */
+void BecamFreeDeviceConfigList(BecamHandle handle, GetDeviceConfigListReply* input) {
+	// 检查句柄
+	if (handle == nullptr) {
+		return;
+	}
+	// 转换句柄类型
+	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
+	// 执行相机配置列表释放
+	becamHandle->FreeDeviceConfigList(input);
+}

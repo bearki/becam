@@ -7,12 +7,6 @@ link_libraries(strmiids)
 # 配置静态库生成参数
 add_library(becamdshow_static STATIC ${SOURCES})
 set_target_properties(becamdshow_static PROPERTIES OUTPUT_NAME "becamdshow")
-
-# 检查是否使用MinGW编译器
-if(MINGW)
-    # 设置动态库后缀为.dll
-    set(CMAKE_SHARED_LIBRARY_SUFFIX ".dll")
-endif()
 # 配置动态库生成参数
 add_library(becamdshow_shared SHARED ${SOURCES})
 set_target_properties(becamdshow_shared PROPERTIES OUTPUT_NAME "becamdshow")

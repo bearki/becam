@@ -11,6 +11,8 @@ int main() {
 			std::cerr << "Failed to initialize handle." << std::endl;
 			return 1;
 		}
+		// OK
+		std::cout << "OK" << std::endl;
 		// 释放句柄
 		BecamFree(&handle);
 	}

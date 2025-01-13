@@ -1,7 +1,7 @@
 #include "BecamDirectShow.hpp"
 #include "BecamAmMediaType.hpp"
 #include "BecamMonikerPropReader.hpp"
-#include "BecamStringConvert.hpp"
+#include <pkg/StringConvert.hpp>
 
 #include "BecamDeviceEnum.hpp"
 #include <vector>
@@ -117,18 +117,18 @@ void BecamDirectShow::FreeDeviceList(GetDeviceListReply* input) {
 		auto item = input->deviceInfoList[i];
 		// 释放友好名称
 		if (item.name != nullptr) {
-			delete item.name;
+			delete[] item.name;
 			item.name = nullptr;
 		}
 		// 释放设备路径
 		if (item.devicePath != nullptr) {
-			delete item.devicePath;
+			delete[] item.devicePath;
 			item.devicePath = nullptr;
 		}
 	}
 
 	// 释放整个列表
-	delete input->deviceInfoList;
+	delete[] input->deviceInfoList;
 	input->deviceInfoListSize = 0;
 	input->deviceInfoList = nullptr;
 }
@@ -158,7 +158,7 @@ StatusCode BecamDirectShow::GetDeviceConfigList(const std::string devicePath, Ge
 	// 获取设备流能力
 	VideoFrameInfo* list = nullptr;
 	size_t listSize = 0;
-	code = BecamDeviceEnum::GetDeviceStreamCaps(moniker, &list, &listSize);
+	code = BecamDeviceEnum::GetDeviceStreamCaps(moniker, list, listSize);
 	// 释放设备实例
 	moniker->Release();
 	moniker = nullptr;
@@ -187,7 +187,7 @@ void BecamDirectShow::FreeDeviceConfigList(GetDeviceConfigListReply* input) {
 		return;
 	}
 	// 释放整个列表
-	delete input->videoFrameInfoList;
+	delete[] input->videoFrameInfoList;
 	input->videoFrameInfoListSize = 0;
 	input->videoFrameInfoList = nullptr;
 }

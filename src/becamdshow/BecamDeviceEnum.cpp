@@ -2,7 +2,7 @@
 #include "BecamDeviceEnum.hpp"
 #include "BecamAmMediaType.hpp"
 #include "BecamMonikerPropReader.hpp"
-#include "BecamStringConvert.hpp"
+#include <pkg/StringConvert.hpp>
 #include <iostream>
 
 /**
@@ -352,9 +352,9 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IBaseFilter* captureFilter, std:
 /**
  * @implements 实现获取设备支持的流能力
  */
-StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInfo** reply, size_t* replySize) {
+StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInfo*& reply, size_t& replySize) {
 	// 检查参数
-	if (moniker == nullptr || reply == nullptr || replySize == nullptr) {
+	if (moniker == nullptr) {
 		// 参数错误
 		return StatusCode::STATUS_CODE_ERR_INTERNAL_PARAM;
 	}
@@ -371,8 +371,8 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	}
 
 	// 置零
-	*reply = nullptr;
-	*replySize = 0;
+	reply = nullptr;
+	replySize = 0;
 	// 声明vector
 	std::vector<VideoFrameInfo> replyVec;
 
@@ -406,9 +406,9 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	// 是否查询到有效流能力
 	if (replyVec.size() > 0) {
 		// 拷贝有效列表
-		*replySize = replyVec.size();
-		*reply = new VideoFrameInfo[replyVec.size()];
-		memcpy(*reply, replyVec.data(), replyVec.size() * sizeof(VideoFrameInfo));
+		replySize = replyVec.size();
+		reply = new VideoFrameInfo[replySize];
+		memcpy(reply, replyVec.data(), replySize * sizeof(VideoFrameInfo));
 	}
 
 	// OK

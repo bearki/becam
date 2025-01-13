@@ -1,0 +1,85 @@
+#include "BecamMediaFoundation.hpp"
+#include "BecammfDeviceHelper.hpp"
+#include <mfapi.h>
+#include <mfidl.h>
+#include <pkg/SafeRelease.hpp>
+#include <pkg/StringConvert.hpp>
+
+/**
+ * @implements 实现构造函数
+ */
+BecamMediaFoundation::BecamMediaFoundation() {}
+
+/**
+ * @implements 实现析构函数
+ */
+BecamMediaFoundation::~BecamMediaFoundation() {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 释放已打开的设备
+	// if (this->openedDevice != nullptr) {
+	// 	delete this->openedDevice;
+	// 	this->openedDevice = nullptr;
+	// }
+}
+
+/**
+ * @implements 实现获取设备列表
+ */
+StatusCode BecamMediaFoundation::GetDeviceList(GetDeviceListReply* reply) {
+	// 检查入参
+	if (reply == nullptr) {
+		return StatusCode::STATUS_CODE_MF_ERR_INPUT_PARAM;
+	}
+	// 执行设备列表获取
+	return BecammfDeviceHelper::GetDeviceList(reply->deviceInfoList, reply->deviceInfoListSize);
+}
+
+/**
+ * @implements 实现释放设备列表
+ */
+void BecamMediaFoundation::FreeDeviceList(GetDeviceListReply* input) {
+	// 检查
+	if (input == nullptr) {
+		return;
+	}
+	// 执行释放
+	BecammfDeviceHelper::FreeDeviceList(input->deviceInfoList, input->deviceInfoListSize);
+}
+
+/**
+ * @implements 实现获取设备配置列表
+ */
+StatusCode BecamMediaFoundation::GetDeviceConfigList(const std::string devicePath, GetDeviceConfigListReply* reply) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 检查入参
+	if (devicePath.empty() || reply == nullptr) {
+		return StatusCode::STATUS_CODE_MF_ERR_INPUT_PARAM;
+	}
+
+	// 初始化设备助手类
+	auto deviceHelper = BecammfDeviceHelper();
+	// 激活指定设备
+	auto code = deviceHelper.ActivateDevice(devicePath);
+	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		return code;
+	}
+
+	// 获取该设备支持的配置
+	return deviceHelper.GetCurrentDeviceConfigList(reply->videoFrameInfoList, reply->videoFrameInfoListSize);
+}
+
+/**
+ * @implements 实现释放设备配置列表
+ */
+void BecamMediaFoundation::FreeDeviceConfigList(GetDeviceConfigListReply* input) {
+	// 检查
+	if (input == nullptr) {
+		return;
+	}
+	// 执行释放
+	BecammfDeviceHelper::FreeDeviceConfigList(input->videoFrameInfoList, input->videoFrameInfoListSize);
+}

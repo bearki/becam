@@ -12,32 +12,55 @@ typedef void* BecamHandle;
 
 // StatusCode 状态码定义
 typedef enum {
-	STATUS_CODE_SUCCESS,					 // 成功
-	STATUS_CODE_NOT_FOUND_DEVICE,			 // 未找到设备
-	STATUS_CODE_ERR_HANDLE_EMPTY,			 // Becam接口句柄未初始化
-	STATUS_CODE_ERR_INPUT_PARAM,			 // 传入参数错误
-	STATUS_CODE_ERR_INTERNAL_PARAM,			 // 内部参数错误
-	STATUS_CODE_ERR_INIT_COM,				 // 初始化COM库失败
-	STATUS_CODE_ERR_CREATE_ENUMERATOR,		 // 创建设备枚举器失败
-	STATUS_CODE_ERR_DEVICE_ENUM,			 // 设备枚举失败
-	STATUS_CODE_ERR_GET_DEVICE_PROP,		 // 获取设备属性失败
-	STATUS_CODE_ERR_GET_STREAM_CAPS,		 // 获取设备流能力失败
-	STATUS_CODE_ERR_NOMATCH_STREAM_CAPS,	 // 未匹配到流能力
-	STATUS_CODE_ERR_SET_MEDIA_TYPE,			 // 设置媒体类型失败
-	STATUS_CODE_ERR_SELECTED_DEVICE,		 // 选择设备失败
-	STATUS_CODE_ERR_CREATE_GRAPH_BUILDER,	 // 创建图像构建器失败
-	STATUS_CODE_ERR_ADD_CAPTURE_FILTER,		 // 添加捕获过滤器到图像构建器失败
-	STATUS_CODE_ERR_CREATE_SAMPLE_GRABBER,	 // 创建样品采集器失败
-	STATUS_CODE_ERR_GET_SAMPLE_GRABBER_INFC, // 获取样品采集器接口失败
-	STATUS_CODE_ERR_ADD_SAMPLE_GRABBER,		 // 添加样品采集器到图像构建器失败
-	STATUS_CODE_ERR_CREATE_MEDIA_CONTROL,	 // 创建媒体控制器失败
-	STATUS_CODE_ERR_CREATE_NULL_RENDER,		 // 创建空渲染器失败
-	STATUS_CODE_ERR_ADD_NULL_RENDER,		 // 添加空渲染器到图像构建器失败
-	STATUS_CODE_ERR_CAPTURE_GRABBER,		 // 连接捕获器和采集器失败
-	STATUS_CODE_ERR_GRABBER_RENDER,			 // 连接采集器和渲染器失败
-	STATUS_CODE_ERR_DEVICE_NOT_OPEN,		 // 设备未打开
-	STATUS_CODE_ERR_FRAME_EMPTY,			 // 视频帧为空
-	STATUS_CODE_ERR_FRAME_NOT_UPDATE,		 // 视频帧未更新
+	STATUS_CODE_SUCCESS,					   // 成功
+	/**
+	 * Direct Show 异常
+	 */
+	STATUS_CODE_NOT_FOUND_DEVICE,			   // 未找到设备
+	STATUS_CODE_ERR_HANDLE_EMPTY,			   // Becam接口句柄未初始化
+	STATUS_CODE_ERR_INPUT_PARAM,			   // 传入参数错误
+	STATUS_CODE_ERR_INTERNAL_PARAM,			   // 内部参数错误
+	STATUS_CODE_ERR_INIT_COM,				   // 初始化COM库失败
+	STATUS_CODE_ERR_CREATE_ENUMERATOR,		   // 创建设备枚举器失败
+	STATUS_CODE_ERR_DEVICE_ENUM,			   // 设备枚举失败
+	STATUS_CODE_ERR_GET_DEVICE_PROP,		   // 获取设备属性失败
+	STATUS_CODE_ERR_GET_STREAM_CAPS,		   // 获取设备流能力失败
+	STATUS_CODE_ERR_NOMATCH_STREAM_CAPS,	   // 未匹配到流能力
+	STATUS_CODE_ERR_SET_MEDIA_TYPE,			   // 设置媒体类型失败
+	STATUS_CODE_ERR_SELECTED_DEVICE,		   // 选择设备失败
+	STATUS_CODE_ERR_CREATE_GRAPH_BUILDER,	   // 创建图像构建器失败
+	STATUS_CODE_ERR_ADD_CAPTURE_FILTER,		   // 添加捕获过滤器到图像构建器失败
+	STATUS_CODE_ERR_CREATE_SAMPLE_GRABBER,	   // 创建样品采集器失败
+	STATUS_CODE_ERR_GET_SAMPLE_GRABBER_INFC,   // 获取样品采集器接口失败
+	STATUS_CODE_ERR_ADD_SAMPLE_GRABBER,		   // 添加样品采集器到图像构建器失败
+	STATUS_CODE_ERR_CREATE_MEDIA_CONTROL,	   // 创建媒体控制器失败
+	STATUS_CODE_ERR_CREATE_NULL_RENDER,		   // 创建空渲染器失败
+	STATUS_CODE_ERR_ADD_NULL_RENDER,		   // 添加空渲染器到图像构建器失败
+	STATUS_CODE_ERR_CAPTURE_GRABBER,		   // 连接捕获器和采集器失败
+	STATUS_CODE_ERR_GRABBER_RENDER,			   // 连接采集器和渲染器失败
+	STATUS_CODE_ERR_DEVICE_NOT_OPEN,		   // 设备未打开
+	STATUS_CODE_ERR_FRAME_EMPTY,			   // 视频帧为空
+	STATUS_CODE_ERR_FRAME_NOT_UPDATE,		   // 视频帧未更新
+	/**
+	 * Media Foundation 异常
+	 */
+	STATUS_CODE_MF_ERR_INPUT_PARAM,			   // MediaFoundation异常：传入参数错误
+	STATUS_CODE_MF_ERR_CREATE_ATTR_STORE,	   // MediaFoundation异常：创建属性存储器失败
+	STATUS_CODE_MF_ERR_SET_ATTR_STORE,		   // MediaFoundation异常：赋值属性存储器失败
+	STATUS_CODE_MF_ERR_DEVICE_ENUM,			   // MediaFoundation异常：枚举设备失败
+	STATUS_CODE_MF_ERR_CREATE_DEVICE_SOURCE,   // MediaFoundation异常：创建设备源失败
+	STATUS_CODE_MF_ERR_DEVICE_UNACTIVATE,	   // MediaFoundation异常：未激活设备
+	STATUS_CODE_MF_ERR_CREATE_PRESENT_DESC,	   // MediaFoundation异常：获取设备获取演示文稿描述符失败
+	STATUS_CODE_MF_ERR_GET_STREAM_DESC,		   // MediaFoundation异常：获取设备视频流的流描述符失败
+	STATUS_CODE_MF_ERR_GET_MEDIA_TYPE_HANDLER, // MediaFoundation异常：获取媒体类型处理器失败
+	STATUS_CODE_MF_ERR_GET_MEDIA_TYPE_COUNT,   // MediaFoundation异常：获取媒体类型总数量失败
+
+	STATUS_CODE_MF_ERR_GET_MEDIA_TYPE,		   // MediaFoundation异常：获取媒体类型失败
+	STATUS_CODE_MF_ERR_GET_FRAME_FOTMAT,	   // MediaFoundation异常：获取视频帧格式失败
+	STATUS_CODE_MF_ERR_GET_FRAME_SIZE,		   // MediaFoundation异常：获取视频帧分辨率失败
+	STATUS_CODE_MF_ERR_GET_FRAME_RATE,		   // MediaFoundation异常：获取视频帧刷新率失败
+
+	
 } StatusCode;
 
 // VideoFrameInfo 视频帧信息
