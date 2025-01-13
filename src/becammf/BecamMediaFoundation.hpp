@@ -3,11 +3,12 @@
 #ifndef _BECAMMF_MEDIA_FOUNDATION_H_
 #define _BECAMMF_MEDIA_FOUNDATION_H_
 
-#include <mutex>
+#include "BecammfDeviceHelper.hpp"
 #include <becam/becam.h>
 #include <dshow.h>
 #include <functional>
 #include <iostream>
+#include <mutex>
 
 /**
  * @brief 基于Media Foundation实现Becam接口
@@ -18,7 +19,7 @@ private:
 	// 声明互斥锁
 	std::mutex mtx;
 	// 已打开设备实例
-	// BecamOpenedDevice* openedDevice = nullptr;
+	BecammfDeviceHelper* openedDevice = new BecammfDeviceHelper();
 
 public:
 	/**

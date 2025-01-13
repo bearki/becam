@@ -23,7 +23,7 @@ BecammfDeviceHelper::BecammfDeviceHelper() {
  */
 BecammfDeviceHelper::~BecammfDeviceHelper() {
 	// 释放当前设备
-	this->ReleaseCurrent();
+	this->ReleaseCurrentDevice();
 	// COM库初始化成功时需要释放
 	if (SUCCEEDED(this->_ComInitResult)) {
 		// 释放Com库
@@ -39,14 +39,24 @@ BecammfDeviceHelper::~BecammfDeviceHelper() {
 /**
  * @implements 实现释放当前设备
  */
-void BecammfDeviceHelper::ReleaseCurrent() {
+void BecammfDeviceHelper::ReleaseCurrentDevice() {
+	// 已打开的设备源读取器需要释放
+	this->ReleaseCurrentDeviceReader();
 	// 已打开的设备需要关闭设备
 	if (this->activatedDevice != nullptr) {
 		// 关闭设备
-		activatedDevice->Shutdown();
+		this->activatedDevice->Shutdown();
 	}
-	// 释放设备
-	SafeRelease(&activatedDevice);
+	// 安全的释放设备
+	SafeRelease(&this->activatedDevice);
+}
+
+/**
+ * @implements 实现释放当前设备源读取器
+ */
+void BecammfDeviceHelper::ReleaseCurrentDeviceReader() {
+	// 安全释放设备源读取器
+	SafeRelease(&this->activatedReader);
 }
 
 /**
@@ -186,7 +196,7 @@ void BecammfDeviceHelper::FreeDeviceList(DeviceInfo*& input, size_t& inputSize) 
 /**
  * @implements 实现激活指定设备
  */
-StatusCode BecammfDeviceHelper::ActivateDevice(std::string devicePath) {
+StatusCode BecammfDeviceHelper::ActivateDevice(const std::string devicePath) {
 	// 参数检查
 	if (devicePath.empty()) {
 		return StatusCode::STATUS_CODE_MF_ERR_INPUT_PARAM;
@@ -196,30 +206,31 @@ StatusCode BecammfDeviceHelper::ActivateDevice(std::string devicePath) {
 	std::unique_lock<std::mutex> lock(this->mtx);
 
 	// 释放已激活的设备
-	this->ReleaseCurrent();
+	this->ReleaseCurrentDevice();
 
 	// 托管属性存储器，使其自动释放
 	auto attributesHelper = BecammfAttributesHelper();
 	// 创建属性存储器
 	HRESULT res = MFCreateAttributes(attributesHelper.AttributesAddress(), 1);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::Activate -> MFCreateAttributes() failed, HRESULT: " << res << std::endl;
+		std::cerr << "BecammfDeviceHelper::ActivateDevice -> MFCreateAttributes() failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_MF_ERR_CREATE_ATTR_STORE;
 	}
 
 	// 赋值设备属性类型
 	res = attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::Activate -> attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE) failed, "
-					 "HRESULT: "
-				  << res << std::endl;
+		std::cerr
+			<< "BecammfDeviceHelper::ActivateDevice -> attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE) failed, "
+			   "HRESULT: "
+			<< res << std::endl;
 		return StatusCode::STATUS_CODE_MF_ERR_SET_ATTR_STORE;
 	}
 	// 赋值设备属性符号链接
 	auto devicePathW = StringToWString(devicePath);
 	res = attributesHelper.Attributes()->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, (LPCWSTR)devicePathW.c_str());
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::Activate -> "
+		std::cerr << "BecammfDeviceHelper::ActivateDevice -> "
 					 "attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK) "
 					 "failed, HRESULT: "
 				  << res << std::endl;
@@ -229,7 +240,7 @@ StatusCode BecammfDeviceHelper::ActivateDevice(std::string devicePath) {
 	// 激活设备
 	res = MFCreateDeviceSource(attributesHelper.Attributes(), &this->activatedDevice);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::Activate -> MFCreateDeviceSource() failed, HRESULT: " << res << std::endl;
+		std::cerr << "BecammfDeviceHelper::ActivateDevice -> MFCreateDeviceSource() failed, HRESULT: " << res << std::endl;
 		return StatusCode::STATUS_CODE_MF_ERR_CREATE_DEVICE_SOURCE;
 	}
 
@@ -256,12 +267,240 @@ StatusCode BecammfDeviceHelper::GetCurrentDeviceConfigList(VideoFrameInfo*& repl
 }
 
 /**
- * @brief 释放已获取的设备支持的配置列表
- *
- * @param input [in && out] 已获取的视频帧信息列表引用
- * @param inputSize [in && out] 已获取的视频帧信息列表大小引用
+ * @implements 实现释放已获取的设备支持的配置列表
  */
 void BecammfDeviceHelper::FreeDeviceConfigList(VideoFrameInfo*& input, size_t& inputSize) {
 	// 执行释放
 	BecammfDeviceConfigHelper::FreeDeviceConfigList(input, inputSize);
+}
+
+/**
+ * @implements 实现激活设备源读取器
+ */
+StatusCode BecammfDeviceHelper::ActivateDeviceReader(const VideoFrameInfo frameInfo) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 检查设备是否已激活
+	if (this->activatedDevice == nullptr) {
+		return StatusCode::STATUS_CODE_MF_ERR_DEVICE_UNACTIVATE;
+	}
+
+	// 释放已存在的设备源读取器
+	this->ReleaseCurrentDeviceReader();
+
+	// 托管属性存储器，使其自动释放
+	auto attributesHelper = BecammfAttributesHelper();
+	// 创建属性对象
+	auto res = MFCreateAttributes(attributesHelper.AttributesAddress(), 1);
+	if (FAILED(res)) {
+		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> MFCreateAttributes() failed, HRESULT: " << res << std::endl;
+		return StatusCode::STATUS_CODE_MF_ERR_CREATE_ATTR_STORE;
+	}
+
+	// 设置低延迟模式
+	res = attributesHelper.Attributes()->SetUINT32(MF_LOW_LATENCY, true);
+	if (FAILED(res)) {
+		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> attributesHelper.Attributes()->SetUINT32(MF_LOW_LATENCY, true) failed, "
+					 "HRESULT: "
+				  << res << std::endl;
+		return StatusCode::STATUS_CODE_MF_ERR_SET_ATTR_STORE;
+	}
+
+	// 激活源读取器
+	res = MFCreateSourceReaderFromMediaSource(this->activatedDevice, attributesHelper.Attributes(), &this->activatedReader);
+	if (FAILED(res)) {
+		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> MFCreateSourceReaderFromMediaSource() failed, HRESULT: " << res
+				  << std::endl;
+		return StatusCode::STATUS_CODE_MF_ERR_CREATE_SOURCE_READER;
+	}
+
+	// 媒体资源类型索引下标
+	int typeIndex = 0;
+	// 查询到的媒体资源类型
+	IMFMediaType* pType = nullptr;
+	// TODO：不想遍历流索引，先固定为MF_SOURCE_READER_FIRST_VIDEO_STREAM吧
+	// 枚举设备支持的流格式
+	while (SUCCEEDED(this->activatedReader->GetNativeMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, typeIndex, &pType))) {
+		// 索引叠加
+		typeIndex++;
+
+		// 获取帧格式
+		GUID subtype;
+		res = pType->GetGUID(MF_MT_SUBTYPE, &subtype);
+		if (FAILED(res)) {
+			// 释放媒体资源类型
+			SafeRelease(&pType);
+			std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> pType->GetGUID(MF_MT_SUBTYPE, &subtype) "
+						 "failed, HRESULT: "
+					  << res << std::endl;
+			// 忽略，继续下一个
+			continue;
+		}
+		// 检查帧格式是否一致
+		if (BecammfDeviceConfigHelper::GuidToFourcc(subtype) != frameInfo.format) {
+			// 不一致，释放查询到的
+			SafeRelease(&pType);
+			// 忽略，继续下一个
+			continue;
+		}
+
+		// 获取帧大小
+		UINT32 width = 0;
+		UINT32 height = 0;
+		res = MFGetAttributeSize(pType, MF_MT_FRAME_SIZE, &width, &height);
+		if (FAILED(res)) {
+			// 释放媒体资源类型
+			SafeRelease(&pType);
+			std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> MFGetAttributeRatio(pType, MF_MT_FRAME_SIZE) "
+						 "failed, HRESULT: "
+					  << res << std::endl;
+			// 忽略，继续下一个
+			continue;
+		}
+		// 检查大小是否一致
+		if (width != frameInfo.width || height != frameInfo.height) {
+			// 不一致，释放查询到的
+			SafeRelease(&pType);
+			// 忽略，继续下一个
+			continue;
+		}
+
+		// 获取帧率
+		UINT32 numerator = 0;
+		UINT32 denominator = 0;
+		res = MFGetAttributeRatio(pType, MF_MT_FRAME_RATE, &numerator, &denominator);
+		if (FAILED(res)) {
+			// 释放媒体资源类型
+			SafeRelease(&pType);
+			std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> MFGetAttributeRatio(pType, MF_MT_FRAME_RATE) failed, HRESULT: "
+					  << res << std::endl;
+			// 忽略，继续下一个
+			continue;
+		}
+		// 检查帧率是否一致
+		if (numerator / denominator != frameInfo.fps) {
+			// 不一致，释放查询到的
+			SafeRelease(&pType);
+			// 忽略，继续下一个
+			continue;
+		}
+
+		// 查询成功，跳出查询，不释放媒体资源类型，保持对其的引用
+		break;
+	}
+
+	// 检查是否查询到对应的配置
+	if (pType == nullptr) {
+		return StatusCode::STATUS_CODE_MF_ERR_MEDIA_TYPE_NOT_FOUND;
+	}
+
+	// 设置输出格式
+	res = this->activatedReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, pType);
+	if (FAILED(res)) {
+		// 释放引用的媒体资源类型
+		SafeRelease(&pType);
+		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> SetCurrentMediaType() failed, HRESULT: " << res << std::endl;
+		return StatusCode::STATUS_CODE_MF_ERR_SET_MEDIA_TYPE;
+	}
+	// 释放引用的媒体资源类型
+	SafeRelease(&pType);
+
+	// OK
+	return StatusCode::STATUS_CODE_SUCCESS;
+}
+
+/**
+ * @implements 实现关闭设备
+ */
+void BecammfDeviceHelper::CloseDevice() {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 关闭当前设备
+	this->ReleaseCurrentDevice();
+}
+
+/**
+ * @implements 实现获取视频帧
+ */
+StatusCode BecammfDeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 检查设备是否已激活
+	if (this->activatedDevice == nullptr || this->activatedReader == nullptr) {
+		return StatusCode::STATUS_CODE_MF_ERR_DEVICE_UNACTIVATE;
+	}
+
+	// 声明一些要用的东西
+	DWORD streamIndex, sampleFlags;
+	LONGLONG timestamp;
+	IMFSample* pSample = nullptr;
+	// 读取一帧
+	auto res = this->activatedReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, &streamIndex, &sampleFlags, &timestamp, &pSample);
+	if (FAILED(res)) {
+		std::cerr
+			<< "BecammfDeviceHelper::GetFrame -> this->activatedReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM) failed, HRESULT: "
+			<< res << std::endl;
+		return StatusCode::STATUS_CODE_MF_ERR_GET_FRAME;
+	}
+
+	// 是否读取到帧
+	if (pSample == nullptr) {
+		return StatusCode::STATUS_CODE_MF_ERR_GET_FRAME_EMPTY;
+	}
+
+	// 获取媒体缓冲区
+	IMFMediaBuffer* pBuffer = nullptr;
+	res = pSample->ConvertToContiguousBuffer(&pBuffer);
+	if (FAILED(res)) {
+		// 安全释放帧
+		SafeRelease(&pSample);
+		std::cerr << "BecammfDeviceHelper::GetFrame -> pSample->ConvertToContiguousBuffer() failed, HRESULT: " << res << std::endl;
+		return StatusCode::STATUS_CODE_MF_ERR_CONVERT_FRAME_BUFFER;
+	}
+
+	// 锁定缓冲区并获取数据指针
+	BYTE* pData = nullptr;
+	DWORD bufferLength = 0;
+	res = pBuffer->Lock(&pData, nullptr, &bufferLength);
+	if (FAILED(res)) {
+		// 安全释放缓冲区
+		SafeRelease(&pBuffer);
+		// 安全释放帧
+		SafeRelease(&pSample);
+		std::cerr << "BecammfDeviceHelper::GetFrame -> pBuffer->Lock() failed, HRESULT: " << res << std::endl;
+		return StatusCode::STATUS_CODE_MF_ERR_LOCK_FRAME_BUFFER;
+	}
+
+	// 是否需要拷贝缓冲区
+	if (bufferLength > 0) {
+		// 拷贝缓冲区
+		replySize = bufferLength;
+		reply = new uint8_t[replySize];
+		memcpy(reply, pData, replySize);
+	}
+
+	// 解锁缓冲区
+	pBuffer->Unlock();
+	// 安全释放缓冲区
+	SafeRelease(&pBuffer);
+	// 安全释放帧
+	SafeRelease(&pSample);
+
+	// OK
+	return StatusCode::STATUS_CODE_SUCCESS;
+}
+
+/**
+ * @implements 实现释放已获取的视频帧
+ */
+void BecammfDeviceHelper::FreeFrame(uint8_t*& reply) {
+	if (reply == nullptr) {
+		return;
+	}
+
+	delete[] reply;
+	reply = nullptr;
 }

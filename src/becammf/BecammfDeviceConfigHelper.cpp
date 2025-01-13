@@ -1,5 +1,6 @@
 #include "BecammfDeviceConfigHelper.hpp"
 #include <iostream>
+#include <mfreadwrite.h>
 #include <vector>
 
 /**
@@ -66,6 +67,7 @@ StatusCode BecammfDeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply
 
 	// 获取视频流的流描述符
 	BOOL fSelected = false;
+	// TODO：不想遍历流索引，先固定为0吧
 	res = this->pPD->GetStreamDescriptorByIndex(0, &fSelected, &this->pSD);
 	if (FAILED(res)) {
 		std::cerr << "BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pPD->GetStreamDescriptorByIndex(0, &fSelected, &this->pSD) "

@@ -1,5 +1,4 @@
 #include "BecamMediaFoundation.hpp"
-#include "BecammfDeviceHelper.hpp"
 #include <mfapi.h>
 #include <mfidl.h>
 #include <pkg/SafeRelease.hpp>
@@ -18,10 +17,10 @@ BecamMediaFoundation::~BecamMediaFoundation() {
 	std::unique_lock<std::mutex> lock(this->mtx);
 
 	// 释放已打开的设备
-	// if (this->openedDevice != nullptr) {
-	// 	delete this->openedDevice;
-	// 	this->openedDevice = nullptr;
-	// }
+	if (this->openedDevice != nullptr) {
+		delete this->openedDevice;
+		this->openedDevice = nullptr;
+	}
 }
 
 /**
@@ -82,4 +81,67 @@ void BecamMediaFoundation::FreeDeviceConfigList(GetDeviceConfigListReply* input)
 	}
 	// 执行释放
 	BecammfDeviceHelper::FreeDeviceConfigList(input->videoFrameInfoList, input->videoFrameInfoListSize);
+}
+
+/**
+ * @implements 实现打开指定设备
+ */
+StatusCode BecamMediaFoundation::OpenDevice(const std::string devicePath, const VideoFrameInfo* frameInfo) {
+	// 检查参数
+	if (devicePath.empty() || frameInfo == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
+
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 关闭已打开的设备
+	this->openedDevice->CloseDevice();
+
+	// 激活设备
+	auto code = this->openedDevice->ActivateDevice(devicePath);
+	if (code != StatusCode::STATUS_CODE_SUCCESS) {
+		return code;
+	}
+	// 激活设备源读取器
+	return this->openedDevice->ActivateDeviceReader(*frameInfo);
+}
+
+/**
+ * @implements 实现关闭设备
+ */
+void BecamMediaFoundation::CloseDevice() {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 关闭已打开的设备
+	if (this->openedDevice != nullptr) {
+		this->openedDevice->CloseDevice();
+	}
+}
+
+/**
+ * @implements 实现获取视频帧
+ */
+StatusCode BecamMediaFoundation::GetFrame(uint8_t** data, size_t* size) {
+	// 检查参数
+	if (data == nullptr || size == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
+
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 检查设备是否已打开
+	return this->openedDevice->GetFrame(*data, *size);
+}
+
+/**
+ * @implements 实现释放视频帧
+ */
+void BecamMediaFoundation::FreeFrame(uint8_t** data) {
+	if (data == nullptr) {
+		return;
+	}
+	BecammfDeviceHelper::FreeFrame(*data);
 }

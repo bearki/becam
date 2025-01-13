@@ -2,6 +2,7 @@
 
 #include <becam/becam.h>
 #include <mfidl.h>
+#include <mfreadwrite.h>
 #include <mutex>
 #include <pkg/SafeRelease.hpp>
 #include <string>
@@ -22,11 +23,18 @@ private:
 	HRESULT _MFStartupResult;
 	// 已激活的设备（内部管理）
 	IMFMediaSource* activatedDevice = nullptr;
+	// 当前已激活的源读取器
+	IMFSourceReader* activatedReader = nullptr;
 
 	/**
 	 * @brief 释放当前设备
 	 */
-	void ReleaseCurrent();
+	void ReleaseCurrentDevice();
+
+	/**
+	 * @brief 释放当前设备源读取器
+	 */
+	void ReleaseCurrentDeviceReader();
 
 public:
 	/**
@@ -62,7 +70,7 @@ public:
 	 * @param devicePath [in] 设备符号链接地址
 	 * @return 状态码
 	 */
-	StatusCode ActivateDevice(std::string devicePath);
+	StatusCode ActivateDevice(const std::string devicePath);
 
 	/**
 	 * @brief 获取当前设备支持的配置列表
@@ -80,6 +88,35 @@ public:
 	 * @param inputSize [in && out] 已获取的视频帧信息列表大小引用
 	 */
 	static void FreeDeviceConfigList(VideoFrameInfo*& input, size_t& inputSize);
+
+	/**
+	 * @brief 激活设备源读取器
+	 *
+	 * @param frameInfo	[in] 要激活的视频帧信息
+	 * @return 状态码
+	 */
+	StatusCode ActivateDeviceReader(const VideoFrameInfo frameInfo);
+
+	/**
+	 * @brief 关闭设备
+	 */
+	void CloseDevice();
+
+	/**
+	 * @brief 获取视频帧
+	 *
+	 * @param reply [out] 视频帧数据引用
+	 * @param replySize [out] 视频帧数据大小引用
+	 * @return 状态码
+	 */
+	StatusCode GetFrame(uint8_t*& reply, size_t& replySize);
+
+	/**
+	 * @brief 释放已获取的视频帧
+	 *
+	 * @param input [in && out] 已获取的视频帧数据引用
+	 */
+	static void FreeFrame(uint8_t*& reply);
 };
 
 #endif
