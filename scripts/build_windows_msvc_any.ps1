@@ -8,10 +8,10 @@ param (
     # RelWithDebInfo: 这在某种程度上是前两者的折衷。它的目标是使性能接近于发布版本，但仍然允许一定程度的调试。
     # MinSizeRel: 这种构建类型通常只用于受限制的资源环境，如嵌入式设备。
     [string] $BuildType = "Debug",
-    # 编译架构（i686、x86_64）
-    [string] $BuildArch = "i686",
+    # 编译架构（x86、x64、arm、arm64）
+    [string] $BuildArch = "x86",
     # 工具链
-    [string] $Toolchain = (Resolve-Path -Path "C:\MinGW\mingw32")
+    [string] $Toolchain = (Resolve-Path -Path "D:\Microsoft Visual Studio\2022\Community")
 )
 
 begin {
@@ -73,6 +73,8 @@ process {
 
     # 执行压缩
     Compress-Archive -Path "${ProjectRootPath}/dist/libbecamdshow_windows_${BuildArch}/*" -DestinationPath "${ProjectRootPath}/dist/libbecamdshow_windows_${BuildArch}.zip"
+    # 执行压缩
+    Compress-Archive -Path "${ProjectRootPath}/dist/libbecammf_windows_${BuildArch}/*" -DestinationPath "${ProjectRootPath}/dist/libbecammf_windows_${BuildArch}.zip"
 }
 
 end {

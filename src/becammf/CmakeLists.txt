@@ -1,6 +1,9 @@
 # 配置相关源文件
 file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
+# 声明最低支持的平台为Win7（Win8才支持低延迟配置）
+add_compile_definitions(_WIN32_WINNT=0x0601)
+
 # 配置链接库
 link_libraries(mf mfplat mfuuid mfreadwrite)
 

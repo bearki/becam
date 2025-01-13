@@ -298,6 +298,8 @@ StatusCode BecammfDeviceHelper::ActivateDeviceReader(const VideoFrameInfo frameI
 		return StatusCode::STATUS_CODE_MF_ERR_CREATE_ATTR_STORE;
 	}
 
+// 条件设置低延迟模式
+#if (_WIN32_WINNT >= _WIN32_WINNT_WIN8)
 	// 设置低延迟模式
 	res = attributesHelper.Attributes()->SetUINT32(MF_LOW_LATENCY, true);
 	if (FAILED(res)) {
@@ -306,6 +308,7 @@ StatusCode BecammfDeviceHelper::ActivateDeviceReader(const VideoFrameInfo frameI
 				  << res << std::endl;
 		return StatusCode::STATUS_CODE_MF_ERR_SET_ATTR_STORE;
 	}
+#endif
 
 	// 激活源读取器
 	res = MFCreateSourceReaderFromMediaSource(this->activatedDevice, attributesHelper.Attributes(), &this->activatedReader);

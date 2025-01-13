@@ -1,0 +1,9 @@
+*.h eol=lf
+*.c eol=lf
+*.hpp eol=lf
+*.cpp eol=lf
+*.txt eol=lf
+*.md eol=lf
+.clang-format eol=lf
+.git* eol=lf
+*.json eol=lf
