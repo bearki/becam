@@ -11,7 +11,7 @@
 #define _BECAMMF_DEVICE_HELPER_H_
 
 /**
- * Media Foundation设备助手类
+ * Media Foundation 设备助手类
  */
 class BecammfDeviceHelper {
 private:

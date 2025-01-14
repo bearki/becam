@@ -53,6 +53,7 @@
         "thread": "cpp",
         "fstream": "cpp",
         "codecvt": "cpp",
-        "map": "cpp"
-    }
+        "map": "cpp",
+        "sstream": "cpp"
+    },
 }

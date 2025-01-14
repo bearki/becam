@@ -6,7 +6,6 @@
 #include <codecvt>
 #include <locale>
 #include <string>
-#include <stringapiset.h>
 
 /**
  * @brief 将 std::string 转换为 std::wstring
@@ -30,6 +29,39 @@ static std::string WStringToString(const std::wstring& str) {
 	std::string dstStr = converter.to_bytes(str);
 	// 返回
 	return dstStr;
+}
+
+/**
+ * @brief 移除字符串左侧的空格
+ *
+ * @param str 原始字符串
+ * @return 处理后的字符串
+ */
+static std::string TrimLeftSpace(const std::string& str) {
+	auto it = std::find_if(str.begin(), str.end(), [](unsigned char ch) { return !std::isspace(ch); });
+	return std::string(it, str.end());
+}
+
+/**
+ * @brief 移除字符串右侧的空格
+ *
+ * @param str 原始字符串
+ * @return 处理后的字符串
+ */
+static std::string TrimRightSpace(const std::string& str) {
+	auto it = std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base();
+	return std::string(str.begin(), it);
+}
+
+/**
+ * @brief 移除字符串两侧的空格
+ *
+ * @param str 原始字符串
+ * @return 处理后的字符串
+ */
+static std::string TrimSpace(const std::string& str) {
+	// 复用处理函数
+	return TrimRightSpace(TrimLeftSpace(str));
 }
 
 #endif

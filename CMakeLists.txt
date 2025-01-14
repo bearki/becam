@@ -7,7 +7,11 @@ project(Becam)
 #告知当前使用的是交叉编译方式，必须配置
 if (NOT CMAKE_SYSTEM_NAME)
     # 设置目标操作系统名称
-    set(CMAKE_SYSTEM_NAME Windows)
+    if(WIN32) 
+        set(CMAKE_SYSTEM_NAME Windows)
+    elseif(LINUX)
+        set(CMAKE_SYSTEM_NAME Linux)
+    endif()
     # 设置目标操作系统架构
     set(CMAKE_SYSTEM_PROCESSOR x86_64)
 endif()

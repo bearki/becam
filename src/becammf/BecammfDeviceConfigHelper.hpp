@@ -10,7 +10,7 @@
 #define _BECAMMF_DEVICE_CONFIG_HELPER_H_
 
 /**
- * @brief 设备配置信息助手类
+ * @brief Media Foundation 设备配置信息助手类
  */
 class BecammfDeviceConfigHelper {
 private:

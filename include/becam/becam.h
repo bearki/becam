@@ -2,9 +2,14 @@
 
 #ifndef _BECAM_H_
 #define _BECAM_H_
+#ifdef Win32
 #define _BECAM_API_ __declspec(dllexport)
+#else
+#define _BECAM_API_
+#endif
 
 // 引入必要头文件
+#include <stddef.h>
 #include <stdint.h>
 
 // Becam接口句柄
@@ -62,6 +67,11 @@ typedef enum {
 	STATUS_CODE_MF_ERR_GET_FRAME_EMPTY,		   // MediaFoundation异常：获取视频帧为空
 	STATUS_CODE_MF_ERR_CONVERT_FRAME_BUFFER,   // MediaFoundation异常：转换视频帧缓冲区失败
 	STATUS_CODE_MF_ERR_LOCK_FRAME_BUFFER,	   // MediaFoundation异常：锁定视频帧缓冲区失败
+	/**
+	 * V4L2 异常
+	 */
+	STATUS_CODE_V4L2_ERR_INPUT_PARAM,	  // V4L2异常：传入参数错误
+	STATUS_CODE_MF_ERR_DEVICE_GLOB_MATCH, // V4L2异常：设备泛匹配失败
 } StatusCode;
 
 // VideoFrameInfo 视频帧信息

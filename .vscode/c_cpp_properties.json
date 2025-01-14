@@ -6,6 +6,13 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include/**"
             ]
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/include/**"
+            ]
         }
     ],
     "version": 4
