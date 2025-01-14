@@ -7,7 +7,7 @@ param (
     # Release: 这种构建类型通常快速的提供了充分的优化，并且没有调试信息，尽管一些平台在某些情况下仍然可能生成调试符号。
     # RelWithDebInfo: 这在某种程度上是前两者的折衷。它的目标是使性能接近于发布版本，但仍然允许一定程度的调试。
     # MinSizeRel: 这种构建类型通常只用于受限制的资源环境，如嵌入式设备。
-    [string] $BuildType = "Debug",
+    [string] $BuildType = "Release",
     # 编译架构（i686、x86_64）
     [string] $BuildArch = "i686",
     # 工具链
@@ -21,7 +21,7 @@ begin {
     # 遇到错误立即停止
     $ErrorActionPreference = 'Stop'
     # 配置项目根目录
-    $ProjectRootPath = (Resolve-Path "${PSScriptRoot}").Path
+    $ProjectRootPath = (Resolve-Path "${PSScriptRoot}\..\").Path
 
     # 指定编译器
     $Compiler = "${BuildArch}-w64-mingw32"
@@ -41,10 +41,13 @@ begin {
 }
 
 process {
+    # 声明目录
+    $buildDir = "${ProjectRootPath}\build"
+    $publishDir = "${ProjectRootPath}\dist\mingw"
     # 移除旧的构建目录
-    Remove-Item -Path "${ProjectRootPath}/build" -Recurse -Force -ErrorAction Ignore
+    Remove-Item -Path "${buildDir}" -Recurse -Force -ErrorAction Ignore
     # 创建新的构建目录
-    New-Item -Path "${ProjectRootPath}/build" -ItemType Directory
+    New-Item -Path "${buildDir}" -ItemType Directory
 
     # 构建开始
     Write-Host "------------------------------- 构建:开始 -------------------------------"
@@ -61,20 +64,20 @@ process {
         -DCMAKE_C_COMPILER="${Compiler}-gcc" `
         -DCMAKE_CXX_COMPILER="${Compiler}-g++" `
         -S "${ProjectRootPath}" `
-        -B "${ProjectRootPath}/build"
+        -B "${buildDir}"
 
     # 执行make
     Write-Host "------------------------------- 执行Make -------------------------------"
-    cmake --build "${ProjectRootPath}/build" --config "${BuildType}"
+    cmake --build "${buildDir}" --config "${BuildType}"
 
     # 执行make install
     Write-Host "--------------------------- 执行Make Install ---------------------------"
-    cmake --install "${ProjectRootPath}/build" --config "${BuildType}"
+    cmake --install "${buildDir}" --config "${BuildType}" --prefix "${publishDir}"
 
     # 执行压缩
-    Compress-Archive -Path "${ProjectRootPath}/dist/libbecamdshow_windows_${BuildArch}/*" -DestinationPath "${ProjectRootPath}/dist/libbecamdshow_windows_${BuildArch}.zip"
+    Compress-Archive -Force -Path "${publishDir}\libbecamdshow_windows_${BuildArch}\*" -DestinationPath "${ProjectRootPath}\dist\libbecamdshow_windows_${BuildArch}_mingw.zip"
     # 执行压缩
-    Compress-Archive -Path "${ProjectRootPath}/dist/libbecammf_windows_${BuildArch}/*" -DestinationPath "${ProjectRootPath}/dist/libbecammf_windows_${BuildArch}.zip"
+    Compress-Archive -Force -Path "${publishDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${ProjectRootPath}\dist\libbecammf_windows_${BuildArch}_mingw.zip"
 }
 
 end {

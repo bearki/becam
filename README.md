@@ -16,7 +16,7 @@
 | 平台 | 工具 | 版本 | 备注 |
 | :---------: | :--------: | :--------: | :-------- |
 | Windows | MinGW | `w64devkit-1.18.0` | 需要安装[MinGW](https://www.mingw-w64.org/downloads/) |
-| Windows | MSVC | `Visual Studio 16 2019` | 需安装[Windows SDK](https://developer.microsoft.com/zh-cn/windows/downloads/windows-sdk/)，不支持编译`Direct Show`实现，因为可维护的Direct Show SDK很少，建议使用`MinGW`编译`Direct Show` |
+| Windows | MSVC | `Visual Studio 17 2022` | 需安装[Windows SDK](https://developer.microsoft.com/zh-cn/windows/downloads/windows-sdk/)，不支持编译`Direct Show`实现，因为可维护的Direct Show SDK很少，建议使用`MinGW`编译`Direct Show` |
 | Linux | V4L2 | `GCC` | |
 | UVC | libuvc | `-` | |
 | Android | Camera V1 | `-` | |
