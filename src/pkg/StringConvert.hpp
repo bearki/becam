@@ -6,6 +6,7 @@
 #include <codecvt>
 #include <locale>
 #include <string>
+#include <algorithm>
 
 /**
  * @brief 将 std::string 转换为 std::wstring
