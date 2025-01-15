@@ -22,11 +22,11 @@ if(MSVC)
 endif()
 
 # 设置编译后的静态库文件的输出目录
-set(ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
 # 设置编译后的动态库文件的输出目录
-set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
 # 设置编译后的可执行文件的输出成目录
-set(RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
 # 命令行未设置安装前缀时内部主动设置
 # 设定编译后生成的制品文件安装目录前缀
 if(MSVC) 
@@ -41,8 +41,8 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/include
                     ${CMAKE_SOURCE_DIR}/src)
 # 配置引用库链接目录（静态库或动态库都行）
-link_directories(${ARCHIVE_OUTPUT_DIRECTORY}/lib
-                 ${LIBRARY_OUTPUT_DIRECTORY}/lib)
+link_directories(${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/lib
+                 ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/lib)
 
 # 转换一下大小写方便打包
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" BUILD_OS)
