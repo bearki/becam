@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef _BECAMMF_MEDIA_FOUNDATION_H_
-#define _BECAMMF_MEDIA_FOUNDATION_H_
+#ifndef _BECAM_MEDIA_FOUNDATION_H_
+#define _BECAM_MEDIA_FOUNDATION_H_
 
 #include "BecammfDeviceHelper.hpp"
 #include <becam/becam.h>

@@ -196,7 +196,7 @@ void BecammfDeviceHelper::FreeDeviceList(DeviceInfo*& input, size_t& inputSize) 
 /**
  * @implements 实现激活指定设备
  */
-StatusCode BecammfDeviceHelper::ActivateDevice(const std::string devicePath) {
+StatusCode BecammfDeviceHelper::ActivateDevice(const std::string& devicePath) {
 	// 参数检查
 	if (devicePath.empty()) {
 		return StatusCode::STATUS_CODE_MF_ERR_INPUT_PARAM;

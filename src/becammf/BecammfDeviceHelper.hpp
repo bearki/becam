@@ -70,7 +70,7 @@ public:
 	 * @param devicePath [in] 设备符号链接地址
 	 * @return 状态码
 	 */
-	StatusCode ActivateDevice(const std::string devicePath);
+	StatusCode ActivateDevice(const std::string& devicePath);
 
 	/**
 	 * @brief 获取当前设备支持的配置列表

@@ -1,14 +1,15 @@
 #include "Becamv4l2DeviceHelper.hpp"
+#include "Becamv4l2DeviceConfigHelper.hpp"
 #include <algorithm>
 #include <fcntl.h>
 #include <glob.h>
 #include <iostream>
 #include <linux/videodev2.h>
+#include <pkg/StringConvert.hpp>
 #include <sstream>
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <vector>
-#include <pkg/StringConvert.hpp>
 
 /**
  * @implements 实现构造函数
@@ -18,15 +19,16 @@ Becamv4l2DeviceHelper::Becamv4l2DeviceHelper() {}
 /**
  * @implements 实现析构函数
  */
-Becamv4l2DeviceHelper::~Becamv4l2DeviceHelper() {}
+Becamv4l2DeviceHelper::~Becamv4l2DeviceHelper() {
+	// 释放当前设备
+	this->ReleaseCurrentDevice();
+}
 
 /**
- * @brief 处理设备名称
- *
- * @param deviceName [in] 设备名称
- * @return 处理后的设备名称
+ * @implements 实现处理设备名称
  */
-std::string trimDeviceName(const std::string& deviceName) {
+std::string Becamv4l2DeviceHelper::TrimDeviceName(const std::string& deviceName) {
+	// 预声明
 	std::vector<std::string> tokens;
 	std::string token;
 	std::stringstream ss(deviceName);
@@ -50,17 +52,13 @@ std::string trimDeviceName(const std::string& deviceName) {
 }
 
 /**
- * @brief 检查设备是否支持视频捕获能力
- *
- * @param devicePath [in] 设备路径
- * @param deviceName [out] 设备名称（仅在设备支持视频捕获能力时返回）
- * @return 是否支持视频捕获能力
+ * @implements 实现检查设备是否支持视频捕获能力
  */
-static bool isVideoCaptureDevice(const std::string& devicePath, std::string& deviceName) {
+bool Becamv4l2DeviceHelper::IsVideoCaptureDevice(const std::string& devicePath, std::string& deviceName) {
 	// 只读方式打开设备句柄
 	auto fd = open(devicePath.c_str(), O_RDONLY);
 	if (fd == -1) {
-		std::cerr << "isVideoCaptureDevice(" << devicePath << ") Failed" << std::endl;
+		std::cerr << "Becamv4l2DeviceHelper::IsVideoCaptureDevice -> open(" << devicePath << ") Failed" << std::endl;
 		return false;
 	}
 
@@ -80,12 +78,24 @@ static bool isVideoCaptureDevice(const std::string& devicePath, std::string& dev
 		&& cap.device_caps & V4L2_CAP_VIDEO_CAPTURE // 当前设备节点访问的能力必须支持视频捕获
 	) {
 		// 复制设备名称
-		deviceName = trimDeviceName(reinterpret_cast<char*>(cap.card));
+		deviceName = Becamv4l2DeviceHelper::TrimDeviceName(reinterpret_cast<char*>(cap.card));
 		return true;
 	}
 
 	// 默认无能力
 	return false;
+}
+
+/**
+ * @implements 实现释放当前设备
+ */
+void Becamv4l2DeviceHelper::ReleaseCurrentDevice() {
+	// 已打开的设备需要关闭设备
+	if (this->activatedDevice != -1) {
+		// 关闭设备
+		close(this->activatedDevice);
+		this->activatedDevice = -1;
+	}
 }
 
 /**
@@ -97,7 +107,7 @@ StatusCode Becamv4l2DeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& repl
 	auto res = glob("/dev/video*", GLOB_TILDE, nullptr, &globResult);
 	if (res != 0) {
 		std::cerr << "Becamv4l2DeviceHelper::GetDeviceList -> lob(/dev/video*, GLOB_TILDE) Failed, RESULT:" << res << std::endl;
-		return StatusCode::STATUS_CODE_MF_ERR_DEVICE_GLOB_MATCH;
+		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_GLOB_MATCH;
 	}
 
 	// 临时设备列表
@@ -108,7 +118,7 @@ StatusCode Becamv4l2DeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& repl
 		std::string deviceName = "";
 		// 提取设备路径
 		std::string devicePath = globResult.gl_pathv[i];
-		if (isVideoCaptureDevice(devicePath, deviceName)) {
+		if (Becamv4l2DeviceHelper::IsVideoCaptureDevice(devicePath, deviceName)) {
 			// 构建设备信息
 			DeviceInfo deviceInfo = {0};
 			// 拷贝设备名称
@@ -166,4 +176,56 @@ void Becamv4l2DeviceHelper::FreeDeviceList(DeviceInfo*& input, size_t& inputSize
 	delete[] input;
 	inputSize = 0;
 	input = nullptr;
+}
+
+/**
+ * @implements 实现激活指定设备
+ */
+StatusCode Becamv4l2DeviceHelper::ActivateDevice(const std::string& devicePath) {
+	// 参数检查
+	if (devicePath.empty()) {
+		return StatusCode::STATUS_CODE_V4L2_ERR_INPUT_PARAM;
+	}
+
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 释放已激活的设备
+	this->ReleaseCurrentDevice();
+
+	// 激活设备
+	this->activatedDevice = open(devicePath.c_str(), O_RDONLY);
+	if (this->activatedDevice == -1) {
+		std::cerr << "Becamv4l2DeviceHelper::ActivateDevice -> open(" << devicePath << ") Failed" << std::endl;
+		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_OPEN;
+	}
+
+	// OK
+	return StatusCode::STATUS_CODE_SUCCESS;
+}
+
+/**
+ * @implements 实现获取当前设备支持的配置列表
+ */
+StatusCode Becamv4l2DeviceHelper::GetCurrentDeviceConfigList(VideoFrameInfo*& reply, size_t& replySize) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 检查设备是否已激活
+	if (this->activatedDevice == -1) {
+		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE;
+	}
+
+	// 初始化设备配置助手类
+	auto configHelper = Becamv4l2DeviceConfigHelper(this->activatedDevice);
+	// 查询设备支持的配置列表
+	return configHelper.GetDeviceConfigList(reply, replySize);
+}
+
+/**
+ * @implements 实现释放已获取的设备支持的配置列表
+ */
+void Becamv4l2DeviceHelper::FreeDeviceConfigList(VideoFrameInfo*& input, size_t& inputSize) {
+	// 执行释放
+	Becamv4l2DeviceConfigHelper::FreeDeviceConfigList(input, inputSize);
 }

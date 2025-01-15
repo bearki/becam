@@ -62,33 +62,32 @@ void BecamFreeDeviceList(BecamHandle handle, GetDeviceListReply* input) {
  * @implements 实现获取设备配置列表
  */
 StatusCode BecamGetDeviceConfigList(BecamHandle handle, const char* devicePath, GetDeviceConfigListReply* reply) {
-	// // 检查句柄
-	// if (handle == nullptr) {
-	// 	return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
-	// }
-	// // 检查设备路径
-	// if (devicePath == nullptr) {
-	// 	return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
-	// }
-	// // 转换句柄类型
-	// BecamV4L2* becamHandle = static_cast<BecamV4L2*>(handle);
-	// // 执行获取设备配置列表
-	// return becamHandle->GetDeviceConfigList(devicePath, reply);
-	return StatusCode::STATUS_CODE_SUCCESS;
+	// 检查句柄
+	if (handle == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
+	}
+	// 检查设备路径
+	if (devicePath == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
+	// 转换句柄类型
+	BecamV4L2* becamHandle = static_cast<BecamV4L2*>(handle);
+	// 执行获取设备配置列表
+	return becamHandle->GetDeviceConfigList(devicePath, reply);
 }
 
 /**
  * @implements 实现释放设备配置列表
  */
 void BecamFreeDeviceConfigList(BecamHandle handle, GetDeviceConfigListReply* input) {
-	// // 检查句柄
-	// if (handle == nullptr) {
-	// 	return;
-	// }
-	// // 转换句柄类型
-	// BecamV4L2* becamHandle = static_cast<BecamV4L2*>(handle);
-	// // 执行相机配置列表释放
-	// becamHandle->FreeDeviceConfigList(input);
+	// 检查句柄
+	if (handle == nullptr) {
+		return;
+	}
+	// 转换句柄类型
+	BecamV4L2* becamHandle = static_cast<BecamV4L2*>(handle);
+	// 执行相机配置列表释放
+	becamHandle->FreeDeviceConfigList(input);
 }
 
 /**

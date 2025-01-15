@@ -70,8 +70,10 @@ typedef enum {
 	/**
 	 * V4L2 异常
 	 */
-	STATUS_CODE_V4L2_ERR_INPUT_PARAM,	  // V4L2异常：传入参数错误
-	STATUS_CODE_MF_ERR_DEVICE_GLOB_MATCH, // V4L2异常：设备泛匹配失败
+	STATUS_CODE_V4L2_ERR_INPUT_PARAM,		// V4L2异常：传入参数错误
+	STATUS_CODE_V4L2_ERR_DEVICE_GLOB_MATCH, // V4L2异常：设备泛匹配失败
+	STATUS_CODE_V4L2_ERR_DEVICE_OPEN,		// V4L2异常：设备打开失败
+	STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE, // V4L2异常：未激活设备
 } StatusCode;
 
 // VideoFrameInfo 视频帧信息

@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef _BECAMMF_MV4L2_H_
-#define _BECAMMF_MV4L2_H_
+#ifndef _BECAM_MV4L2_H_
+#define _BECAM_MV4L2_H_
 
 #include <becam/becam.h>
 #include <mutex>
