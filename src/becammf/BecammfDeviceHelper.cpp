@@ -11,7 +11,7 @@
  */
 BecammfDeviceHelper::BecammfDeviceHelper() {
 	// 初始化Com库
-	this->_ComInitResult = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	this->_ComInitResult = CoInitializeEx(NULL, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
 	if (SUCCEEDED(this->_ComInitResult)) {
 		// 初始化Media Foundation库
 		this->_MFStartupResult = MFStartup(MF_VERSION);

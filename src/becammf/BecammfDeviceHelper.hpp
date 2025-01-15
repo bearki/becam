@@ -54,7 +54,7 @@ public:
 	 * @param replySize [out] 设备信息列表大小引用
 	 * @return 状态码
 	 */
-	static StatusCode GetDeviceList(DeviceInfo*& reply, size_t& replySize);
+	StatusCode GetDeviceList(DeviceInfo*& reply, size_t& replySize);
 
 	/**
 	 * @brief 释放已获取的设备列表

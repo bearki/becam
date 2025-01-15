@@ -27,8 +27,10 @@ BecamMediaFoundation::~BecamMediaFoundation() {
  * @implements 实现获取设备列表
  */
 StatusCode BecamMediaFoundation::GetDeviceList(GetDeviceListReply& reply) {
+	// 初始化设备助手对象
+	BecammfDeviceHelper deviceHelper;
 	// 执行设备列表获取
-	return BecammfDeviceHelper::GetDeviceList(reply.deviceInfoList, reply.deviceInfoListSize);
+	return deviceHelper.GetDeviceList(reply.deviceInfoList, reply.deviceInfoListSize);
 }
 
 /**
