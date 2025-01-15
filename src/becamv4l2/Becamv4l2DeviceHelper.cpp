@@ -1,5 +1,6 @@
 #include "Becamv4l2DeviceHelper.hpp"
 #include "Becamv4l2DeviceConfigHelper.hpp"
+#include "xioctl.hpp"
 #include <algorithm>
 #include <fcntl.h>
 #include <glob.h>
@@ -7,7 +8,7 @@
 #include <linux/videodev2.h>
 #include <pkg/StringConvert.hpp>
 #include <sstream>
-#include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <vector>
 
@@ -21,7 +22,44 @@ Becamv4l2DeviceHelper::Becamv4l2DeviceHelper() {}
  */
 Becamv4l2DeviceHelper::~Becamv4l2DeviceHelper() {
 	// 释放当前设备
-	this->ReleaseCurrentDevice();
+	this->CloseCurrentDevice();
+}
+
+/**
+ * @implements 实现关闭当前设备
+ */
+void Becamv4l2DeviceHelper::CloseCurrentDevice() {
+	// 停止当前设备取流
+	this->StopCurrentDeviceStreaming();
+	// 已打开的设备需要关闭设备
+	if (this->activatedDevice != -1) {
+		// 关闭设备
+		close(this->activatedDevice);
+		this->activatedDevice = -1;
+	}
+}
+
+/**
+ * @implements 实现停止当前设备取流
+ */
+void Becamv4l2DeviceHelper::StopCurrentDeviceStreaming() {
+	// 正在取流的需要先停止
+	if (this->streamON) {
+		// 停止取流
+		auto bufType = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		xioctl(this->activatedDevice, VIDIOC_STREAMOFF, &bufType);
+		// 标记已停止取流
+		this->streamON = false;
+	}
+	// 取消内核缓冲区和用户缓冲区的映射
+	for (size_t i = 0; i < Becamv4l2DeviceHelper::USER_BUFFER_COUNT; i++) {
+		// 仅在缓冲区长度有效时进行解绑
+		if (this->userBufferLengths[i] > 0) {
+			munmap(this->userBuffers[i], this->userBufferLengths[i]);
+			this->userBuffers[i] = 0;
+			this->userBufferLengths[i] = 0;
+		}
+	}
 }
 
 /**
@@ -62,9 +100,9 @@ bool Becamv4l2DeviceHelper::IsVideoCaptureDevice(const std::string& devicePath, 
 		return false;
 	}
 
-	// 使用ioctl查询设备是否支持视频捕获能力
+	// 使用xioctl查询设备是否支持视频捕获能力
 	v4l2_capability cap;
-	auto res = ioctl(fd, VIDIOC_QUERYCAP, &cap);
+	auto res = xioctl(fd, VIDIOC_QUERYCAP, &cap);
 	// 关闭句柄
 	close(fd);
 	// 检查结果
@@ -87,25 +125,21 @@ bool Becamv4l2DeviceHelper::IsVideoCaptureDevice(const std::string& devicePath, 
 }
 
 /**
- * @implements 实现释放当前设备
- */
-void Becamv4l2DeviceHelper::ReleaseCurrentDevice() {
-	// 已打开的设备需要关闭设备
-	if (this->activatedDevice != -1) {
-		// 关闭设备
-		close(this->activatedDevice);
-		this->activatedDevice = -1;
-	}
-}
-
-/**
  * @implements 实现获取设备列表
  */
 StatusCode Becamv4l2DeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& replySize) {
+	// 重置
+	reply = nullptr;
+	replySize = 0;
+
 	// 查找符合`/dev/video*`的设备
 	glob_t globResult;
 	auto res = glob("/dev/video*", GLOB_TILDE, nullptr, &globResult);
 	if (res != 0) {
+		// 无匹配时直接返回
+		if (res == GLOB_NOMATCH) {
+			return StatusCode::STATUS_CODE_SUCCESS;
+		}
 		std::cerr << "Becamv4l2DeviceHelper::GetDeviceList -> lob(/dev/video*, GLOB_TILDE) Failed, RESULT:" << res << std::endl;
 		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_GLOB_MATCH;
 	}
@@ -181,20 +215,20 @@ void Becamv4l2DeviceHelper::FreeDeviceList(DeviceInfo*& input, size_t& inputSize
 /**
  * @implements 实现激活指定设备
  */
-StatusCode Becamv4l2DeviceHelper::ActivateDevice(const std::string& devicePath) {
+StatusCode Becamv4l2DeviceHelper::ActivateDevice(const std::string& devicePath, const int oflags) {
 	// 参数检查
 	if (devicePath.empty()) {
-		return StatusCode::STATUS_CODE_V4L2_ERR_INPUT_PARAM;
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
 
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
 
 	// 释放已激活的设备
-	this->ReleaseCurrentDevice();
+	this->CloseCurrentDevice();
 
 	// 激活设备
-	this->activatedDevice = open(devicePath.c_str(), O_RDONLY);
+	this->activatedDevice = open(devicePath.c_str(), oflags);
 	if (this->activatedDevice == -1) {
 		std::cerr << "Becamv4l2DeviceHelper::ActivateDevice -> open(" << devicePath << ") Failed" << std::endl;
 		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_OPEN;
@@ -228,4 +262,197 @@ StatusCode Becamv4l2DeviceHelper::GetCurrentDeviceConfigList(VideoFrameInfo*& re
 void Becamv4l2DeviceHelper::FreeDeviceConfigList(VideoFrameInfo*& input, size_t& inputSize) {
 	// 执行释放
 	Becamv4l2DeviceConfigHelper::FreeDeviceConfigList(input, inputSize);
+}
+
+/**
+ * @implements 实现激活设备取流
+ */
+StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& frameInfo) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 检查设备是否已激活
+	if (this->activatedDevice == -1) {
+		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE;
+	}
+
+	// 停止当前设备取流
+	this->StopCurrentDeviceStreaming();
+
+	// 声明输出格式和分辨率
+	v4l2_format fmt = {0};
+	fmt.type = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE; // 固定流类型为视频捕获流
+	fmt.fmt.pix.width = frameInfo.width;				   // 指定帧分辨率
+	fmt.fmt.pix.height = frameInfo.height;				   // 指定帧分辨率
+	fmt.fmt.pix.pixelformat = frameInfo.format;			   // 指定帧格式
+	fmt.fmt.pix.field = v4l2_field::V4L2_FIELD_NONE;	   // 指定场模式，通常为：V4L2_FIELD_NONE
+	// 设置分辨率和格式
+	if (xioctl(this->activatedDevice, VIDIOC_S_FMT, &fmt) == -1) {
+		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_S_FMT) Failed" << std::endl;
+		return StatusCode::STATUS_CODE_V4L2_ERR_SET_FRAME_FORMAT;
+	}
+
+	// 声明输出帧率
+	v4l2_streamparm streamparm = {0};
+	streamparm.type = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE; // 固定流类型为视频捕获流
+	streamparm.parm.capture.timeperframe.numerator = -1;		  // 初始帧率（-1表示未找到）
+	streamparm.parm.capture.timeperframe.denominator = -1;		  // 初始帧率（-1表示未找到）
+	// 查找对应的帧率
+	{
+		// 枚举当前分辨率下支持的帧率
+		v4l2_frmivalenum frmival = {0};
+		frmival.index = 0;						 // 初始下标为0
+		frmival.pixel_format = frameInfo.format; // 指定要枚举的格式
+		frmival.width = frameInfo.width;		 // 指定要枚举的分辨率
+		frmival.height = frameInfo.height;		 // 指定要枚举的分辨率
+		while (xioctl(this->activatedDevice, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0) {
+			// 帧率与期望值是否一致
+			auto fps = frmival.discrete.denominator / frmival.discrete.numerator;
+			if (fps == frameInfo.fps) {
+				// 帧率一致，赋值帧率
+				streamparm.parm.capture.timeperframe.numerator = frmival.discrete.numerator;
+				streamparm.parm.capture.timeperframe.denominator = frmival.discrete.denominator;
+				// 跳出循环
+				break;
+			}
+			// 叠加帧率枚举下标
+			frmival.index++;
+		}
+	}
+	// 检查对应帧率是否查询到
+	if (streamparm.parm.capture.timeperframe.numerator == -1 || streamparm.parm.capture.timeperframe.denominator == -1) {
+		return StatusCode::STATUS_CODE_V4L2_ERR_FRAME_RATE_NOT_FOUND;
+	}
+	// 设置输出帧率
+	if (xioctl(this->activatedDevice, VIDIOC_S_PARM, &streamparm) == -1) {
+		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_S_PARM) Failed" << std::endl;
+		return StatusCode::STATUS_CODE_V4L2_ERR_SET_FRAME_RATE;
+	}
+
+	// 请求缓冲区
+	v4l2_requestbuffers reqBuf = {0};
+	reqBuf.count = Becamv4l2DeviceHelper::USER_BUFFER_COUNT;
+	reqBuf.type = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	reqBuf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
+	if (xioctl(this->activatedDevice, VIDIOC_REQBUFS, &reqBuf) == -1) {
+		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_REQBUFS) Failed" << std::endl;
+		return StatusCode::STATUS_CODE_V4L2_ERR_REQUEST_BUF;
+	}
+
+	// 声明内核缓冲区查询参数
+	v4l2_buffer buf = {0};
+	// 查询内核缓冲区，并将其映射到用户缓冲区
+	for (int i = 0; i < Becamv4l2DeviceHelper::USER_BUFFER_COUNT; i++) {
+		// 查询内核缓冲区
+		buf.type = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		buf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
+		buf.index = i;
+		if (xioctl(this->activatedDevice, VIDIOC_QUERYBUF, &buf) == -1) {
+			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QUERYBUF) Failed" << std::endl;
+			return StatusCode::STATUS_CODE_V4L2_ERR_QUERY_BUF;
+		}
+		// 映射内核缓冲区
+		this->userBuffers[i] = mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, this->activatedDevice, buf.m.offset);
+		if (this->userBuffers[i] == MAP_FAILED) {
+			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QUERYBUF) Failed" << std::endl;
+			return StatusCode::STATUS_CODE_V4L2_ERR_MMAP_BUF;
+		}
+		// 储存缓冲区的长度
+		this->userBufferLengths[i] = buf.length;
+	}
+
+	// 将缓冲区加入到设备的输出队列（就是缓冲区解锁的意思）
+	for (int i = 0; i < v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE; i++) {
+		buf.type = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		buf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
+		buf.index = i;
+		if (xioctl(this->activatedDevice, VIDIOC_QBUF, &buf) == -1) {
+			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QBUF) Failed" << std::endl;
+			return StatusCode::STATUS_CODE_V4L2_ERR_UNLOCK_BUF;
+		}
+	}
+
+	// 启动视频流
+	auto bufType = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	if (xioctl(this->activatedDevice, VIDIOC_STREAMON, &bufType) == -1) {
+		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_STREAMON) Failed" << std::endl;
+		return StatusCode::STATUS_CODE_V4L2_ERR_VIDEO_STREAM_ON;
+	}
+	// 标记已经开始取流
+	this->streamON = true;
+
+	// OK
+	return StatusCode::STATUS_CODE_SUCCESS;
+}
+
+/**
+ * @implements 实现关闭设备
+ */
+void Becamv4l2DeviceHelper::CloseDevice() {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 关闭当前设备
+	this->CloseCurrentDevice();
+}
+
+/**
+ * @implements 实现获取视频帧
+ */
+StatusCode Becamv4l2DeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
+
+	// 重置
+	reply = nullptr;
+	replySize = 0;
+
+	// 检查设备是否已激活
+	if (this->activatedDevice == -1 || !this->streamON) {
+		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE;
+	}
+
+	// 声明缓冲区队列查询参数
+	v4l2_buffer buf = {0};
+	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	buf.memory = V4L2_MEMORY_MMAP;
+	// 消费队列中的缓冲区（就是缓冲区加锁）
+	if (xioctl(this->activatedDevice, VIDIOC_DQBUF, &buf) == -1) {
+		std::cerr << "Becamv4l2DeviceHelper::GetFrame -> xioctl(VIDIOC_DQBUF) Failed" << std::endl;
+		return StatusCode::STATUS_CODE_V4L2_ERR_LOCK_BUF;
+	}
+
+	// 是否读取到有效帧
+	if (buf.bytesused > 0) {
+		// 拷贝帧
+		replySize = buf.bytesused;
+		reply = new uint8_t[replySize];
+		memcpy(reply, this->userBuffers[buf.index], replySize);
+	}
+
+	// 重新将缓冲区加入队列（就是缓冲区解锁）
+	if (xioctl(this->activatedDevice, VIDIOC_QBUF, &buf) == -1) {
+		std::cerr << "Becamv4l2DeviceHelper::GetFrame -> xioctl(VIDIOC_QBUF) Failed" << std::endl;
+		return StatusCode::STATUS_CODE_V4L2_ERR_UNLOCK_BUF;
+	}
+
+	// 检查视频帧是否无效
+	if (replySize <= 0) {
+		return StatusCode::STATUS_CODE_V4L2_ERR_FRAME_EMPTY;
+	}
+
+	// OK
+	return StatusCode::STATUS_CODE_SUCCESS;
+}
+
+/**
+ * @implements 实现释放已获取的视频帧
+ */
+void Becamv4l2DeviceHelper::FreeFrame(uint8_t*& reply) {
+	if (reply == nullptr) {
+		return;
+	}
+
+	delete[] reply;
+	reply = nullptr;
 }

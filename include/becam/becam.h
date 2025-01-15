@@ -19,11 +19,14 @@ typedef void* BecamHandle;
 typedef enum {
 	STATUS_CODE_SUCCESS, // 成功
 	/**
+	 * 通用异常
+	 */
+	STATUS_CODE_ERR_HANDLE_EMPTY, // Becam接口句柄未初始化
+	STATUS_CODE_ERR_INPUT_PARAM,  // 传入参数错误
+	/**
 	 * Direct Show 异常
 	 */
 	STATUS_CODE_NOT_FOUND_DEVICE,			 // 未找到设备
-	STATUS_CODE_ERR_HANDLE_EMPTY,			 // Becam接口句柄未初始化
-	STATUS_CODE_ERR_INPUT_PARAM,			 // 传入参数错误
 	STATUS_CODE_ERR_INTERNAL_PARAM,			 // 内部参数错误
 	STATUS_CODE_ERR_INIT_COM,				 // 初始化COM库失败
 	STATUS_CODE_ERR_CREATE_ENUMERATOR,		 // 创建设备枚举器失败
@@ -70,10 +73,19 @@ typedef enum {
 	/**
 	 * V4L2 异常
 	 */
-	STATUS_CODE_V4L2_ERR_INPUT_PARAM,		// V4L2异常：传入参数错误
-	STATUS_CODE_V4L2_ERR_DEVICE_GLOB_MATCH, // V4L2异常：设备泛匹配失败
-	STATUS_CODE_V4L2_ERR_DEVICE_OPEN,		// V4L2异常：设备打开失败
-	STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE, // V4L2异常：未激活设备
+	STATUS_CODE_V4L2_ERR_DEVICE_GLOB_MATCH,	   // V4L2异常：设备泛匹配失败
+	STATUS_CODE_V4L2_ERR_DEVICE_OPEN,		   // V4L2异常：设备打开失败
+	STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE,	   // V4L2异常：未激活设备
+	STATUS_CODE_V4L2_ERR_SET_FRAME_FORMAT,	   // V4L2异常：设置视频帧格式失败
+	STATUS_CODE_V4L2_ERR_SET_FRAME_RATE,	   // V4L2异常：设置视频帧率格式失败
+	STATUS_CODE_V4L2_ERR_FRAME_RATE_NOT_FOUND, // V4L2异常：视频帧率未找到
+	STATUS_CODE_V4L2_ERR_REQUEST_BUF,		   // V4L2异常：申请内核缓冲区失败
+	STATUS_CODE_V4L2_ERR_QUERY_BUF,			   // V4L2异常：查询内核缓冲区失败
+	STATUS_CODE_V4L2_ERR_MMAP_BUF,			   // V4L2异常：映射内核缓冲区失败
+	STATUS_CODE_V4L2_ERR_LOCK_BUF,			   // V4L2异常：缓冲区加锁失败
+	STATUS_CODE_V4L2_ERR_UNLOCK_BUF,		   // V4L2异常：缓冲区解锁失败
+	STATUS_CODE_V4L2_ERR_VIDEO_STREAM_ON,	   // V4L2异常：启动视频流失败
+	STATUS_CODE_V4L2_ERR_FRAME_EMPTY,		   // V4L2异常：获取到的视频帧为空
 } StatusCode;
 
 // VideoFrameInfo 视频帧信息

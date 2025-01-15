@@ -1,7 +1,7 @@
 #include "Becamv4l2DeviceConfigHelper.hpp"
+#include "xioctl.hpp"
 #include <linux/videodev2.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <vector>
 
 /**
@@ -21,29 +21,33 @@ Becamv4l2DeviceConfigHelper::~Becamv4l2DeviceConfigHelper() {}
  * @implements 实现获取设备支持的配置列表
  */
 StatusCode Becamv4l2DeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply, size_t& replySize) {
+	// 重置
+	reply = nullptr;
+	replySize = 0;
+
 	// 临时配置信息列表
 	std::vector<VideoFrameInfo> configList;
 
 	// 提取到的格式信息
-	v4l2_fmtdesc fmt;
+	v4l2_fmtdesc fmt = {0};
 	fmt.index = 0;							// 初始下标为0
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE; // 指定要枚举的流类型为视频捕获
 	// 枚举支持的像素格式
-	while (ioctl(this->deviceFdHandle, VIDIOC_ENUM_FMT, &fmt) == 0) {
+	while (xioctl(this->deviceFdHandle, VIDIOC_ENUM_FMT, &fmt) == 0) {
 		// 枚举当前格式下支持的分辨率
-		v4l2_frmsizeenum frmsize;
+		v4l2_frmsizeenum frmsize = {0};
 		frmsize.index = 0;						// 初始下标为0
 		frmsize.pixel_format = fmt.pixelformat; // 指定要枚举的格式
-		while (ioctl(this->deviceFdHandle, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0) {
+		while (xioctl(this->deviceFdHandle, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0) {
 			// 枚举当前分辨率下支持的帧率
-			v4l2_frmivalenum frmival;
+			v4l2_frmivalenum frmival = {0};
 			frmival.index = 0;							 // 初始下标为0
 			frmival.pixel_format = frmsize.pixel_format; // 指定要枚举的格式
 			frmival.width = frmsize.discrete.width;		 // 指定要枚举的分辨率
 			frmival.height = frmsize.discrete.height;	 // 指定要枚举的分辨率
-			while (ioctl(this->deviceFdHandle, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0) {
+			while (xioctl(this->deviceFdHandle, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0) {
 				// 构建视频帧信息
-				VideoFrameInfo videoFrameInfo;
+				VideoFrameInfo videoFrameInfo = {0};
 				videoFrameInfo.format = frmival.pixel_format;
 				videoFrameInfo.width = frmival.width;
 				videoFrameInfo.height = frmival.height;
