@@ -1,9 +1,6 @@
 # 配置相关源文件
 file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
-# 配置链接库
-# link_libraries(mf mfplat mfuuid mfreadwrite)
-
 # 配置静态库生成参数
 add_library(becamv4l2_static STATIC ${SOURCES})
 set_target_properties(becamv4l2_static PROPERTIES OUTPUT_NAME "becamv4l2")
