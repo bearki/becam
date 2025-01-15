@@ -38,14 +38,14 @@ public:
 	 * @param reply [out] 响应参数
 	 * @return 状态码
 	 */
-	StatusCode GetDeviceList(GetDeviceListReply* reply);
+	StatusCode GetDeviceList(GetDeviceListReply& reply);
 
 	/**
 	 * @brief 释放设备列表
 	 *
 	 * @param input [in] 输入参数
 	 */
-	void FreeDeviceList(GetDeviceListReply* input);
+	void FreeDeviceList(GetDeviceListReply& input);
 
 	/**
 	 * @brief 获取设备配置列表
@@ -54,14 +54,14 @@ public:
 	 * @param reply [out] 输出参数
 	 * @return 状态码
 	 */
-	StatusCode GetDeviceConfigList(const std::string devicePath, GetDeviceConfigListReply* reply);
+	StatusCode GetDeviceConfigList(const std::string& devicePath, GetDeviceConfigListReply& reply);
 
 	/**
 	 * @brief 释放设备配置列表
 	 *
 	 * @param input [in] 输入参数
 	 */
-	void FreeDeviceConfigList(GetDeviceConfigListReply* input);
+	void FreeDeviceConfigList(GetDeviceConfigListReply& input);
 
 	/**
 	 * @brief 打开指定设备
@@ -70,7 +70,7 @@ public:
 	 * @param frameInfo [in] 设置的视频帧信息
 	 * @return 状态码
 	 */
-	StatusCode OpenDevice(const std::string devicePath, const VideoFrameInfo* frameInfo);
+	StatusCode OpenDevice(const std::string& devicePath, const VideoFrameInfo& frameInfo);
 
 	/**
 	 * @brief 关闭设备
@@ -84,14 +84,14 @@ public:
 	 * @param size [out] 视频帧流大小
 	 * @return 状态码
 	 */
-	StatusCode GetFrame(uint8_t** data, size_t* size);
+	StatusCode GetFrame(uint8_t*& data, size_t& size);
 
 	/**
 	 * @brief 释放视频帧
 	 *
 	 * @param data [in && out] 视频帧流
 	 */
-	void FreeFrame(uint8_t** data);
+	void FreeFrame(uint8_t*& data);
 };
 
 #endif

@@ -27,14 +27,14 @@ private:
 	IMFSourceReader* activatedReader = nullptr;
 
 	/**
-	 * @brief 释放当前设备
+	 * @brief 关闭当前设备
 	 */
-	void ReleaseCurrentDevice();
+	void CloseCurrentDevice();
 
 	/**
-	 * @brief 释放当前设备源读取器
+	 * @brief 停止当前设备取流
 	 */
-	void ReleaseCurrentDeviceReader();
+	void StopCurrentDeviceStreaming();
 
 public:
 	/**
@@ -90,12 +90,12 @@ public:
 	static void FreeDeviceConfigList(VideoFrameInfo*& input, size_t& inputSize);
 
 	/**
-	 * @brief 激活设备源读取器
+	 * @brief 实现激活当前设备取流
 	 *
 	 * @param frameInfo	[in] 要激活的视频帧信息
 	 * @return 状态码
 	 */
-	StatusCode ActivateDeviceReader(const VideoFrameInfo frameInfo);
+	StatusCode ActivateCurrentDeviceStreaming(const VideoFrameInfo frameInfo);
 
 	/**
 	 * @brief 关闭设备

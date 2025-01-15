@@ -86,7 +86,7 @@ BecamOpenedDevice::~BecamOpenedDevice() {
 /**
  * @implements 实现打开设备
  */
-StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFrameInfo* frameInfo) {
+StatusCode BecamOpenedDevice::Open(const std::string& devicePath, const VideoFrameInfo& frameInfo) {
 	// 构建设备枚举类（不要初始化COM库）
 	auto deviceEnum = BecamDeviceEnum(false);
 
@@ -107,7 +107,7 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 	if (FAILED(res)) {
 		// 绑定设备实例失败
 		std::cerr << "BecamOpenedDevice::Open -> BindToObject failed, HRESULT: " << res << std::endl;
-		return StatusCode::STATUS_CODE_ERR_SELECTED_DEVICE;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_SELECTED_DEVICE;
 	}
 
 	// 获取捕获筛选器的输出端口
@@ -115,11 +115,11 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 	if (this->captureOuputPin == nullptr) {
 		// 获取PIN接口失败
 		std::cerr << "BecamOpenedDevice::Open -> GetPin failed" << std::endl;
-		return StatusCode::STATUS_CODE_ERR_GET_STREAM_CAPS;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS;
 	}
 
 	// 配置设备流能力
-	code = BecamDeviceEnum::SetCaptureOuputPinStreamCaps(this->captureOuputPin, *frameInfo);
+	code = BecamDeviceEnum::SetCaptureOuputPinStreamCaps(this->captureOuputPin, frameInfo);
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
 		// 配置设备流能力失败
 		std::cerr << "BecamOpenedDevice::Open -> SetCaptureOuputPinStreamCaps failed, CODE: " << code << std::endl;
@@ -132,21 +132,21 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 	res = CoCreateInstance(CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, IID_IGraphBuilder, (void**)&this->graphBuilder);
 	if (FAILED(res)) {
 		// 创建图像构建器失败
-		return StatusCode::STATUS_CODE_ERR_CREATE_GRAPH_BUILDER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_CREATE_GRAPH_BUILDER;
 	}
 
 	// 创建视频帧抓取器（过滤器）
 	res = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)&this->sampleGrabber);
 	if (FAILED(res)) {
 		// 创建视频帧抓取器失败
-		return StatusCode::STATUS_CODE_ERR_CREATE_SAMPLE_GRABBER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_CREATE_SAMPLE_GRABBER;
 	}
 
 	// 创建空渲染器（输出）
 	res = CoCreateInstance(CLSID_NullRenderer, nullptr, CLSCTX_INPROC, IID_IBaseFilter, (void**)&this->nullRender);
 	if (FAILED(res)) {
 		// 创建空渲染器失败
-		return StatusCode::STATUS_CODE_ERR_CREATE_NULL_RENDER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_CREATE_NULL_RENDER;
 	}
 
 	// ------------------------------ 关联各组件实例 ----------------------------- //
@@ -155,21 +155,21 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 	res = this->graphBuilder->AddFilter(this->captureFilter, L"Video Capture Filter");
 	if (FAILED(res)) {
 		// 添加捕获过滤器失败
-		return StatusCode::STATUS_CODE_ERR_ADD_CAPTURE_FILTER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_ADD_CAPTURE_FILTER;
 	}
 
 	// 将视频帧抓取器（过滤器）添加到图像构建器
 	res = this->graphBuilder->AddFilter(this->sampleGrabber, L"Sample Grabber");
 	if (FAILED(res)) {
 		// 添加样品采集器失败
-		return StatusCode::STATUS_CODE_ERR_ADD_SAMPLE_GRABBER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_ADD_SAMPLE_GRABBER;
 	}
 
 	// 将空渲染器添加到图像构建器
 	res = this->graphBuilder->AddFilter(this->nullRender, L"bull");
 	if (FAILED(res)) {
 		// 创建空渲染器失败
-		return StatusCode::STATUS_CODE_ERR_ADD_NULL_RENDER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_ADD_NULL_RENDER;
 	}
 
 	// ----------------------- 连接各实例的输入、输出端口 ----------------------- //
@@ -178,7 +178,7 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 	auto dst = BecamDeviceEnum::GetPin(this->sampleGrabber, PINDIR_INPUT);
 	if (dst == nullptr) {
 		// 连接失败
-		return StatusCode::STATUS_CODE_ERR_CAPTURE_GRABBER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_CAPTURE_GRABBER;
 	}
 	// 连接捕获器输出和采集器输入
 	res = this->graphBuilder->Connect(this->captureOuputPin, dst);
@@ -190,14 +190,14 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 	// 检查连接结果
 	if (FAILED(res)) {
 		// 连接失败
-		return StatusCode::STATUS_CODE_ERR_CAPTURE_GRABBER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_CAPTURE_GRABBER;
 	}
 
 	// 采集器输出端口
 	auto grabber = BecamDeviceEnum::GetPin(this->sampleGrabber, PINDIR_OUTPUT);
 	if (FAILED(res)) {
 		// 连接失败
-		return StatusCode::STATUS_CODE_ERR_GRABBER_RENDER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_GRABBER_RENDER;
 	}
 	// 空渲染器输入端口
 	auto render = BecamDeviceEnum::GetPin(this->nullRender, PINDIR_INPUT);
@@ -206,7 +206,7 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 		grabber->Release();
 		grabber = nullptr;
 		// 连接失败
-		return StatusCode::STATUS_CODE_ERR_GRABBER_RENDER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_GRABBER_RENDER;
 	}
 	// 连接采集和渲染
 	res = this->graphBuilder->Connect(grabber, render);
@@ -218,7 +218,7 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 	// 检查连接结果
 	if (FAILED(res)) {
 		// 连接失败
-		return StatusCode::STATUS_CODE_ERR_GRABBER_RENDER;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_GRABBER_RENDER;
 	}
 
 	// ----------------------- 获取、配置控制接口 ----------------------- //
@@ -227,13 +227,13 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 	res = this->sampleGrabber->QueryInterface(IID_ISampleGrabber, (void**)&this->sampleGrabberIntf);
 	if (FAILED(res)) {
 		// 获取视频帧抓取器接口失败
-		return StatusCode::STATUS_CODE_ERR_GET_SAMPLE_GRABBER_INFC;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_GET_SAMPLE_GRABBER_INFC;
 	}
 	// 创建媒体控制（开关）
 	res = graphBuilder->QueryInterface(IID_IMediaControl, (void**)&this->mediaControl);
 	if (FAILED(res)) {
 		// 创建媒体控制器失败
-		return StatusCode::STATUS_CODE_ERR_CREATE_MEDIA_CONTROL;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_CREATE_MEDIA_CONTROL;
 	}
 
 	// 配置回调
@@ -245,7 +245,7 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 	this->mediaControl->Run();
 
 	// 赋值当前使用的帧率
-	this->fps = frameInfo->fps;
+	this->fps = frameInfo.fps;
 
 	// OK
 	return StatusCode::STATUS_CODE_SUCCESS;
@@ -254,17 +254,11 @@ StatusCode BecamOpenedDevice::Open(const std::string devicePath, const VideoFram
 /**
  * @implements 实现获取视频帧
  */
-StatusCode BecamOpenedDevice::GetFrame(uint8_t** data, size_t* size) {
-	// 检查入参
-	if (data == nullptr || size == nullptr) {
-		// 参数错误
-		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
-	}
-
+StatusCode BecamOpenedDevice::GetFrame(uint8_t*& data, size_t& size) {
 	// 检查样品采集器回调是否赋值
 	if (this->sampleGrabberCallback == nullptr) {
 		// 没有回调
-		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_DEVICE_NOT_OPEN;
 	}
 
 	// 每次取帧的状态码
@@ -292,9 +286,9 @@ StatusCode BecamOpenedDevice::GetFrame(uint8_t** data, size_t* size) {
 /**
  * @implements 实现释放视频帧
  */
-void BecamOpenedDevice::FreeFrame(uint8_t** data) {
+void BecamOpenedDevice::FreeFrame(uint8_t*& data) {
 	// 检查参数
-	if (data == nullptr || *data == nullptr) {
+	if (data == nullptr) {
 		return;
 	}
 

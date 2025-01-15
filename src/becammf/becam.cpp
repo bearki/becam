@@ -18,12 +18,10 @@ void BecamFree(BecamHandle* handle) {
 		// 参数错误
 		return;
 	}
-
 	// 获取Becam接口句柄
 	auto becamHandle = static_cast<BecamMediaFoundation*>(*handle);
 	// 释放Becam接口句柄
 	delete becamHandle;
-
 	// 置空
 	becamHandle = nullptr;
 	*handle = nullptr;
@@ -37,11 +35,14 @@ StatusCode BecamGetDeviceList(BecamHandle handle, GetDeviceListReply* reply) {
 	if (handle == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
 	}
-
+	// 检查参数
+	if (reply == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
 	// 转换句柄类型
 	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
 	// 获取相机列表
-	return becamHandle->GetDeviceList(reply);
+	return becamHandle->GetDeviceList(*reply);
 }
 
 /**
@@ -52,10 +53,14 @@ void BecamFreeDeviceList(BecamHandle handle, GetDeviceListReply* input) {
 	if (handle == nullptr) {
 		return;
 	}
+	// 检查参数
+	if (input == nullptr) {
+		return;
+	}
 	// 转换句柄类型
 	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
 	// 执行相机列表释放
-	becamHandle->FreeDeviceList(input);
+	becamHandle->FreeDeviceList(*input);
 }
 
 /**
@@ -66,14 +71,14 @@ StatusCode BecamGetDeviceConfigList(BecamHandle handle, const char* devicePath, 
 	if (handle == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
 	}
-	// 检查设备路径
-	if (devicePath == nullptr) {
+	// 检查参数
+	if (devicePath == nullptr || reply == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
 	// 转换句柄类型
 	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
 	// 执行获取设备配置列表
-	return becamHandle->GetDeviceConfigList(devicePath, reply);
+	return becamHandle->GetDeviceConfigList(devicePath, *reply);
 }
 
 /**
@@ -84,10 +89,14 @@ void BecamFreeDeviceConfigList(BecamHandle handle, GetDeviceConfigListReply* inp
 	if (handle == nullptr) {
 		return;
 	}
+	// 检查参数
+	if (input == nullptr) {
+		return;
+	}
 	// 转换句柄类型
 	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
 	// 执行相机配置列表释放
-	becamHandle->FreeDeviceConfigList(input);
+	becamHandle->FreeDeviceConfigList(*input);
 }
 
 /**
@@ -98,11 +107,14 @@ StatusCode BecamOpenDevice(BecamHandle handle, const char* devicePath, const Vid
 	if (handle == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
 	}
-
+	// 检查参数
+	if (devicePath == nullptr || frameInfo == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
 	// 转换句柄类型
 	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
 	// 执行相机打开
-	return becamHandle->OpenDevice(devicePath, frameInfo);
+	return becamHandle->OpenDevice(devicePath, *frameInfo);
 }
 
 /**
@@ -113,7 +125,6 @@ void BecamCloseDevice(BecamHandle handle) {
 	if (handle == nullptr) {
 		return;
 	}
-
 	// 转换句柄类型
 	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
 	// 执行相机关闭
@@ -128,11 +139,14 @@ StatusCode BecamGetFrame(BecamHandle handle, uint8_t** data, size_t* size) {
 	if (handle == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
 	}
-
+	// 检查参数
+	if (data == nullptr || size == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
+	}
 	// 转换句柄类型
 	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
 	// 执行获取视频帧
-	return becamHandle->GetFrame(data, size);
+	return becamHandle->GetFrame(*data, *size);
 }
 
 /**
@@ -143,9 +157,12 @@ void BecamFreeFrame(BecamHandle handle, uint8_t** data) {
 	if (handle == nullptr) {
 		return;
 	}
-
+	// 检查参数
+	if (data == nullptr) {
+		return;
+	}
 	// 转换句柄类型
 	BecamMediaFoundation* becamHandle = static_cast<BecamMediaFoundation*>(handle);
 	// 执行释放视频帧
-	becamHandle->FreeFrame(data);
+	becamHandle->FreeFrame(*data);
 }

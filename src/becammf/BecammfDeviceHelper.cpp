@@ -23,7 +23,7 @@ BecammfDeviceHelper::BecammfDeviceHelper() {
  */
 BecammfDeviceHelper::~BecammfDeviceHelper() {
 	// 释放当前设备
-	this->ReleaseCurrentDevice();
+	this->CloseCurrentDevice();
 	// COM库初始化成功时需要释放
 	if (SUCCEEDED(this->_ComInitResult)) {
 		// 释放Com库
@@ -37,11 +37,11 @@ BecammfDeviceHelper::~BecammfDeviceHelper() {
 }
 
 /**
- * @implements 实现释放当前设备
+ * @implements 关闭当前设备
  */
-void BecammfDeviceHelper::ReleaseCurrentDevice() {
+void BecammfDeviceHelper::CloseCurrentDevice() {
 	// 已打开的设备源读取器需要释放
-	this->ReleaseCurrentDeviceReader();
+	this->StopCurrentDeviceStreaming();
 	// 已打开的设备需要关闭设备
 	if (this->activatedDevice != nullptr) {
 		// 关闭设备
@@ -52,9 +52,9 @@ void BecammfDeviceHelper::ReleaseCurrentDevice() {
 }
 
 /**
- * @implements 实现释放当前设备源读取器
+ * @implements 停止当前设备取流
  */
-void BecammfDeviceHelper::ReleaseCurrentDeviceReader() {
+void BecammfDeviceHelper::StopCurrentDeviceStreaming() {
 	// 安全释放设备源读取器
 	SafeRelease(&this->activatedReader);
 }
@@ -199,14 +199,14 @@ void BecammfDeviceHelper::FreeDeviceList(DeviceInfo*& input, size_t& inputSize) 
 StatusCode BecammfDeviceHelper::ActivateDevice(const std::string& devicePath) {
 	// 参数检查
 	if (devicePath.empty()) {
-		return StatusCode::STATUS_CODE_MF_ERR_INPUT_PARAM;
+		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
 
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
 
 	// 释放已激活的设备
-	this->ReleaseCurrentDevice();
+	this->CloseCurrentDevice();
 
 	// 托管属性存储器，使其自动释放
 	auto attributesHelper = BecammfAttributesHelper();
@@ -275,9 +275,9 @@ void BecammfDeviceHelper::FreeDeviceConfigList(VideoFrameInfo*& input, size_t& i
 }
 
 /**
- * @implements 实现激活设备源读取器
+ * @implements 实现激活当前设备取流
  */
-StatusCode BecammfDeviceHelper::ActivateDeviceReader(const VideoFrameInfo frameInfo) {
+StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameInfo frameInfo) {
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
 
@@ -287,7 +287,7 @@ StatusCode BecammfDeviceHelper::ActivateDeviceReader(const VideoFrameInfo frameI
 	}
 
 	// 释放已存在的设备源读取器
-	this->ReleaseCurrentDeviceReader();
+	this->StopCurrentDeviceStreaming();
 
 	// 托管属性存储器，使其自动释放
 	auto attributesHelper = BecammfAttributesHelper();
@@ -421,7 +421,7 @@ void BecammfDeviceHelper::CloseDevice() {
 	std::unique_lock<std::mutex> lock(this->mtx);
 
 	// 关闭当前设备
-	this->ReleaseCurrentDevice();
+	this->CloseCurrentDevice();
 }
 
 /**

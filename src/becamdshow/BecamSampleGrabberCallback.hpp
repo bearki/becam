@@ -59,14 +59,14 @@ public:
 	 * @param size 视频帧流大小
 	 * @return 状态码
 	 */
-	StatusCode GetFrame(uint8_t** data, size_t* size);
+	StatusCode GetFrame(uint8_t*& data, size_t& size);
 
 	/**
 	 * @brief 释放视频帧
 	 *
 	 * @param data 视频帧流
 	 */
-	void FreeFrame(uint8_t** data);
+	void FreeFrame(uint8_t*& data);
 };
 
 #endif

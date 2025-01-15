@@ -15,9 +15,6 @@ BecamDirectShow::BecamDirectShow() {}
  * @implements 实现析构函数
  */
 BecamDirectShow::~BecamDirectShow() {
-	// 加个锁先
-	std::unique_lock<std::mutex> lock(this->mtx);
-
 	// 释放已打开的设备
 	if (this->openedDevice != nullptr) {
 		delete this->openedDevice;
@@ -28,25 +25,17 @@ BecamDirectShow::~BecamDirectShow() {
 /**
  * @implements 实现获取设备列表
  */
-StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
-	// 加个锁先
-	std::unique_lock<std::mutex> lock(this->mtx);
-
-	// 检查入参
-	if (reply == nullptr) {
-		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
-	}
-
+StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply& reply) {
 	// 设备数量置空
-	reply->deviceInfoListSize = 0;
-	reply->deviceInfoList = nullptr;
+	reply.deviceInfoListSize = 0;
+	reply.deviceInfoList = nullptr;
 
 	// 声明vector来储存设备列表
 	std::vector<DeviceInfo> deviceVec;
 	// 初始化设备枚举类
 	auto deviceEnum = BecamDeviceEnum(true);
 	// 开始枚举设备
-	auto code = deviceEnum.EnumVideoDevices([this, &deviceVec](IMoniker* moniker) {
+	auto code = deviceEnum.EnumVideoDevices([&deviceVec](IMoniker* moniker) {
 		// 获取设备友好名称
 		std::string friendlyName = "";
 		auto code = BecamDeviceEnum::GetMonikerFriendlyName(moniker, friendlyName);
@@ -89,10 +78,10 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 	}
 	// 是否有枚举到设备
 	if (deviceVec.size() > 0) {
-		// 转换为定长数组
-		reply->deviceInfoListSize = deviceVec.size();
-		reply->deviceInfoList = new DeviceInfo[deviceVec.size()];
-		memcpy(reply->deviceInfoList, deviceVec.data(), deviceVec.size() * sizeof(DeviceInfo));
+		// 拷贝设备列表
+		reply.deviceInfoListSize = deviceVec.size();
+		reply.deviceInfoList = new DeviceInfo[reply.deviceInfoListSize];
+		memcpy(reply.deviceInfoList, deviceVec.data(), reply.deviceInfoListSize * sizeof(DeviceInfo));
 	}
 
 	// OK
@@ -102,19 +91,16 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply* reply) {
 /**
  * @implements 实现释放设备列表
  */
-void BecamDirectShow::FreeDeviceList(GetDeviceListReply* input) {
+void BecamDirectShow::FreeDeviceList(GetDeviceListReply& input) {
 	// 检查
-	if (input == nullptr) {
-		return;
-	}
-	if (input->deviceInfoListSize <= 0 || input->deviceInfoList == nullptr) {
+	if (input.deviceInfoListSize <= 0 || input.deviceInfoList == nullptr) {
 		return;
 	}
 
 	// 遍历，执行释放操作
-	for (size_t i = 0; i < input->deviceInfoListSize; i++) {
+	for (size_t i = 0; i < input.deviceInfoListSize; i++) {
 		// 获取引用
-		auto item = input->deviceInfoList[i];
+		auto item = input.deviceInfoList[i];
 		// 释放友好名称
 		if (item.name != nullptr) {
 			delete[] item.name;
@@ -128,20 +114,20 @@ void BecamDirectShow::FreeDeviceList(GetDeviceListReply* input) {
 	}
 
 	// 释放整个列表
-	delete[] input->deviceInfoList;
-	input->deviceInfoListSize = 0;
-	input->deviceInfoList = nullptr;
+	delete[] input.deviceInfoList;
+	input.deviceInfoListSize = 0;
+	input.deviceInfoList = nullptr;
 }
 
 /**
  * @implements 实现获取设备配置列表
  */
-StatusCode BecamDirectShow::GetDeviceConfigList(const std::string devicePath, GetDeviceConfigListReply* reply) {
+StatusCode BecamDirectShow::GetDeviceConfigList(const std::string& devicePath, GetDeviceConfigListReply& reply) {
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
 
 	// 检查入参
-	if (devicePath.empty() || reply == nullptr) {
+	if (devicePath.empty()) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
 
@@ -168,8 +154,8 @@ StatusCode BecamDirectShow::GetDeviceConfigList(const std::string devicePath, Ge
 	}
 
 	// 赋值查询结果
-	reply->videoFrameInfoListSize = listSize;
-	reply->videoFrameInfoList = list;
+	reply.videoFrameInfoListSize = listSize;
+	reply.videoFrameInfoList = list;
 
 	// OK
 	return StatusCode::STATUS_CODE_SUCCESS;
@@ -178,32 +164,29 @@ StatusCode BecamDirectShow::GetDeviceConfigList(const std::string devicePath, Ge
 /**
  * @implements 实现释放设备配置列表
  */
-void BecamDirectShow::FreeDeviceConfigList(GetDeviceConfigListReply* input) {
+void BecamDirectShow::FreeDeviceConfigList(GetDeviceConfigListReply& input) {
 	// 检查
-	if (input == nullptr) {
-		return;
-	}
-	if (input->videoFrameInfoListSize <= 0 || input->videoFrameInfoList == nullptr) {
+	if (input.videoFrameInfoListSize <= 0 || input.videoFrameInfoList == nullptr) {
 		return;
 	}
 	// 释放整个列表
-	delete[] input->videoFrameInfoList;
-	input->videoFrameInfoListSize = 0;
-	input->videoFrameInfoList = nullptr;
+	delete[] input.videoFrameInfoList;
+	input.videoFrameInfoListSize = 0;
+	input.videoFrameInfoList = nullptr;
 }
 
 /**
  * @implements 实现打开指定设备
  */
-StatusCode BecamDirectShow::OpenDevice(const std::string devicePath, const VideoFrameInfo* frameInfo) {
+StatusCode BecamDirectShow::OpenDevice(const std::string& devicePath, const VideoFrameInfo& frameInfo) {
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
 
 	// 检查入参
-	if (devicePath.empty() || frameInfo == nullptr) {
+	if (devicePath.empty()) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
-	if (frameInfo->width <= 0 || frameInfo->height <= 0 || frameInfo->fps <= 0 || frameInfo->format <= 0) {
+	if (frameInfo.width <= 0 || frameInfo.height <= 0 || frameInfo.fps <= 0 || frameInfo.format <= 0) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
 
@@ -248,18 +231,13 @@ void BecamDirectShow::CloseDevice() {
 /**
  * @implements 实现获取视频帧
  */
-StatusCode BecamDirectShow::GetFrame(uint8_t** data, size_t* size) {
+StatusCode BecamDirectShow::GetFrame(uint8_t*& data, size_t& size) {
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
 
-	// 检查入参
-	if (data == nullptr || size == nullptr) {
-		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
-	}
-
 	// 检查设备是否打开
 	if (this->openedDevice == nullptr) {
-		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
+		return StatusCode::STATUS_CODE_DSHOW_ERR_DEVICE_NOT_OPEN;
 	}
 
 	// 获取视频帧
@@ -269,12 +247,12 @@ StatusCode BecamDirectShow::GetFrame(uint8_t** data, size_t* size) {
 /**
  * @implements 实现释放视频帧
  */
-void BecamDirectShow::FreeFrame(uint8_t** data) {
+void BecamDirectShow::FreeFrame(uint8_t*& data) {
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
 
 	// 检查入参
-	if (data == nullptr || *data == nullptr) {
+	if (data == nullptr) {
 		return;
 	}
 

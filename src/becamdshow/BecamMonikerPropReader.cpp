@@ -31,14 +31,14 @@ std::pair<StatusCode, VARIANT> BecamMonikerPropReader::read(IMoniker* pMoniker) 
 	auto res = pMoniker->BindToStorage(nullptr, nullptr, IID_IPropertyBag, (void**)&this->propBag);
 	if (FAILED(res)) {
 		// 忽略失败的，返回空名称
-		return std::make_pair(StatusCode::STATUS_CODE_ERR_GET_DEVICE_PROP, this->friendNameUTF16);
+		return std::make_pair(StatusCode::STATUS_CODE_DSHOW_ERR_GET_DEVICE_PROP, this->friendNameUTF16);
 	}
 
 	// 读取属性值
 	res = this->propBag->Read(this->propName, &this->friendNameUTF16, nullptr);
 	if (FAILED(res)) {
 		// 忽略失败的，返回空名称
-		return std::make_pair(StatusCode::STATUS_CODE_ERR_GET_DEVICE_PROP, this->friendNameUTF16);
+		return std::make_pair(StatusCode::STATUS_CODE_DSHOW_ERR_GET_DEVICE_PROP, this->friendNameUTF16);
 	}
 
 	// 返回结果

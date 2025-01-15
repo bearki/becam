@@ -15,7 +15,6 @@ BecamHandle BecamNew() {
 void BecamFree(BecamHandle* handle) {
 	// 检查参数
 	if (handle == nullptr || *handle == nullptr) {
-		// 参数错误
 		return;
 	}
 
@@ -91,6 +90,7 @@ void BecamFreeDeviceConfigList(BecamHandle handle, GetDeviceConfigListReply* inp
 	if (handle == nullptr) {
 		return;
 	}
+	// 检查参数
 	if (input == nullptr) {
 		return;
 	}
@@ -108,6 +108,7 @@ StatusCode BecamOpenDevice(BecamHandle handle, const char* devicePath, const Vid
 	if (handle == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
 	}
+	// 检查参数
 	if (devicePath == nullptr || frameInfo == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
