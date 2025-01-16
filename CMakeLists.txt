@@ -34,7 +34,7 @@ if(MSVC)
 elseif(MINGW)
     set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/dist/mingw)
 else()
-    set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/dist/gcc)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/dist/gnu)
 endif()
 
 # 配置引用头文件目录

@@ -8,3 +8,4 @@
 .git* eol=lf
 *.json eol=lf
 *.ps1 eol=crlf
+*.sh eol=lf
