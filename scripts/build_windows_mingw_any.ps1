@@ -8,7 +8,9 @@ param (
     [string] $Toolchain = (Resolve-Path -Path "${Env:MinGW32}")
 )
 
-begin {
+# 保存旧的PATH
+$oldPath = $Env:Path
+try {
     # ===== 变量预声明 =====
     # 定义输出编码（对[Console]::WriteLine生效）
     $OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
@@ -39,13 +41,12 @@ begin {
         New-Item -Path "${publishDir}" -ItemType Directory
     }
     # 将工具链添加到环境变量
-    $ToolchainBin = Resolve-Path -Path "${Toolchain}\bin"
-    if (!$Env:Path.StartsWith($ToolchainBin)) {
-        $Env:Path = "${ToolchainBin};${Env:Path}"
+    $toolchainBin = Resolve-Path -Path "${Toolchain}\bin"
+    if (!$Env:Path.StartsWith($toolchainBin)) {
+        $Env:Path = "${toolchainBin};${Env:Path}"
     }
-}
 
-process {
+    
     # 构建开始
     Write-Host "--------------------------------- 构建:开始 ----------------------------------"
     Write-Host "[编译器:${Toolchain}\bin\${BuildArch}-w64-mingw32-gcc.exe]"
@@ -75,9 +76,11 @@ process {
     Compress-Archive -Force -Path "${installDir}\libbecamdshow_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecamdshow_windows_${BuildArch}_mingw.zip"
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecammf_windows_${BuildArch}_mingw.zip"
-}
 
-end {
     # 构建结束
     Write-Host "--------------------------------- 构建:结束 ----------------------------------"
+}
+finally {
+    # 还原旧的PATH
+    $Env:Path = $oldPath
 }

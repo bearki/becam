@@ -8,7 +8,9 @@ param (
     [string] $VsVersion = "Visual Studio 2022"
 )
 
-begin {
+# 保存旧的PATH
+$oldPath = $Env:Path
+try {
     # ===== 变量预声明 =====
     # 定义输出编码（对[Console]::WriteLine生效）
     $OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
@@ -97,12 +99,10 @@ begin {
             Throw "不支持的额目标架构：${$BuildArch}"
         }
     }
-
     # VS提供的环境配置脚本配置编译环境
     & "${vsPath}\VC\Auxiliary\Build\vcvarsall.bat" $vcHost
-}
 
-process {
+
     # 构建开始
     Write-Host "--------------------------------- 构建:开始 ----------------------------------"
     Write-Host "[编译器:${msvcToolchainPath}]"
@@ -131,9 +131,11 @@ process {
     # 不支持Direct Show，所以仅压缩Miedia Foundation
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecammf_windows_${BuildArch}_msvc.zip"
-}
 
-end {
     # 构建结束
     Write-Host "--------------------------------- 构建:结束 ----------------------------------"
+}
+finally {
+    # 还原旧的PATH
+    $Env:Path = $oldPath
 }
