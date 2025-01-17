@@ -41,7 +41,8 @@ echo "[工具链:${Toolchain}]"
 echo "------------------------------- 执行CMake:配置 -------------------------------"
 cmake -G "Unix Makefiles" \
     -DTOOLCHAIN_PATH="${Toolchain}" \
-    -DCMAKE_TOOLCHAIN_FILE="${projectDir}/cmake-toolchains/rockchip-linux-${SystemArch}-toolchain.cmake" \
+    -DCMAKE_SYSTEM_PROCESSOR="${BuildArch}" \
+    -DCMAKE_TOOLCHAIN_FILE="${projectDir}/cmake-toolchains/linux-rockchip-toolchain.cmake" \
     -DCMAKE_BUILD_TYPE="${buildType}" \
     -S "${projectDir}" \
     -B "${buildDir}"

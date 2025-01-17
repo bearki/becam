@@ -35,7 +35,8 @@ echo "[模式:${buildType}]"
 # 执行CMake
 echo "------------------------------- 执行CMake:配置 -------------------------------"
 cmake -G "Unix Makefiles" \
-    -DCMAKE_TOOLCHAIN_FILE="${projectDir}/cmake-toolchains/gnu-linux-${SystemArch}-toolchain.cmake" \
+    -DCMAKE_SYSTEM_PROCESSOR="${BuildArch}" \
+    -DCMAKE_TOOLCHAIN_FILE="${projectDir}/cmake-toolchains/linux-gnu-toolchain.cmake" \
     -DCMAKE_BUILD_TYPE="${buildType}" \
     -S "${projectDir}" \
     -B "${buildDir}"

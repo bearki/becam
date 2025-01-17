@@ -2,12 +2,6 @@
 [CmdletBinding()]
 # ===== 配置参数信息 =====
 param (
-    # 编译类型（Debug、Release、RelWithDebInfo、MinSizeRel）
-    # Debug: 由于没有优化和完整的调试信息，这通常在开发和调试期间使用，因为它通常提供最快的构建时间和最佳的交互式调试体验。
-    # Release: 这种构建类型通常快速的提供了充分的优化，并且没有调试信息，尽管一些平台在某些情况下仍然可能生成调试符号。
-    # RelWithDebInfo: 这在某种程度上是前两者的折衷。它的目标是使性能接近于发布版本，但仍然允许一定程度的调试。
-    # MinSizeRel: 这种构建类型通常只用于受限制的资源环境，如嵌入式设备。
-    [string] $BuildType = "Release",
     # 编译架构（i686 | x86_64 | arm | arm64）
     [string] $BuildArch = "i686",
     # VS版本（Visual Studio 2019 | Visual Studio 2022）
@@ -20,8 +14,22 @@ begin {
     $OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
     # 遇到错误立即停止
     $ErrorActionPreference = 'Stop'
-    # 配置项目根目录
-    $ProjectRootPath = (Resolve-Path "${PSScriptRoot}\..\").Path
+    # 配置项目目录
+    $projectDir = (Resolve-Path "${PSScriptRoot}\..\").Path
+    # 配置构建目录
+    $buildDir = "${projectDir}\build"
+    # 配置发布目录
+    $publishDir = "${projectDir}\dist\msvc"
+    # 编译类型（Debug、Release、RelWithDebInfo、MinSizeRel）
+    # Debug: 由于没有优化和完整的调试信息，这通常在开发和调试期间使用，因为它通常提供最快的构建时间和最佳的交互式调试体验。
+    # Release: 这种构建类型通常快速的提供了充分的优化，并且没有调试信息，尽管一些平台在某些情况下仍然可能生成调试符号。
+    # RelWithDebInfo: 这在某种程度上是前两者的折衷。它的目标是使性能接近于发布版本，但仍然允许一定程度的调试。
+    # MinSizeRel: 这种构建类型通常只用于受限制的资源环境，如嵌入式设备。
+    $buildType = "Release"
+    # 移除旧的构建目录
+    Remove-Item -Path "${buildDir}" -Recurse -Force -ErrorAction Ignore
+    # 创建新的构建目录
+    New-Item -Path "${buildDir}" -ItemType Directory
 
     # 设置 vswhere 的路径
     $vswherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -84,45 +92,36 @@ begin {
 
     # VS提供的环境配置脚本配置编译环境
     & "${vsPath}\VC\Auxiliary\Build\vcvarsall.bat" $vcHost
-    Write-Host "环境变量：${Env:Path}"
-
-    Write-Host "----------------------------- CMake版本信息 -----------------------------"
-    cmake --version
 }
 
 process {
-    # # 移除旧的构建目录
-    Remove-Item -Path "${ProjectRootPath}\build" -Recurse -Force -ErrorAction Ignore
-    # 创建新的构建目录
-    New-Item -Path "${ProjectRootPath}\build" -ItemType Directory
-
     # 构建开始
     Write-Host "------------------------------- 构建:开始 -------------------------------"
     Write-Host "[编译器:${msvcToolchainPath}]"
     Write-Host "[架构:${BuildArch}]"
-    Write-Host "[模式:${BuildType}]"
+    Write-Host "[模式:${buildType}]"
     
     # # 执行CMake
     Write-Host "------------------------------- 执行CMake -------------------------------"
     cmake -G "Visual Studio 17 2022" `
         -DCMAKE_SYSTEM_NAME="Windows" `
         -DCMAKE_SYSTEM_PROCESSOR="${BuildArch}" `
-        -S"${ProjectRootPath}" `
-        -B"${ProjectRootPath}\build" `
+        -S"${projectDir}" `
+        -B"${buildDir}" `
         -T host="${vcHost}" `
         -A "${vcArch}"
 
     # 执行make
     Write-Host "------------------------------- 执行Make -------------------------------"
-    cmake --build "${ProjectRootPath}\build" --config "${BuildType}"
+    cmake --build "${buildDir}" --config "${buildType}"
 
     # 执行make install
     Write-Host "--------------------------- 执行Make Install ---------------------------"
-    cmake --install "${ProjectRootPath}\build" --config "${BuildType}"
+    cmake --install "${buildDir}" --config "${buildType}" --prefix "${publishDir}"
 
-    # 不支持Direct Show，索引仅压缩Miedia Foundation
+    # 不支持Direct Show，所以仅压缩Miedia Foundation
     # 执行压缩
-    Compress-Archive -Force -Path "${ProjectRootPath}\dist\msvc\libbecammf_windows_${BuildArch}\*" -DestinationPath "${ProjectRootPath}\dist\libbecammf_windows_${BuildArch}_msvc.zip"
+    Compress-Archive -Force -Path "${publishDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecammf_windows_${BuildArch}_msvc.zip"
 }
 
 end {
