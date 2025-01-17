@@ -6,8 +6,8 @@
 | :---------: | :--------: | :--------: |
 | Windows | Direct Show | `Supported` |
 | Windows | Media Foundation | `Supported` |
-| Linux | V4L2 | `Developing` |
-| UVC | libuvc | `Schedule` |
+| Linux | V4L2 | `Supported` |
+| UVC | libuvc | `Developing` |
 | Android | Camera V1 | `Schedule` |
 | Android | Camera V2 | `Schedule` |
 | Harmony | Camera | `Schedule` |

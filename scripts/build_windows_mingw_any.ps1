@@ -38,17 +38,22 @@ begin {
     if (!(Test-Path -Path "${publishDir}")) {
         New-Item -Path "${publishDir}" -ItemType Directory
     }
+    # 将工具链添加到环境变量
+    $ToolchainBin = Resolve-Path -Path "${Toolchain}\bin"
+    if (!$Env:Path.StartsWith($ToolchainBin)) {
+        $Env:Path = "${ToolchainBin};${Env:Path}"
+    }
 }
 
 process {
     # 构建开始
-    Write-Host "------------------------------- 构建:开始 -------------------------------"
+    Write-Host "--------------------------------- 构建:开始 ----------------------------------"
     Write-Host "[编译器:${Toolchain}\bin\${BuildArch}-w64-mingw32-gcc.exe]"
     Write-Host "[架构:${BuildArch}]"
     Write-Host "[模式:${buildType}]"
     
     # 执行CMake
-    Write-Host "------------------------------- 执行CMake -------------------------------"
+    Write-Host "------------------------------- 执行CMake:配置 -------------------------------"
     cmake -G "MinGW Makefiles" `
         -DTOOLCHAIN_PATH="${Toolchain}" `
         -DCMAKE_SYSTEM_PROCESSOR="${BuildArch}" `
@@ -58,13 +63,14 @@ process {
         -B "${buildDir}"
 
     # 执行make
-    Write-Host "------------------------------- 执行Make -------------------------------"
+    Write-Host "------------------------------- 执行CMake:构建 -------------------------------"
     cmake --build "${buildDir}" --config "${buildType}"
 
     # 执行make install
-    Write-Host "--------------------------- 执行Make Install ---------------------------"
+    Write-Host "------------------------------- 执行CMake:安装 -------------------------------"
     cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
+    Write-Host "---------------------------------- 执行压缩 ----------------------------------"
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecamdshow_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecamdshow_windows_${BuildArch}_mingw.zip"
     # 执行压缩
@@ -73,5 +79,5 @@ process {
 
 end {
     # 构建结束
-    Write-Host "------------------------------- 构建:结束 -------------------------------"
+    Write-Host "--------------------------------- 构建:结束 ----------------------------------"
 }

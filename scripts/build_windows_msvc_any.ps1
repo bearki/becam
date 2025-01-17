@@ -32,8 +32,12 @@ begin {
     Remove-Item -Path "${buildDir}" -Recurse -Force -ErrorAction Ignore
     # 创建新的构建目录
     New-Item -Path "${buildDir}" -ItemType Directory -Force
-    New-Item -Path "${installDir}" -ItemType Directory
-    New-Item -Path "${publishDir}" -ItemType Directory
+    if (!(Test-Path -Path "${installDir}")) {
+        New-Item -Path "${installDir}" -ItemType Directory
+    }
+    if (!(Test-Path -Path "${publishDir}")) {
+        New-Item -Path "${publishDir}" -ItemType Directory
+    }
 
     # 设置 vswhere 的路径
     $vswherePath = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -100,13 +104,13 @@ begin {
 
 process {
     # 构建开始
-    Write-Host "------------------------------- 构建:开始 -------------------------------"
+    Write-Host "--------------------------------- 构建:开始 ----------------------------------"
     Write-Host "[编译器:${msvcToolchainPath}]"
     Write-Host "[架构:${BuildArch}]"
     Write-Host "[模式:${buildType}]"
     
     # # 执行CMake
-    Write-Host "------------------------------- 执行CMake -------------------------------"
+    Write-Host "------------------------------- 执行CMake:配置 -------------------------------"
     cmake -G "Visual Studio 17 2022" `
         -DCMAKE_SYSTEM_NAME="Windows" `
         -DCMAKE_SYSTEM_PROCESSOR="${BuildArch}" `
@@ -116,13 +120,14 @@ process {
         -A "${vcArch}"
 
     # 执行make
-    Write-Host "------------------------------- 执行Make -------------------------------"
+    Write-Host "------------------------------- 执行CMake:构建 -------------------------------"
     cmake --build "${buildDir}" --config "${buildType}"
 
     # 执行make install
-    Write-Host "--------------------------- 执行Make Install ---------------------------"
+    Write-Host "------------------------------- 执行CMake:安装 -------------------------------"
     cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
+    Write-Host "---------------------------------- 执行压缩 ----------------------------------"
     # 不支持Direct Show，所以仅压缩Miedia Foundation
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecammf_windows_${BuildArch}_msvc.zip"
@@ -130,5 +135,5 @@ process {
 
 end {
     # 构建结束
-    Write-Host "------------------------------- 构建:结束 -------------------------------"
+    Write-Host "--------------------------------- 构建:结束 ----------------------------------"
 }
