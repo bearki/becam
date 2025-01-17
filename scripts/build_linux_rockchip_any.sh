@@ -8,7 +8,7 @@ set -e
 # 声明使用的平台（rk1126、rk1109、rk3566、rk3588）
 Platform=${1:-"rk1126"}
 # 声明系统架构（arm、aarch64）
-SystemArch=${2:-"arm"}
+BuildArch=${2:-"arm"}
 # 声明工具链所在位置
 Toolchain=${3:-"/RV1126_RV1109_LINUX_SDK_V2.2.4/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf"}
 
@@ -30,12 +30,18 @@ buildType="Release"
 rm -rf "${buildDir}"
 # 创建新的构建目录
 mkdir -p -m 755 "${buildDir}"
+if [[ ! -d "${installDir}" ]]; then
+  mkdir -p -m 755 "${installDir}"
+fi
+if [[ ! -d "${publishDir}" ]]; then
+  mkdir -p -m 755 "${publishDir}"
+fi
 
 # 构建开始
 echo "--------------------------------- 构建:开始 ----------------------------------"
 echo "[平台:${Platform}]"
 echo "[系统:Linux]"
-echo "[架构:${SystemArch}]"
+echo "[架构:${BuildArch}]"
 echo "[模式:${buildType}]"
 echo "[工具链:${Toolchain}]"
     
@@ -60,7 +66,7 @@ cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
 # 执行压缩
 echo "---------------------------------- 执行压缩 ----------------------------------"
-tar -czvf "${publishDir}/libbecamv4l2_linux_${SystemArch}_gnu.tar.gz" -C "${installDir}/libbecamv4l2_linux_${SystemArch}" .
+tar -czvf "${publishDir}/libbecamv4l2_linux_${BuildArch}_${Platform}.tar.gz" -C "${installDir}/libbecamv4l2_linux_${BuildArch}" .
 
 # 构建结束
 echo "--------------------------------- 构建:结束 ----------------------------------"
