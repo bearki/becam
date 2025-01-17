@@ -24,7 +24,7 @@ public:
 	/**
 	 * @brief 构造函数
 	 *
-	 * @param propName 属性名
+	 * @param propName [in] 属性名
 	 */
 	BecamMonikerPropReader(LPCOLESTR propName);
 
@@ -35,7 +35,8 @@ public:
 
 	/**
 	 * @brief 读取属性
-	 * @param pMoniker 设备实例
+	 * 
+	 * @param pMoniker [in] 设备实例
 	 * @return 状态码和UTF16属性值引用（外部无需管理，脱离MonikerPropReader作用域会自动释放）
 	 */
 	std::pair<StatusCode, VARIANT> read(IMoniker* pMoniker);

@@ -1,33 +1,36 @@
 #pragma once
 
-#ifndef _BECAM_MV4L2_H_
-#define _BECAM_MV4L2_H_
+#ifndef _BECAM_MEDIA_FOUNDATION_H_
+#define _BECAM_MEDIA_FOUNDATION_H_
 
-#include "Becamv4l2DeviceHelper.hpp"
+#include "BecammfDeviceHelper.hpp"
 #include <becam/becam.h>
+#include <dshow.h>
+#include <functional>
+#include <iostream>
 #include <mutex>
 
 /**
- * @brief 基于V4L2实现Becam接口
+ * @brief 基于Media Foundation实现Becam接口
  *
  */
-class BecamV4L2 {
+class BecamMediaFoundation {
 private:
 	// 声明互斥锁
 	std::mutex mtx;
 	// 已打开设备实例
-	Becamv4l2DeviceHelper* openedDevice = new Becamv4l2DeviceHelper();
+	BecammfDeviceHelper* openedDevice = new BecammfDeviceHelper();
 
 public:
 	/**
 	 * @brief 构造函数
 	 */
-	BecamV4L2();
+	BecamMediaFoundation();
 
 	/**
 	 * @brief 析构函数
 	 */
-	~BecamV4L2();
+	~BecamMediaFoundation();
 
 	/**
 	 * @brief 获取设备列表
