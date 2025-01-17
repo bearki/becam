@@ -14,8 +14,10 @@ SystemArch=${1:-"x86_64"}
 projectDir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 # 构建目录
 buildDir="${projectDir}/build"
+# 安装目录
+installDir="${projectDir}/install/gnu"
 # 发布目录
-publishDir="${projectDir}/dist/gnu"
+publishDir="${projectDir}/publish"
 # 编译类型（Debug、Release）
 buildType="Release"
 
@@ -48,11 +50,11 @@ cmake --build "${buildDir}" --config "${buildType}"
 
 # 执行make install
 echo "------------------------------- 执行CMake:安装 -------------------------------"
-cmake --install "${buildDir}" --config "${buildType}" --prefix "${publishDir}"
+cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
 # 执行压缩
 echo "---------------------------------- 执行压缩 ----------------------------------"
-tar -czvf "${projectDir}/dist/libbecamv4l2_linux_${SystemArch}_gnu.tar.gz" -C "${publishDir}/libbecamv4l2_linux_${SystemArch}" .
+tar -czvf "${publishDir}/libbecamv4l2_linux_${SystemArch}_gnu.tar.gz" -C "${installDir}/libbecamv4l2_linux_${SystemArch}" .
 
 # 构建结束
 echo "--------------------------------- 构建:结束 ----------------------------------"

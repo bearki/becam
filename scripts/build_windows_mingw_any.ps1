@@ -18,8 +18,10 @@ begin {
     $projectDir = (Resolve-Path "${PSScriptRoot}\..\").Path
     # 配置构建目录
     $buildDir = "${projectDir}\build"
+    # 配置安装目录
+    $installDir = "${projectDir}\install\mingw"
     # 配置发布目录
-    $publishDir = "${projectDir}\dist\mingw"
+    $publishDir = "${projectDir}\publish"
     # 编译类型（Debug、Release、RelWithDebInfo、MinSizeRel）
     # Debug: 由于没有优化和完整的调试信息，这通常在开发和调试期间使用，因为它通常提供最快的构建时间和最佳的交互式调试体验。
     # Release: 这种构建类型通常快速的提供了充分的优化，并且没有调试信息，尽管一些平台在某些情况下仍然可能生成调试符号。
@@ -29,13 +31,19 @@ begin {
     # 移除旧的构建目录
     Remove-Item -Path "${buildDir}" -Recurse -Force -ErrorAction Ignore
     # 创建新的构建目录
-    New-Item -Path "${buildDir}" -ItemType Directory
+    New-Item -Path "${buildDir}" -ItemType Directory -Force
+    if (!(Test-Path -Path "${installDir}")) {
+        New-Item -Path "${installDir}" -ItemType Directory
+    }
+    if (!(Test-Path -Path "${publishDir}")) {
+        New-Item -Path "${publishDir}" -ItemType Directory
+    }
 }
 
 process {
     # 构建开始
     Write-Host "------------------------------- 构建:开始 -------------------------------"
-    Write-Host "[编译器:${Toolchain}\bin\${BuildArch}-w64-mingw32-gcc]"
+    Write-Host "[编译器:${Toolchain}\bin\${BuildArch}-w64-mingw32-gcc.exe]"
     Write-Host "[架构:${BuildArch}]"
     Write-Host "[模式:${buildType}]"
     
@@ -55,12 +63,12 @@ process {
 
     # 执行make install
     Write-Host "--------------------------- 执行Make Install ---------------------------"
-    cmake --install "${buildDir}" --config "${buildType}" --prefix "${publishDir}"
+    cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
     # 执行压缩
-    Compress-Archive -Force -Path "${publishDir}\libbecamdshow_windows_${BuildArch}\*" -DestinationPath "${projectDir}\dist\libbecamdshow_windows_${BuildArch}_mingw.zip"
+    Compress-Archive -Force -Path "${installDir}\libbecamdshow_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecamdshow_windows_${BuildArch}_mingw.zip"
     # 执行压缩
-    Compress-Archive -Force -Path "${publishDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${projectDir}\dist\libbecammf_windows_${BuildArch}_mingw.zip"
+    Compress-Archive -Force -Path "${installDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecammf_windows_${BuildArch}_mingw.zip"
 }
 
 end {
