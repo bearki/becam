@@ -71,7 +71,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/include/libuvc)
 # 根据条件添加子目录
 if(CMAKE_SYSTEM_NAME MATCHES "Windows") # windows环境下需要编译的内容
     # 增加子目录
-    if(MINGW)
+    if(MINGW) # 仅在MINGW环境下编译Direct Show
         add_subdirectory(${CMAKE_SOURCE_DIR}/src/becamdshow)
         add_subdirectory(${CMAKE_SOURCE_DIR}/test/becamdshow)
     endif()
