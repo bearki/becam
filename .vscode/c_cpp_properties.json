@@ -3,15 +3,18 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/include/**"
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/libusb-cmake/src/libusb",
+                "${workspaceFolder}/include/libusb-cmake/src/msvc",
+                "${workspaceFolder}/include/libuvc/include"
             ]
         },
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/include/**"
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/include/libusb-cmake/src/libusb",
+                "${workspaceFolder}/include/libuvc/include"
             ]
         }
     ],

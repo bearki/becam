@@ -51,6 +51,14 @@ string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" BUILD_ARCH)
 # 打印一下系统类型
 message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${BUILD_ARCH}")
+
+# 引入三方库libusb源码
+add_subdirectory(${CMAKE_SOURCE_DIR}/include/libusb-cmake)
+# 引入三方库libuvc源码
+# set(CMAKE_BUILD_TARGET "Both")
+# add_subdirectory(${CMAKE_SOURCE_DIR}/include/libuvc)
+# add_dependencies(uvc_static libusb_static)
+
 # 根据条件添加子目录
 if(CMAKE_SYSTEM_NAME MATCHES "Windows") # windows环境下需要编译的内容
     # 增加子目录
