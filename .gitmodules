@@ -1,3 +1,6 @@
 [submodule "include/libuvc"]
 	path = include/libuvc
 	url = https://github.com/libuvc/libuvc.git
+[submodule "include/libusb-cmake"]
+	path = include/libusb-cmake
+	url = https://github.com/libusb/libusb-cmake.git
