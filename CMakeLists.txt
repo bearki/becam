@@ -76,10 +76,18 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     # 导入编译好的libusb供libuvc使用
     add_library(LibUSB::LibUSB STATIC IMPORTED) # 导入LibUSB::LibUSB库
     set_target_properties(LibUSB::LibUSB PROPERTIES 
-                        INTERFACE_INCLUDE_DIRECTORIES ${LibUSB_INCLUDE_DIRS}) # 指定LibUSB::LibUSB头文件目录
-    set_target_properties(LibUSB::LibUSB PROPERTIES
-                        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-                        IMPORTED_LOCATION "${LibUSB_LIBRARY_DIRS}/libusb-1.0.a") # 指定LibUSB::LibUSB库文件
+                            INTERFACE_INCLUDE_DIRECTORIES ${LibUSB_INCLUDE_DIRS}) # 指定LibUSB::LibUSB头文件目录
+    # MSVC的静态库特殊处理
+    if(MSVC)
+        set_target_properties(LibUSB::LibUSB PROPERTIES
+                                IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                                IMPORTED_LOCATION "${LibUSB_LIBRARY_DIRS}/libusb-1.0.lib") # 指定LibUSB::LibUSB库文件
+    else()
+        set_target_properties(LibUSB::LibUSB PROPERTIES
+                                IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+                                IMPORTED_LOCATION "${LibUSB_LIBRARY_DIRS}/libusb-1.0.a") # 指定LibUSB::LibUSB库文件
+    endif()
+    
                         
     # 引入三方库libuvc源码
     set(CMAKE_BUILD_TARGET "Shared") # 编译成静态库
@@ -88,14 +96,14 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
 
     # 强制等待libusb编译完成
     if(CMAKE_BUILD_TARGET MATCHES "Shared")
-        target_link_libraries(uvc PRIVATE udev)
+        target_link_libraries(uvc PRIVATE udev) # 动态库需要连接到udev
         add_dependencies(uvc usb-1.0)
         set(LibUVC_STATIC OFF) # libuvc的CMake写的有问题，必须启用，否则示例程序编译不通过
     elseif(CMAKE_BUILD_TARGET MATCHES "Static")
         add_dependencies(uvc_static usb-1.0)
         set(LibUVC_STATIC ON) # libuvc的CMake写的有问题，必须启用，否则示例程序编译不通过
     elseif(CMAKE_BUILD_TARGET MATCHES "Both")
-        target_link_libraries(uvc PRIVATE udev)
+        target_link_libraries(uvc PRIVATE udev) # 动态库需要连接到udev
         add_dependencies(uvc usb-1.0)
         add_dependencies(uvc_static usb-1.0)
         set(LibUVC_STATIC ON) # libuvc的CMake写的有问题，必须启用，否则示例程序编译不通过
