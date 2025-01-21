@@ -82,26 +82,34 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
                             IMPORTED_LOCATION "${LibUSB_LIBRARY_DIRS}/libusb-1.0.a") # 指定LibUSB::LibUSB库文件
                         
     # 引入三方库libuvc源码
-    set(CMAKE_BUILD_TARGET "Static") # 编译成静态库
+    set(CMAKE_BUILD_TARGET "Both") # 编译成静态库
     set(BUILD_EXAMPLE ON) # 编译实例程序
-    set(LibUVC_STATIC ON) 
+    if(CMAKE_BUILD_TARGET MATCHES "Static" OR CMAKE_BUILD_TARGET MATCHES "Both")
+        set(LibUVC_STATIC ON) 
+    else()
+        set(LibUVC_STATIC OFF) 
+    endif()
     add_subdirectory(${CMAKE_SOURCE_DIR}/include/libuvc) # 添加libuvc子目录
     # 强制等待libusb编译完成
-    if(NOT CMAKE_BUILD_TARGET MATCHES "Static")
-        # 动态库需要连接到udev
+    if(CMAKE_BUILD_TARGET MATCHES "Shared")
+        # 动态库和示例程序需要连接到udev
         if(CMAKE_SYSTEM_NAME MATCHES "Linux")
             target_link_libraries(uvc PRIVATE udev) 
         endif()
         # 强制指定依赖关系
         add_dependencies(uvc usb-1.0)
     elseif(CMAKE_BUILD_TARGET MATCHES "Static")
+        # 示例程序需要连接到udev
+        if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+            target_link_libraries(uvc_static PRIVATE udev)
+        endif()
         # 强制指定依赖关系
         add_dependencies(uvc_static usb-1.0)
     elseif(CMAKE_BUILD_TARGET MATCHES "Both")
-        # 动态库需要连接到udev
+        # 动态库和示例程序需要连接到udev
         if(CMAKE_SYSTEM_NAME MATCHES "Linux")
             target_link_libraries(uvc PRIVATE udev) 
-            target_link_libraries(example PRIVATE udev) 
+            target_link_libraries(uvc_static PRIVATE udev)
         endif()
         # 强制指定依赖关系
         add_dependencies(uvc usb-1.0)
