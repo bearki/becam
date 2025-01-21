@@ -57,4 +57,7 @@
         "sstream": "cpp",
         "libuvc.h": "c"
     },
+    "cmake.configureSettings": {
+        "CMAKE_BUILD_TYPR": "${buildType}"
+    }
 }
