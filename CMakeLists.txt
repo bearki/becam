@@ -118,7 +118,7 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     endif()
 
     # 添加子目录
-    add_subdirectory(${CMAKE_SOURCE_DIR}/src/becamuvc)
+    # add_subdirectory(${CMAKE_SOURCE_DIR}/src/becamuvc)
 endif()
 
 ############################ 特定平台的相机库实现 ############################
