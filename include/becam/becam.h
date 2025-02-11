@@ -36,22 +36,22 @@ typedef enum {
 	/**
 	 * Direct Show 异常
 	 */
-	STATUS_CODE_DSHOW_ERR_INTERNAL_PARAM,		   // 内部参数错误
-	STATUS_CODE_DSHOW_ERR_INIT_COM,				   // 初始化COM库失败
-	STATUS_CODE_DSHOW_ERR_CREATE_ENUMERATOR,	   // 创建设备枚举器失败
-	STATUS_CODE_DSHOW_ERR_GET_DEVICE_PROP,		   // 获取设备属性失败
-	STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS,		   // 获取设备流能力失败
-	STATUS_CODE_DSHOW_ERR_CREATE_GRAPH_BUILDER,	   // 创建图像构建器失败
-	STATUS_CODE_DSHOW_ERR_ADD_CAPTURE_FILTER,	   // 添加捕获过滤器到图像构建器失败
-	STATUS_CODE_DSHOW_ERR_CREATE_SAMPLE_GRABBER,   // 创建样品采集器失败
-	STATUS_CODE_DSHOW_ERR_GET_SAMPLE_GRABBER_INFC, // 获取样品采集器接口失败
-	STATUS_CODE_DSHOW_ERR_ADD_SAMPLE_GRABBER,	   // 添加样品采集器到图像构建器失败
-	STATUS_CODE_DSHOW_ERR_CREATE_MEDIA_CONTROL,	   // 创建媒体控制器失败
-	STATUS_CODE_DSHOW_ERR_CREATE_NULL_RENDER,	   // 创建空渲染器失败
-	STATUS_CODE_DSHOW_ERR_ADD_NULL_RENDER,		   // 添加空渲染器到图像构建器失败
-	STATUS_CODE_DSHOW_ERR_CAPTURE_GRABBER,		   // 连接捕获器和采集器失败
-	STATUS_CODE_DSHOW_ERR_GRABBER_RENDER,		   // 连接采集器和渲染器失败
-	STATUS_CODE_DSHOW_ERR_FRAME_NOT_UPDATE,		   // 视频帧未更新
+	STATUS_CODE_DSHOW_ERR_INTERNAL_PARAM,		   // DirectShow异常：内部参数错误
+	STATUS_CODE_DSHOW_ERR_INIT_COM,				   // DirectShow异常：初始化COM库失败
+	STATUS_CODE_DSHOW_ERR_CREATE_ENUMERATOR,	   // DirectShow异常：创建设备枚举器失败
+	STATUS_CODE_DSHOW_ERR_GET_DEVICE_PROP,		   // DirectShow异常：获取设备属性失败
+	STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS,		   // DirectShow异常：获取设备流能力失败
+	STATUS_CODE_DSHOW_ERR_CREATE_GRAPH_BUILDER,	   // DirectShow异常：创建图像构建器失败
+	STATUS_CODE_DSHOW_ERR_ADD_CAPTURE_FILTER,	   // DirectShow异常：添加捕获过滤器到图像构建器失败
+	STATUS_CODE_DSHOW_ERR_CREATE_SAMPLE_GRABBER,   // DirectShow异常：创建样品采集器失败
+	STATUS_CODE_DSHOW_ERR_GET_SAMPLE_GRABBER_INFC, // DirectShow异常：获取样品采集器接口失败
+	STATUS_CODE_DSHOW_ERR_ADD_SAMPLE_GRABBER,	   // DirectShow异常：添加样品采集器到图像构建器失败
+	STATUS_CODE_DSHOW_ERR_CREATE_MEDIA_CONTROL,	   // DirectShow异常：创建媒体控制器失败
+	STATUS_CODE_DSHOW_ERR_CREATE_NULL_RENDER,	   // DirectShow异常：创建空渲染器失败
+	STATUS_CODE_DSHOW_ERR_ADD_NULL_RENDER,		   // DirectShow异常：添加空渲染器到图像构建器失败
+	STATUS_CODE_DSHOW_ERR_CAPTURE_GRABBER,		   // DirectShow异常：连接捕获器和采集器失败
+	STATUS_CODE_DSHOW_ERR_GRABBER_RENDER,		   // DirectShow异常：连接采集器和渲染器失败
+	STATUS_CODE_DSHOW_ERR_FRAME_NOT_UPDATE,		   // DirectShow异常：视频帧未更新
 	/**
 	 * Media Foundation 异常
 	 */
