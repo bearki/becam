@@ -57,7 +57,7 @@ message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${BUILD_ARCH}")
 
 
 ############################ 通用平台的相机库实现 ############################
-if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+if(CMAKE_SYSTEM_NAME MATCHES "Android")
     # 启用CMake新规则，否则变量传不进去
     set(CMAKE_POLICY_DEFAULT_CMP0077 NEW) 
     # 设置新规则，否则无法为子项目链接库

@@ -10,7 +10,7 @@ Platform=${1:-"rk1126"}
 # 声明系统架构（arm、aarch64）
 BuildArch=${2:-"arm"}
 # 声明工具链所在位置
-Toolchain=${3:-"/home/WORK/build-tools/RV1126_RV1109_LINUX_SDK_V2.2.4/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf"}
+Toolchain=${3:-"$HOME/build-tools/RV1126_RV1109_LINUX_SDK_V2.2.4/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf"}
 
 
 ######################## 内部变量声明 ########################

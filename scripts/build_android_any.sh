@@ -8,7 +8,7 @@ set -e
 # 声明系统架构（arm64-v8a、armeabi-v7a、armeabi-v6、armeabi、mips、mips64、x86、x86_64）
 BuildArch=${2:-"arm64-v8a"}
 # 声明工具链所在位置
-Toolchain=${3:-"/home/WORK/build-tools/android-ndk-r26d"}
+Toolchain=${3:-"$HOME/build-tools/android-ndk-r26d"}
 
 
 ######################## 内部变量声明 ########################
