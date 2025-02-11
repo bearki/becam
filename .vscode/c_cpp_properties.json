@@ -4,6 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/include",
+                "${workspaceFolder}/src",
                 "${workspaceFolder}/include/libusb-cmake/libusb/libusb",
                 "${workspaceFolder}/include/libuvc/include"
             ]
@@ -12,6 +13,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/include",
+                "${workspaceFolder}/src",
                 "${workspaceFolder}/include/libusb-cmake/libusb/libusb",
                 "${workspaceFolder}/include/libuvc/include"
             ]

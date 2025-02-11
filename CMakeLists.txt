@@ -90,7 +90,8 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         set(LibUVC_STATIC OFF) 
     endif()
     add_subdirectory(${CMAKE_SOURCE_DIR}/include/libuvc) # 添加libuvc子目录
-    # 强制等待libusb编译完成
+
+    # 强制等待libusb和libuvc编译完成
     if(CMAKE_BUILD_TARGET MATCHES "Shared")
         # 动态库和示例程序需要连接到udev
         if(CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -115,6 +116,9 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
         add_dependencies(uvc usb-1.0)
         add_dependencies(uvc_static usb-1.0)
     endif()
+
+    # 添加子目录
+    add_subdirectory(${CMAKE_SOURCE_DIR}/src/becamuvc)
 endif()
 
 ############################ 特定平台的相机库实现 ############################
