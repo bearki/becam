@@ -446,7 +446,7 @@ StatusCode Becamv4l2DeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 
 	// 检查视频帧是否无效
 	if (replySize <= 0) {
-		return StatusCode::STATUS_CODE_ERR_FRAME_EMPTY;
+		return StatusCode::STATUS_CODE_ERR_GET_FRAME_EMPTY;
 	}
 
 	// OK

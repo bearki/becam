@@ -68,7 +68,7 @@ StatusCode BecamSampleGrabberCallback::GetFrame(uint8_t*& data, size_t& size) {
 	// 检查缓冲区是否有内容
 	if (this->bufferLen <= 0) {
 		// 无内容
-		return StatusCode::STATUS_CODE_DSHOW_ERR_FRAME_EMPTY;
+		return StatusCode::STATUS_CODE_ERR_GET_FRAME_EMPTY;
 	}
 
 	// 看下缓冲区是否有更新

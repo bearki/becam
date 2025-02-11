@@ -92,7 +92,7 @@ StatusCode BecammfDeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& replyS
 	res = MFEnumDeviceSources(attributesHelper.Attributes(), &ppDevices, &count);
 	if (FAILED(res)) {
 		std::cerr << "BecamMediaFoundation::GetDeviceList -> MFEnumDeviceSources() failed, HRESULT: " << res << std::endl;
-		return StatusCode::STATUS_CODE_MF_ERR_DEVICE_ENUM;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_ENUM_FAILED;
 	}
 	if (count == 0) {
 		return StatusCode::STATUS_CODE_SUCCESS;
@@ -241,7 +241,10 @@ StatusCode BecammfDeviceHelper::ActivateDevice(const std::string& devicePath) {
 	res = MFCreateDeviceSource(attributesHelper.Attributes(), &this->activatedDevice);
 	if (FAILED(res)) {
 		std::cerr << "BecammfDeviceHelper::ActivateDevice -> MFCreateDeviceSource() failed, HRESULT: " << res << std::endl;
-		return StatusCode::STATUS_CODE_MF_ERR_CREATE_DEVICE_SOURCE;
+		if(res == ERROR_DEVICE_NOT_AVAILABLE || res == ERROR_DEV_NOT_EXIST) {
+			return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_FOUND;
+		}
+		return StatusCode::STATUS_CODE_ERR_DEVICE_OPEN_FAILED;
 	}
 
 	// OK
@@ -257,7 +260,7 @@ StatusCode BecammfDeviceHelper::GetCurrentDeviceConfigList(VideoFrameInfo*& repl
 
 	// 检查设备是否已激活
 	if (this->activatedDevice == nullptr) {
-		return StatusCode::STATUS_CODE_MF_ERR_DEVICE_UNACTIVATE;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
 	}
 
 	// 初始化设备配置助手类
@@ -283,7 +286,7 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 
 	// 检查设备是否已激活
 	if (this->activatedDevice == nullptr) {
-		return StatusCode::STATUS_CODE_MF_ERR_DEVICE_UNACTIVATE;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
 	}
 
 	// 释放已存在的设备源读取器
@@ -315,7 +318,7 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 	if (FAILED(res)) {
 		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> MFCreateSourceReaderFromMediaSource() failed, HRESULT: " << res
 				  << std::endl;
-		return StatusCode::STATUS_CODE_MF_ERR_CREATE_SOURCE_READER;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_RUN_FAILED;
 	}
 
 	// 媒体资源类型索引下标
@@ -395,7 +398,7 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 
 	// 检查是否查询到对应的配置
 	if (pType == nullptr) {
-		return StatusCode::STATUS_CODE_MF_ERR_MEDIA_TYPE_NOT_FOUND;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_NOT_FOUND;
 	}
 
 	// 设置输出格式
@@ -404,7 +407,7 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 		// 释放引用的媒体资源类型
 		SafeRelease(&pType);
 		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> SetCurrentMediaType() failed, HRESULT: " << res << std::endl;
-		return StatusCode::STATUS_CODE_MF_ERR_SET_MEDIA_TYPE;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
 	}
 	// 释放引用的媒体资源类型
 	SafeRelease(&pType);
@@ -432,8 +435,11 @@ StatusCode BecammfDeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 	std::unique_lock<std::mutex> lock(this->mtx);
 
 	// 检查设备是否已激活
-	if (this->activatedDevice == nullptr || this->activatedReader == nullptr) {
-		return StatusCode::STATUS_CODE_MF_ERR_DEVICE_UNACTIVATE;
+	if (this->activatedDevice == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
+	}
+	if (this->activatedReader == nullptr) {
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_RUN;
 	}
 
 	// 声明一些要用的东西
@@ -446,12 +452,12 @@ StatusCode BecammfDeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 		std::cerr
 			<< "BecammfDeviceHelper::GetFrame -> this->activatedReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM) failed, HRESULT: "
 			<< res << std::endl;
-		return StatusCode::STATUS_CODE_MF_ERR_GET_FRAME;
+		return StatusCode::STATUS_CODE_ERR_GET_FRAME_FAILED;
 	}
 
 	// 是否读取到帧
 	if (pSample == nullptr) {
-		return StatusCode::STATUS_CODE_MF_ERR_GET_FRAME_EMPTY;
+		return StatusCode::STATUS_CODE_ERR_GET_FRAME_EMPTY;
 	}
 
 	// 获取媒体缓冲区

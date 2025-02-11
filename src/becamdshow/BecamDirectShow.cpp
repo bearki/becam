@@ -237,7 +237,7 @@ StatusCode BecamDirectShow::GetFrame(uint8_t*& data, size_t& size) {
 
 	// 检查设备是否打开
 	if (this->openedDevice == nullptr) {
-		return StatusCode::STATUS_CODE_DSHOW_ERR_DEVICE_NOT_OPEN;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
 	}
 
 	// 获取视频帧
