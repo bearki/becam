@@ -79,7 +79,7 @@ StatusCode BecamDeviceEnum::EnumVideoDevices(std::function<bool(IMoniker*)> call
 		// 分类枚举器创建成功了，但是没有设备
 		if (res == S_FALSE) {
 			// OK
-			return StatusCode::STATUS_CODE_DSHOW_ERR_NOT_FOUND_DEVICE;
+			return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_FOUND;
 		}
 		// 设备枚举失败
 		std::cerr << "BecamDeviceEnum::EnumVideoDevices -> CreateClassEnumerator(CLSID_VideoInputDeviceCategory) "
