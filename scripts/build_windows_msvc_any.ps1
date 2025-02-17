@@ -4,6 +4,8 @@
 param (
     # 编译架构（i686 | x86_64 | arm | arm64）
     [string] $BuildArch = "i686",
+    # 编译版本号
+    [string] $BuildVersion = "2.0.0.0"
     # VS版本（Visual Studio 2019 | Visual Studio 2022）
     [string] $VsVersion = "Visual Studio 2022"
 )
@@ -129,8 +131,11 @@ try {
 
     Write-Host "---------------------------------- 执行压缩 ----------------------------------"
     # 不支持Direct Show，所以仅压缩Miedia Foundation
+    # 拷贝pkg-config配置文件，并赋值版本号
+    # cp -f "${projectDir}/src/becamv4l2/becam.pc" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
+    # sed -i "s@ENV_LIBRARY_VERSION@${BuildVersion}@g" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
     # 执行压缩
-    Compress-Archive -Force -Path "${installDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecammf_windows_${BuildArch}_msvc.zip"
+    Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_mf\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_mf_msvc.zip"
 
     # 构建结束
     Write-Host "--------------------------------- 构建:结束 ----------------------------------"

@@ -9,8 +9,10 @@ set -e
 Platform=${1:-"rk1126"}
 # 声明系统架构（arm、aarch64）
 BuildArch=${2:-"arm"}
+# 声明库版本号
+BuildVersion=${3:-"2.0.0.0"}
 # 声明工具链所在位置
-Toolchain=${3:-"$HOME/build-tools/RV1126_RV1109_LINUX_SDK_V2.2.4/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf"}
+Toolchain=${4:-"$HOME/build-tools/RV1126_RV1109_LINUX_SDK_V2.2.4/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf"}
 
 
 ######################## 内部变量声明 ########################
@@ -66,7 +68,11 @@ cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
 # 执行压缩
 echo "---------------------------------- 执行压缩 ----------------------------------"
-tar -czvf "${publishDir}/libbecamv4l2_linux_${BuildArch}_${Platform}.tar.gz" -C "${installDir}/libbecamv4l2_linux_${BuildArch}" .
+# 拷贝pkg-config配置文件，并赋值版本号
+cp -f "${projectDir}/src/becamv4l2/becam.pc" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
+sed -i "s@ENV_LIBRARY_VERSION@${BuildVersion}@g" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
+# 压缩库
+tar -czvf "${publishDir}/libbecam_linux_${BuildArch}_v4l2_${Platform}.tar.gz" -C "${installDir}/libbecam_linux_${BuildArch}_v4l2" .
 
 # 构建结束
 echo "--------------------------------- 构建:结束 ----------------------------------"

@@ -11,7 +11,7 @@ target_link_libraries(becamuvc_shared PRIVATE uvc_static)
 set_target_properties(becamuvc_shared PROPERTIES OUTPUT_NAME "becamuvc")
 
 # 指定make install后头文件、静态库，动态库，可执行文件存放目录
-set(INSTALL_PATH libbecamuvc_${BUILD_OS}_${BUILD_ARCH})
+set(INSTALL_PATH libbecam_${BUILD_OS}_${BUILD_ARCH}_uvc)
 # 头文件
 install(FILES ${CMAKE_SOURCE_DIR}/include/becam/becam.h DESTINATION ${INSTALL_PATH}/include)
 # ARCHIVE-静态库，LIBRARY-动态库，RUNTIME-可执行二进制文件

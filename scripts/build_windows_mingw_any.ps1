@@ -4,6 +4,8 @@
 param (
     # 编译架构（i686、x86_64）
     [string] $BuildArch = "i686",
+    # 编译版本号
+    [string] $BuildVersion = "2.0.0.0"
     # 工具链
     [string] $Toolchain = (Resolve-Path -Path "${Env:MinGW32}")
 )
@@ -73,9 +75,9 @@ try {
 
     Write-Host "---------------------------------- 执行压缩 ----------------------------------"
     # 执行压缩
-    Compress-Archive -Force -Path "${installDir}\libbecamdshow_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecamdshow_windows_${BuildArch}_mingw.zip"
+    Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_dshow_mingw.zip"
     # 执行压缩
-    Compress-Archive -Force -Path "${installDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecammf_windows_${BuildArch}_mingw.zip"
+    Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_mf\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_mf_mingw.zip"
 
     # 构建结束
     Write-Host "--------------------------------- 构建:结束 ----------------------------------"

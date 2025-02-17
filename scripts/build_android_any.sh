@@ -64,7 +64,11 @@ cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
 # 执行压缩
 echo "---------------------------------- 执行压缩 ----------------------------------"
-tar -czvf "${publishDir}/libbecamuvc_android_${BuildArch}.tar.gz" -C "${installDir}/libbecamuvc_android_${BuildArch}" .
+# 拷贝pkg-config配置文件，并赋值版本号
+cp -f "${projectDir}/src/becamuvc/becam.pc" "${installDir}/libbecam_linux_${BuildArch}_uvc/becam.pc"
+sed -i "s@ENV_LIBRARY_VERSION@${BuildVersion}@g" "${installDir}/libbecam_linux_${BuildArch}_uvc/becam.pc"
+# 压缩库
+tar -czvf "${publishDir}/libbecam_android_${BuildArch}_uvc.tar.gz" -C "${installDir}/libbecam_android_${BuildArch}_uvc" .
 
 # 构建结束
 echo "--------------------------------- 构建:结束 ----------------------------------"

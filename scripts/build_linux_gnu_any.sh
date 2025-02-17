@@ -7,6 +7,8 @@ set -e
 ######################## 外部变量声明 ########################
 # 声明系统架构（i686、x86_64）
 BuildArch=${1:-"x86_64"}
+# 声明库版本号
+BuildVersion=${2:-"2.0.0.0"}
 
 
 ######################## 内部变量声明 ########################
@@ -60,7 +62,11 @@ cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
 # 执行压缩
 echo "---------------------------------- 执行压缩 ----------------------------------"
-tar -czvf "${publishDir}/libbecamv4l2_linux_${BuildArch}_gnu.tar.gz" -C "${installDir}/libbecamv4l2_linux_${BuildArch}" .
+# 拷贝pkg-config配置文件，并赋值版本号
+cp -f "${projectDir}/src/becamv4l2/becam.pc" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
+sed -i "s@ENV_LIBRARY_VERSION@${BuildVersion}@g" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
+# 压缩库
+tar -czvf "${publishDir}/libbecam_linux_${BuildArch}_v4l2_gnu.tar.gz" -C "${installDir}/libbecam_linux_${BuildArch}_v4l2" .
 
 # 构建结束
 echo "--------------------------------- 构建:结束 ----------------------------------"
