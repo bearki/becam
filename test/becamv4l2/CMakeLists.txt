@@ -14,7 +14,7 @@ target_link_libraries(becamv4l2_frame_test PRIVATE becamv4l2_static)
 target_link_libraries(becamv4l2_all_test PRIVATE becamv4l2_static)
 
 # 指定make install后静态库，动态库，可执行文件存放目录
-set(INSTALL_PATH libbecamv4l2_${BUILD_OS}_${BUILD_ARCH})
+set(INSTALL_PATH libbecam_${BUILD_OS}_${BUILD_ARCH}_v4l2)
 # ARCHIVE-静态库，LIBRATY-动态库，RUNTIME-可执行二进制文件
 install(TARGETS becamv4l2_init_test RUNTIME DESTINATION ${INSTALL_PATH}/bin)
 install(TARGETS becamv4l2_get_list_test RUNTIME DESTINATION ${INSTALL_PATH}/bin)

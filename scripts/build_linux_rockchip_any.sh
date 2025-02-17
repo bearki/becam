@@ -68,8 +68,7 @@ cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
 # 执行压缩
 echo "---------------------------------- 执行压缩 ----------------------------------"
-# 拷贝pkg-config配置文件，并赋值版本号
-cp -f "${projectDir}/src/becamv4l2/becam.pc" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
+# 赋值pkg-config配置信息版本号
 sed -i "s@ENV_LIBRARY_VERSION@${BuildVersion}@g" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
 # 压缩库
 tar -czvf "${publishDir}/libbecam_linux_${BuildArch}_v4l2_${Platform}.tar.gz" -C "${installDir}/libbecam_linux_${BuildArch}_v4l2" .

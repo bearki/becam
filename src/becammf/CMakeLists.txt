@@ -18,6 +18,7 @@ set_target_properties(becammf_shared PROPERTIES OUTPUT_NAME "becammf")
 set(INSTALL_PATH libbecam_${BUILD_OS}_${BUILD_ARCH}_mf)
 # 头文件
 install(FILES ${CMAKE_SOURCE_DIR}/include/becam/becam.h DESTINATION ${INSTALL_PATH}/include)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/becam.pc DESTINATION ${INSTALL_PATH})
 # ARCHIVE-静态库，LIBRARY-动态库，RUNTIME-可执行二进制文件
 install(TARGETS becammf_static ARCHIVE DESTINATION ${INSTALL_PATH}/lib)
 install(TARGETS becammf_shared LIBRARY DESTINATION ${INSTALL_PATH}/lib
