@@ -6,5 +6,5 @@ includedir=${prefix}/include
 Name: Becam Direct Show
 Description: Becam Direct Show Library
 Version: ENV_LIBRARY_VERSION
-Libs: -L${libdir} -lbecamdshow -lstrmiids -lole32 -loleaut32 -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic
+Libs: -L${libdir} -Wl,-Bstatic -lbecamdshow -lstdc++ -Wl,-Bdynamic -lstrmiids -lole32 -loleaut32
 Cflags: -I${includedir}

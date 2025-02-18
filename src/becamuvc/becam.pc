@@ -6,5 +6,5 @@ includedir=${prefix}/include
 Name: Becam UVC
 Description: Becam UVC Library
 Version: ENV_LIBRARY_VERSION
-Libs: -L${libdir} -lbecamuvc -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic
+Libs: -L${libdir} -Wl,-Bstatic -lbecamuvc -lstdc++ -Wl,-Bdynamic
 Cflags: -I${includedir}
