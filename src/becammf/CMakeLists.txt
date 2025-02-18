@@ -5,7 +5,7 @@ file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 add_compile_definitions(_WIN32_WINNT=0x0601)
 
 # 配置链接库
-link_libraries(mf mfplat mfuuid mfreadwrite)
+link_libraries(ole32 mf mfplat mfuuid mfreadwrite)
 
 # 配置静态库生成参数
 add_library(becammf_static STATIC ${SOURCES})

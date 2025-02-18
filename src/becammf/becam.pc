@@ -6,5 +6,5 @@ includedir=${prefix}/include
 Name: Becam Media Foundation
 Description: Becam Media Foundation Library
 Version: ENV_LIBRARY_VERSION
-Libs: -L${libdir} -Wl,-Bstatic -lbecammf -lstdc++ -Wl,-Bdynamic
+Libs: -L${libdir} -Wl,-Bstatic -lbecammf -lstdc++ -Wl,-Bdynamic -lole32 -lmfplat -lmf -lmfreadwrite -lmfuuid
 Cflags: -I${includedir}

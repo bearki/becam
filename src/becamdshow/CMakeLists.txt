@@ -2,7 +2,7 @@
 file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 # 配置链接库
-link_libraries(strmiids)
+link_libraries(strmiids ole32 oleaut32)
 
 # 配置静态库生成参数
 add_library(becamdshow_static STATIC ${SOURCES})
