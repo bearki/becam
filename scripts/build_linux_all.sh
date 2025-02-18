@@ -14,4 +14,4 @@ scriptDir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 "${scriptDir}/build_linux_gnu_any.sh" "x86_64" "$BuildVersion"
 # Rockchip交叉编译
 RK1126Toolchain="$HOME/build-tools/RV1126_RV1109_LINUX_SDK_V2.2.4/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf"
-"${scriptDir}/build_linux_rockchip_any.sh" "rk1126" "arm" "$BuildVersion" "${RK1126Toolchain}"
+"${scriptDir}/build_linux_rockchip_any.sh" "rv1126" "arm" "$BuildVersion" "${RK1126Toolchain}"
