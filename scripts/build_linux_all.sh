@@ -9,9 +9,21 @@ BuildVersion=2.0.0.0
 # 脚本目录
 scriptDir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# x86编译
-"${scriptDir}/build_linux_gnu_any.sh" "i686" "$BuildVersion"
-"${scriptDir}/build_linux_gnu_any.sh" "x86_64" "$BuildVersion"
-# Rockchip交叉编译
-RK1126Toolchain="$HOME/build-tools/RV1126_RV1109_LINUX_SDK_V2.2.4/prebuilts/gcc/linux-x86/arm/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf"
-"${scriptDir}/build_linux_rockchip_any.sh" "rv1126" "arm" "$BuildVersion" "${RK1126Toolchain}"
+# [GCC-8.3 arm] 交叉编译
+Toolchain="$HOME/build-tools/gcc-arm-8.3-2019.03-x86_64-arm-linux-gnueabihf"
+$scriptDir/build_linux_gnu_any.sh "arm" "$BuildVersion" "${Toolchain}"
+# [GCC-8.3 aarch64] 交叉编译
+Toolchain="$HOME/build-tools/gcc-arm-8.3-2019.03-x86_64-aarch64-linux-gnu"
+$scriptDir/build_linux_gnu_any.sh "aarch64" "$BuildVersion" "${Toolchain}"
+# [GCC-10.3 arm] 交叉编译
+Toolchain="$HOME/build-tools/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf"
+$scriptDir/build_linux_gnu_any.sh "arm" "$BuildVersion" "${Toolchain}"
+# [GCC-10.3 aarch64] 交叉编译
+Toolchain="$HOME/build-tools/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu"
+$scriptDir/build_linux_gnu_any.sh "aarch64" "$BuildVersion" "${Toolchain}"
+# [GCC-10.3 i686] 交叉编译
+Toolchain="$HOME/build-tools/x86-i686--glibc--stable-2021.11-1"
+$scriptDir/build_linux_gnu_any.sh "i686" "$BuildVersion" "${Toolchain}" "i686-buildroot-linux-gnu"
+# [GCC-10.3 x86_64] 交叉编译
+Toolchain="$HOME/build-tools/x86-64--glibc--stable-2021.11-5"
+$scriptDir/build_linux_gnu_any.sh "x86_64" "$BuildVersion" "${Toolchain}" "x86_64-buildroot-linux-gnu"

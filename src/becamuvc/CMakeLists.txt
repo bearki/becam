@@ -1,13 +1,14 @@
 # 配置相关源文件
 file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
+# 都需要链接的库
+link_libraries(-static-libstdc++ -static-libgcc uvc_static)
+
 # 配置静态库生成参数
 add_library(becamuvc_static STATIC ${SOURCES})
-target_link_libraries(becamuvc_static PRIVATE uvc_static)
 set_target_properties(becamuvc_static PROPERTIES OUTPUT_NAME "becamuvc")
 # 配置动态库生成参数
 add_library(becamuvc_shared SHARED ${SOURCES})
-target_link_libraries(becamuvc_shared PRIVATE uvc_static)
 set_target_properties(becamuvc_shared PROPERTIES OUTPUT_NAME "becamuvc")
 
 # 指定make install后头文件、静态库，动态库，可执行文件存放目录
