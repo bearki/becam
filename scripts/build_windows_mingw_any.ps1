@@ -2,11 +2,15 @@
 [CmdletBinding()]
 # ===== 配置参数信息 =====
 param (
-    # 编译架构（i686、x86_64）
+    # 编译架构（i686 | x86_64 | arm | aarch64
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("i686", "x86_64", "arm", "aarch64")]
     [string] $BuildArch = "i686",
     # 编译版本号
+    [Parameter(Mandatory = $true)]
     [string] $BuildVersion = "2.0.0.0",
     # 工具链
+    [Parameter(Mandatory = $false)]
     [string] $Toolchain = (Resolve-Path -Path "${Env:MinGW32}")
 )
 
@@ -75,12 +79,12 @@ try {
 
     Write-Host "---------------------------------- 执行压缩 ----------------------------------"
     # 拷贝pkg-config配置文件，并赋值版本号
-    $dshowPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\becam.pc") -creplace "ENV_LIBRARY_VERSION","${BuildVersion}"
+    $dshowPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersion}"
     $dshowPcContent | Set-Content -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\becam.pc" -Force
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_dshow_mingw.zip"
     # 拷贝pkg-config配置文件，并赋值版本号
-    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION","${BuildVersion}"
+    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersion}"
     $mfPcContent | Set-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc" -Force
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_mf\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_mf_mingw.zip"

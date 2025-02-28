@@ -2,12 +2,17 @@
 [CmdletBinding()]
 # ===== 配置参数信息 =====
 param (
-    # 编译架构（i686 | x86_64 | arm | arm64）
+    # 编译架构（i686 | x86_64 | arm | aarch64
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("i686", "x86_64", "arm", "aarch64")]
     [string] $BuildArch = "i686",
     # 编译版本号
+    [Parameter(Mandatory = $true)]
     [string] $BuildVersion = "2.0.0.0",
-    # VS版本（Visual Studio 2019 | Visual Studio 2022）
-    [string] $VsVersion = "Visual Studio 2022"
+    # VS生成工具版本（Visual Studio 16 2019 | Visual Studio 17 2022）
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("Visual Studio 16 2019", "Visual Studio 17 2022")]
+    [string] $VsVersion = "Visual Studio 16 2019"
 )
 
 # 保存旧的PATH
@@ -51,10 +56,10 @@ try {
     }
 
     # 根据输入的字符串确定版本范围
-    if ($VsVersion -eq "Visual Studio 2019") {
+    if ($VsVersion -eq "Visual Studio 16 2019") {
         $versionRange = "[16.0,17.0)"
     }
-    elseif ($VsVersion -eq "Visual Studio 2022") {
+    elseif ($VsVersion -eq "Visual Studio 17 2022") {
         $versionRange = "[17.0,18.0)"
     }
     else {
@@ -113,7 +118,7 @@ try {
     
     # # 执行CMake
     Write-Host "------------------------------- 执行CMake:配置 -------------------------------"
-    cmake -G "Visual Studio 17 2022" `
+    cmake -G "${VsVersion}" `
         -DCMAKE_SYSTEM_NAME="Windows" `
         -DCMAKE_SYSTEM_PROCESSOR="${BuildArch}" `
         -S"${projectDir}" `
@@ -132,7 +137,7 @@ try {
     Write-Host "---------------------------------- 执行压缩 ----------------------------------"
     # 不支持Direct Show，所以仅压缩Miedia Foundation
     # 拷贝pkg-config配置文件，并赋值版本号
-    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION","${BuildVersion}"
+    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersion}"
     $mfPcContent | Set-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc" -Force
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_mf\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_mf_msvc.zip"
