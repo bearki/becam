@@ -95,7 +95,7 @@ echo "---------------------------------- 执行压缩 --------------------------
 # 赋值pkg-config配置信息版本号
 sed -i "s@ENV_LIBRARY_VERSION@${BuildVersion}@g" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
 # 压缩库
-tar -czvf "${publishDir}/libbecam_linux_${BuildArch}_v4l2_${gccVersion}.tar.gz" -C "${installDir}/libbecam_linux_${BuildArch}_v4l2" .
+tar -czvf "${publishDir}/libbecam_linux_${BuildArch}_v4l2_gnu.tar.gz" -C "${installDir}/libbecam_linux_${BuildArch}_v4l2" .
 
 # 构建结束
 echo "--------------------------------- 构建:结束 ----------------------------------"
