@@ -23,6 +23,8 @@ try {
     $OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
     # 遇到错误立即停止
     $ErrorActionPreference = 'Stop'
+    # 版本号移除前置v、V
+    $BuildVersionNumber = $BuildVersion.TrimStart('v').TrimStart("V")
     # 配置项目目录
     $projectDir = (Resolve-Path "${PSScriptRoot}\..\").Path
     # 配置构建目录
@@ -137,7 +139,7 @@ try {
     Write-Host "---------------------------------- 执行压缩 ----------------------------------"
     # 不支持Direct Show，所以仅压缩Miedia Foundation
     # 拷贝pkg-config配置文件，并赋值版本号
-    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersion}"
+    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersionNumber}"
     $mfPcContent | Set-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc" -Force
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_mf\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_mf_msvc.zip"

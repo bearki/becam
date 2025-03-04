@@ -7,11 +7,15 @@ set -e
 ######################## 外部变量声明 ########################
 # 声明系统架构（arm64-v8a、armeabi-v7a、armeabi-v6、armeabi、mips、mips64、x86、x86_64）
 BuildArch=${2:-"arm64-v8a"}
+# 声明库版本号
+BuildVersion=${2:-"2.0.0.0"}
 # 声明工具链所在位置
 Toolchain=${3:-"$HOME/build-tools/android-ndk-r26d"}
 
 
 ######################## 内部变量声明 ########################
+# 版本号移除前置v、V
+buildVersionNumber="${BuildVersion//^[Vv]/}"
 # 项目目录
 projectDir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 # 构建目录
@@ -65,7 +69,7 @@ cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 # 执行压缩
 echo "---------------------------------- 执行压缩 ----------------------------------"
 # 赋值pkg-config配置信息版本号
-sed -i "s@ENV_LIBRARY_VERSION@${BuildVersion}@g" "${installDir}/libbecam_linux_${BuildArch}_uvc/becam.pc"
+sed -i "s@ENV_LIBRARY_VERSION@${buildVersionNumber}@g" "${installDir}/libbecam_linux_${BuildArch}_uvc/becam.pc"
 # 压缩库
 tar -czvf "${publishDir}/libbecam_android_${BuildArch}_uvc.tar.gz" -C "${installDir}/libbecam_android_${BuildArch}_uvc" .
 

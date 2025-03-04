@@ -38,6 +38,8 @@ tmpGccVersion=$($Toolchain/bin/$ToolchainCompilerName-gcc --version | grep -oP '
 gccVersion="gcc-${tmpGccVersion}"
 
 ######################## 内部变量声明 ########################
+# 版本号移除前置v、V
+buildVersionNumber="${BuildVersion//^[Vv]/}"
 # 项目目录
 projectDir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 # 构建目录
@@ -93,7 +95,7 @@ cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 # 执行压缩
 echo "---------------------------------- 执行压缩 ----------------------------------"
 # 赋值pkg-config配置信息版本号
-sed -i "s@ENV_LIBRARY_VERSION@${BuildVersion}@g" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
+sed -i "s@ENV_LIBRARY_VERSION@${buildVersionNumber}@g" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
 # 压缩库
 tar -czvf "${publishDir}/libbecam_linux_${BuildArch}_v4l2_gnu.tar.gz" -C "${installDir}/libbecam_linux_${BuildArch}_v4l2" .
 
