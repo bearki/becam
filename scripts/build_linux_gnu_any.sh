@@ -45,7 +45,7 @@ projectDir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 # 构建目录
 buildDir="${projectDir}/build"
 # 安装目录
-installDir="${projectDir}/install/${gccVersion}"
+installDir="${projectDir}/install/gnu"
 # 发布目录
 publishDir="${projectDir}/publish"
 # 编译类型（Debug、Release）
