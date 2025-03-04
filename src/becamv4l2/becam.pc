@@ -1,0 +1,10 @@
+# Package Information for pkg-config
+prefix=ENV_LIBRARY_PATH
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: Becam V4L2
+Description: Becam V4L2 Library
+Version: ENV_LIBRARY_VERSION
+Libs: -L${libdir} -Wl,-Bstatic -lbecamv4l2 -lstdc++ -Wl,-Bdynamic
+Cflags: -I${includedir}

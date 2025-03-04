@@ -14,7 +14,7 @@ target_link_libraries(becamdshow_frame_test PRIVATE becamdshow_static)
 target_link_libraries(becamdshow_all_test PRIVATE becamdshow_static)
 
 # 指定make install后静态库，动态库，可执行文件存放目录
-set(INSTALL_PATH libbecamdshow_${BUILD_OS}_${BUILD_ARCH})
+set(INSTALL_PATH libbecam_${BUILD_OS}_${BUILD_ARCH}_dshow)
 # ARCHIVE-静态库，LIBRATY-动态库，RUNTIME-可执行二进制文件
 install(TARGETS becamdshow_init_test RUNTIME DESTINATION ${INSTALL_PATH}/bin)
 install(TARGETS becamdshow_get_list_test RUNTIME DESTINATION ${INSTALL_PATH}/bin)

@@ -2,9 +2,15 @@
 [CmdletBinding()]
 # ===== 配置参数信息 =====
 param (
-    # 编译架构（i686、x86_64）
+    # 编译架构（i686 | x86_64 | arm | aarch64
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("i686", "x86_64", "arm", "aarch64")]
     [string] $BuildArch = "i686",
+    # 编译版本号
+    [Parameter(Mandatory = $true)]
+    [string] $BuildVersion = "2.0.0.0",
     # 工具链
+    [Parameter(Mandatory = $false)]
     [string] $Toolchain = (Resolve-Path -Path "${Env:MinGW32}")
 )
 
@@ -16,6 +22,8 @@ try {
     $OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
     # 遇到错误立即停止
     $ErrorActionPreference = 'Stop'
+    # 版本号移除前置v、V
+    $BuildVersionNumber = $BuildVersion.TrimStart('v').TrimStart("V")
     # 配置项目目录
     $projectDir = (Resolve-Path "${PSScriptRoot}\..\").Path
     # 配置构建目录
@@ -72,10 +80,16 @@ try {
     cmake --install "${buildDir}" --config "${buildType}" --prefix "${installDir}"
 
     Write-Host "---------------------------------- 执行压缩 ----------------------------------"
+    # 拷贝pkg-config配置文件，并赋值版本号
+    $dshowPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersionNumber}"
+    $dshowPcContent | Set-Content -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\becam.pc" -Force
     # 执行压缩
-    Compress-Archive -Force -Path "${installDir}\libbecamdshow_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecamdshow_windows_${BuildArch}_mingw.zip"
+    Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_dshow_mingw.zip"
+    # 拷贝pkg-config配置文件，并赋值版本号
+    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersionNumber}"
+    $mfPcContent | Set-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc" -Force
     # 执行压缩
-    Compress-Archive -Force -Path "${installDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecammf_windows_${BuildArch}_mingw.zip"
+    Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_mf\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_mf_mingw.zip"
 
     # 构建结束
     Write-Host "--------------------------------- 构建:结束 ----------------------------------"

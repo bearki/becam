@@ -21,70 +21,57 @@ typedef enum {
 	/**
 	 * 通用异常
 	 */
-	STATUS_CODE_ERR_HANDLE_EMPTY, // Becam接口句柄未初始化
-	STATUS_CODE_ERR_INPUT_PARAM,  // 传入参数错误
+	STATUS_CODE_ERR_HANDLE_EMPTY,					// Becam接口句柄未初始化
+	STATUS_CODE_ERR_INPUT_PARAM,					// 传入参数错误
+	STATUS_CODE_ERR_DEVICE_ENUM_FAILED,				// 设备枚举失败
+	STATUS_CODE_ERR_DEVICE_NOT_FOUND,				// 设备未找到
+	STATUS_CODE_ERR_DEVICE_OPEN_FAILED,				// 设备打开失败
+	STATUS_CODE_ERR_DEVICE_NOT_OPEN,				// 设备未打开
+	STATUS_CODE_ERR_DEVICE_FRAME_FMT_NOT_FOUND,		// 设备视频帧格式未找到
+	STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED,	// 设备视频帧格式配置失败
+	STATUS_CODE_ERR_DEVICE_RUN_FAILED,				// 设备运行失败
+	STATUS_CODE_ERR_DEVICE_NOT_RUN,					// 设备未运行
+	STATUS_CODE_ERR_GET_FRAME_FAILED,				// 获取视频帧失败
+	STATUS_CODE_ERR_GET_FRAME_EMPTY,				// 获取视频帧为空
 	/**
 	 * Direct Show 异常
 	 */
-	STATUS_CODE_DSHOW_ERR_NOT_FOUND_DEVICE,		   // 未找到设备
-	STATUS_CODE_DSHOW_ERR_INTERNAL_PARAM,		   // 内部参数错误
-	STATUS_CODE_DSHOW_ERR_INIT_COM,				   // 初始化COM库失败
-	STATUS_CODE_DSHOW_ERR_CREATE_ENUMERATOR,	   // 创建设备枚举器失败
-	STATUS_CODE_DSHOW_ERR_DEVICE_ENUM,			   // 设备枚举失败
-	STATUS_CODE_DSHOW_ERR_GET_DEVICE_PROP,		   // 获取设备属性失败
-	STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS,		   // 获取设备流能力失败
-	STATUS_CODE_DSHOW_ERR_NOMATCH_STREAM_CAPS,	   // 未匹配到流能力
-	STATUS_CODE_DSHOW_ERR_SET_MEDIA_TYPE,		   // 设置媒体类型失败
-	STATUS_CODE_DSHOW_ERR_SELECTED_DEVICE,		   // 选择设备失败
-	STATUS_CODE_DSHOW_ERR_CREATE_GRAPH_BUILDER,	   // 创建图像构建器失败
-	STATUS_CODE_DSHOW_ERR_ADD_CAPTURE_FILTER,	   // 添加捕获过滤器到图像构建器失败
-	STATUS_CODE_DSHOW_ERR_CREATE_SAMPLE_GRABBER,   // 创建样品采集器失败
-	STATUS_CODE_DSHOW_ERR_GET_SAMPLE_GRABBER_INFC, // 获取样品采集器接口失败
-	STATUS_CODE_DSHOW_ERR_ADD_SAMPLE_GRABBER,	   // 添加样品采集器到图像构建器失败
-	STATUS_CODE_DSHOW_ERR_CREATE_MEDIA_CONTROL,	   // 创建媒体控制器失败
-	STATUS_CODE_DSHOW_ERR_CREATE_NULL_RENDER,	   // 创建空渲染器失败
-	STATUS_CODE_DSHOW_ERR_ADD_NULL_RENDER,		   // 添加空渲染器到图像构建器失败
-	STATUS_CODE_DSHOW_ERR_CAPTURE_GRABBER,		   // 连接捕获器和采集器失败
-	STATUS_CODE_DSHOW_ERR_GRABBER_RENDER,		   // 连接采集器和渲染器失败
-	STATUS_CODE_DSHOW_ERR_DEVICE_NOT_OPEN,		   // 设备未打开
-	STATUS_CODE_DSHOW_ERR_FRAME_EMPTY,			   // 视频帧为空
-	STATUS_CODE_DSHOW_ERR_FRAME_NOT_UPDATE,		   // 视频帧未更新
+	STATUS_CODE_DSHOW_ERR_INTERNAL_PARAM,		   // DirectShow异常：内部参数错误
+	STATUS_CODE_DSHOW_ERR_INIT_COM,				   // DirectShow异常：初始化COM库失败
+	STATUS_CODE_DSHOW_ERR_CREATE_ENUMERATOR,	   // DirectShow异常：创建设备枚举器失败
+	STATUS_CODE_DSHOW_ERR_GET_DEVICE_PROP,		   // DirectShow异常：获取设备属性失败
+	STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS,		   // DirectShow异常：获取设备流能力失败
+	STATUS_CODE_DSHOW_ERR_CREATE_GRAPH_BUILDER,	   // DirectShow异常：创建图像构建器失败
+	STATUS_CODE_DSHOW_ERR_ADD_CAPTURE_FILTER,	   // DirectShow异常：添加捕获过滤器到图像构建器失败
+	STATUS_CODE_DSHOW_ERR_CREATE_SAMPLE_GRABBER,   // DirectShow异常：创建样品采集器失败
+	STATUS_CODE_DSHOW_ERR_GET_SAMPLE_GRABBER_INFC, // DirectShow异常：获取样品采集器接口失败
+	STATUS_CODE_DSHOW_ERR_ADD_SAMPLE_GRABBER,	   // DirectShow异常：添加样品采集器到图像构建器失败
+	STATUS_CODE_DSHOW_ERR_CREATE_MEDIA_CONTROL,	   // DirectShow异常：创建媒体控制器失败
+	STATUS_CODE_DSHOW_ERR_CREATE_NULL_RENDER,	   // DirectShow异常：创建空渲染器失败
+	STATUS_CODE_DSHOW_ERR_ADD_NULL_RENDER,		   // DirectShow异常：添加空渲染器到图像构建器失败
+	STATUS_CODE_DSHOW_ERR_CAPTURE_GRABBER,		   // DirectShow异常：连接捕获器和采集器失败
+	STATUS_CODE_DSHOW_ERR_GRABBER_RENDER,		   // DirectShow异常：连接采集器和渲染器失败
+	STATUS_CODE_DSHOW_ERR_FRAME_NOT_UPDATE,		   // DirectShow异常：视频帧未更新
 	/**
 	 * Media Foundation 异常
 	 */
 	STATUS_CODE_MF_ERR_CREATE_ATTR_STORE,	   // MediaFoundation异常：创建属性存储器失败
 	STATUS_CODE_MF_ERR_SET_ATTR_STORE,		   // MediaFoundation异常：赋值属性存储器失败
-	STATUS_CODE_MF_ERR_DEVICE_ENUM,			   // MediaFoundation异常：枚举设备失败
-	STATUS_CODE_MF_ERR_CREATE_DEVICE_SOURCE,   // MediaFoundation异常：创建设备源失败
-	STATUS_CODE_MF_ERR_DEVICE_UNACTIVATE,	   // MediaFoundation异常：未激活设备
 	STATUS_CODE_MF_ERR_CREATE_PRESENT_DESC,	   // MediaFoundation异常：获取设备获取演示文稿描述符失败
 	STATUS_CODE_MF_ERR_GET_STREAM_DESC,		   // MediaFoundation异常：获取设备视频流的流描述符失败
 	STATUS_CODE_MF_ERR_GET_MEDIA_TYPE_HANDLER, // MediaFoundation异常：获取媒体类型处理器失败
 	STATUS_CODE_MF_ERR_GET_MEDIA_TYPE_COUNT,   // MediaFoundation异常：获取媒体类型总数量失败
 	STATUS_CODE_MF_ERR_GET_MEDIA_TYPE,		   // MediaFoundation异常：获取媒体资源类型失败
-	STATUS_CODE_MF_ERR_CREATE_SOURCE_READER,   // MediaFoundation异常：创建设备源读取器失败
-	STATUS_CODE_MF_ERR_MEDIA_TYPE_NOT_FOUND,   // MediaFoundation异常：媒体资源类型未找到
-	STATUS_CODE_MF_ERR_SET_MEDIA_TYPE,		   // MediaFoundation异常：设置媒体资源类型失败
-	STATUS_CODE_MF_ERR_GET_FRAME,			   // MediaFoundation异常：获取视频帧失败
-	STATUS_CODE_MF_ERR_GET_FRAME_EMPTY,		   // MediaFoundation异常：获取视频帧为空
 	STATUS_CODE_MF_ERR_CONVERT_FRAME_BUFFER,   // MediaFoundation异常：转换视频帧缓冲区失败
 	STATUS_CODE_MF_ERR_LOCK_FRAME_BUFFER,	   // MediaFoundation异常：锁定视频帧缓冲区失败
 	/**
 	 * V4L2 异常
 	 */
-	STATUS_CODE_V4L2_ERR_DEVICE_GLOB_MATCH,	   // V4L2异常：设备泛匹配失败
-	STATUS_CODE_V4L2_ERR_DEVICE_OPEN,		   // V4L2异常：设备打开失败
-	STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE,	   // V4L2异常：未激活设备
-	STATUS_CODE_V4L2_ERR_SET_FRAME_FORMAT,	   // V4L2异常：设置视频帧格式失败
-	STATUS_CODE_V4L2_ERR_SET_FRAME_RATE,	   // V4L2异常：设置视频帧率格式失败
-	STATUS_CODE_V4L2_ERR_FRAME_RATE_NOT_FOUND, // V4L2异常：视频帧率未找到
 	STATUS_CODE_V4L2_ERR_REQUEST_BUF,		   // V4L2异常：申请内核缓冲区失败
 	STATUS_CODE_V4L2_ERR_QUERY_BUF,			   // V4L2异常：查询内核缓冲区失败
 	STATUS_CODE_V4L2_ERR_MMAP_BUF,			   // V4L2异常：映射内核缓冲区失败
 	STATUS_CODE_V4L2_ERR_LOCK_BUF,			   // V4L2异常：缓冲区加锁失败
 	STATUS_CODE_V4L2_ERR_UNLOCK_BUF,		   // V4L2异常：缓冲区解锁失败
-	STATUS_CODE_V4L2_ERR_VIDEO_STREAM_ON,	   // V4L2异常：启动视频流失败
-	STATUS_CODE_V4L2_ERR_FRAME_EMPTY,		   // V4L2异常：获取视频帧为空
 } StatusCode;
 
 // VideoFrameInfo 视频帧信息

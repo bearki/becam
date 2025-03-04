@@ -1,0 +1,10 @@
+# Package Information for pkg-config
+prefix=ENV_LIBRARY_PATH
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: Becam UVC
+Description: Becam UVC Library
+Version: ENV_LIBRARY_VERSION
+Libs: -L${libdir} -Wl,-Bstatic -lbecamuvc -lstdc++ -Wl,-Bdynamic
+Cflags: -I${includedir}

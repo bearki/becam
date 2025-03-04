@@ -107,7 +107,7 @@ StatusCode BecamOpenedDevice::Open(const std::string& devicePath, const VideoFra
 	if (FAILED(res)) {
 		// 绑定设备实例失败
 		std::cerr << "BecamOpenedDevice::Open -> BindToObject failed, HRESULT: " << res << std::endl;
-		return StatusCode::STATUS_CODE_DSHOW_ERR_SELECTED_DEVICE;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_OPEN_FAILED;
 	}
 
 	// 获取捕获筛选器的输出端口
@@ -242,7 +242,10 @@ StatusCode BecamOpenedDevice::Open(const std::string& devicePath, const VideoFra
 
 	// 开始消耗帧，然后就结束了
 	this->sampleGrabberIntf->SetBufferSamples(true);
-	this->mediaControl->Run();
+	res = this->mediaControl->Run();
+	if (FAILED(res)) {
+		return StatusCode::STATUS_CODE_ERR_DEVICE_RUN_FAILED;
+	}
 
 	// 赋值当前使用的帧率
 	this->fps = frameInfo.fps;
@@ -258,7 +261,7 @@ StatusCode BecamOpenedDevice::GetFrame(uint8_t*& data, size_t& size) {
 	// 检查样品采集器回调是否赋值
 	if (this->sampleGrabberCallback == nullptr) {
 		// 没有回调
-		return StatusCode::STATUS_CODE_DSHOW_ERR_DEVICE_NOT_OPEN;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_RUN;
 	}
 
 	// 每次取帧的状态码

@@ -2,10 +2,17 @@
 [CmdletBinding()]
 # ===== 配置参数信息 =====
 param (
-    # 编译架构（i686 | x86_64 | arm | arm64）
+    # 编译架构（i686 | x86_64 | arm | aarch64
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("i686", "x86_64", "arm", "aarch64")]
     [string] $BuildArch = "i686",
-    # VS版本（Visual Studio 2019 | Visual Studio 2022）
-    [string] $VsVersion = "Visual Studio 2022"
+    # 编译版本号
+    [Parameter(Mandatory = $true)]
+    [string] $BuildVersion = "2.0.0.0",
+    # VS生成工具版本（Visual Studio 16 2019 | Visual Studio 17 2022）
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("Visual Studio 16 2019", "Visual Studio 17 2022")]
+    [string] $VsVersion = "Visual Studio 16 2019"
 )
 
 # 保存旧的PATH
@@ -16,6 +23,8 @@ try {
     $OutputEncoding = [console]::InputEncoding = [console]::OutputEncoding = [Text.UTF8Encoding]::UTF8
     # 遇到错误立即停止
     $ErrorActionPreference = 'Stop'
+    # 版本号移除前置v、V
+    $BuildVersionNumber = $BuildVersion.TrimStart('v').TrimStart("V")
     # 配置项目目录
     $projectDir = (Resolve-Path "${PSScriptRoot}\..\").Path
     # 配置构建目录
@@ -49,10 +58,10 @@ try {
     }
 
     # 根据输入的字符串确定版本范围
-    if ($VsVersion -eq "Visual Studio 2019") {
+    if ($VsVersion -eq "Visual Studio 16 2019") {
         $versionRange = "[16.0,17.0)"
     }
-    elseif ($VsVersion -eq "Visual Studio 2022") {
+    elseif ($VsVersion -eq "Visual Studio 17 2022") {
         $versionRange = "[17.0,18.0)"
     }
     else {
@@ -111,7 +120,7 @@ try {
     
     # # 执行CMake
     Write-Host "------------------------------- 执行CMake:配置 -------------------------------"
-    cmake -G "Visual Studio 17 2022" `
+    cmake -G "${VsVersion}" `
         -DCMAKE_SYSTEM_NAME="Windows" `
         -DCMAKE_SYSTEM_PROCESSOR="${BuildArch}" `
         -S"${projectDir}" `
@@ -129,8 +138,11 @@ try {
 
     Write-Host "---------------------------------- 执行压缩 ----------------------------------"
     # 不支持Direct Show，所以仅压缩Miedia Foundation
+    # 拷贝pkg-config配置文件，并赋值版本号
+    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersionNumber}"
+    $mfPcContent | Set-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc" -Force
     # 执行压缩
-    Compress-Archive -Force -Path "${installDir}\libbecammf_windows_${BuildArch}\*" -DestinationPath "${publishDir}\libbecammf_windows_${BuildArch}_msvc.zip"
+    Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_mf\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_mf_msvc.zip"
 
     # 构建结束
     Write-Host "--------------------------------- 构建:结束 ----------------------------------"

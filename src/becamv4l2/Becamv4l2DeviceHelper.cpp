@@ -141,7 +141,7 @@ StatusCode Becamv4l2DeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& repl
 			return StatusCode::STATUS_CODE_SUCCESS;
 		}
 		std::cerr << "Becamv4l2DeviceHelper::GetDeviceList -> lob(/dev/video*, GLOB_TILDE) Failed, RESULT:" << res << std::endl;
-		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_GLOB_MATCH;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_ENUM_FAILED;
 	}
 
 	// 临时设备列表
@@ -227,11 +227,16 @@ StatusCode Becamv4l2DeviceHelper::ActivateDevice(const std::string& devicePath, 
 	// 释放已激活的设备
 	this->CloseCurrentDevice();
 
+	// 检查设备是否存在
+	if (access(devicePath.c_str(), F_OK) != 0) {
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_FOUND;
+	}
+
 	// 激活设备
 	this->activatedDevice = open(devicePath.c_str(), oflags);
 	if (this->activatedDevice == -1) {
 		std::cerr << "Becamv4l2DeviceHelper::ActivateDevice -> open(" << devicePath << ") Failed" << std::endl;
-		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_OPEN;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_OPEN_FAILED;
 	}
 
 	// OK
@@ -247,7 +252,7 @@ StatusCode Becamv4l2DeviceHelper::GetCurrentDeviceConfigList(VideoFrameInfo*& re
 
 	// 检查设备是否已激活
 	if (this->activatedDevice == -1) {
-		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
 	}
 
 	// 初始化设备配置助手类
@@ -273,7 +278,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 
 	// 检查设备是否已激活
 	if (this->activatedDevice == -1) {
-		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
 	}
 
 	// 停止当前设备取流
@@ -289,7 +294,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 	// 设置分辨率和格式
 	if (xioctl(this->activatedDevice, VIDIOC_S_FMT, &fmt) == -1) {
 		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_S_FMT) Failed" << std::endl;
-		return StatusCode::STATUS_CODE_V4L2_ERR_SET_FRAME_FORMAT;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
 	}
 
 	// 声明输出帧率
@@ -321,12 +326,12 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 	}
 	// 检查对应帧率是否查询到
 	if (streamparm.parm.capture.timeperframe.numerator == -1 || streamparm.parm.capture.timeperframe.denominator == -1) {
-		return StatusCode::STATUS_CODE_V4L2_ERR_FRAME_RATE_NOT_FOUND;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_NOT_FOUND;
 	}
 	// 设置输出帧率
 	if (xioctl(this->activatedDevice, VIDIOC_S_PARM, &streamparm) == -1) {
 		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_S_PARM) Failed" << std::endl;
-		return StatusCode::STATUS_CODE_V4L2_ERR_SET_FRAME_RATE;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
 	}
 
 	// 请求缓冲区
@@ -376,7 +381,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 	auto bufType = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (xioctl(this->activatedDevice, VIDIOC_STREAMON, &bufType) == -1) {
 		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_STREAMON) Failed" << std::endl;
-		return StatusCode::STATUS_CODE_V4L2_ERR_VIDEO_STREAM_ON;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_RUN_FAILED;
 	}
 	// 标记已经开始取流
 	this->streamON = true;
@@ -408,8 +413,11 @@ StatusCode Becamv4l2DeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 	replySize = 0;
 
 	// 检查设备是否已激活
-	if (this->activatedDevice == -1 || !this->streamON) {
-		return StatusCode::STATUS_CODE_V4L2_ERR_DEVICE_UNACTIVATE;
+	if (this->activatedDevice == -1) {
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
+	}
+	if (!this->streamON) {
+		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_RUN;
 	}
 
 	// 声明缓冲区队列查询参数
@@ -438,7 +446,7 @@ StatusCode Becamv4l2DeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 
 	// 检查视频帧是否无效
 	if (replySize <= 0) {
-		return StatusCode::STATUS_CODE_V4L2_ERR_FRAME_EMPTY;
+		return StatusCode::STATUS_CODE_ERR_GET_FRAME_EMPTY;
 	}
 
 	// OK

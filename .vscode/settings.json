@@ -54,6 +54,12 @@
         "fstream": "cpp",
         "codecvt": "cpp",
         "map": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "libuvc.h": "c",
+        "cstring": "cpp",
+        "cinttypes": "cpp"
     },
+    "cmake.configureSettings": {
+        "CMAKE_BUILD_TYPR": "${buildType}"
+    }
 }

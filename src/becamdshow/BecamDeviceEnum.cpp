@@ -79,13 +79,13 @@ StatusCode BecamDeviceEnum::EnumVideoDevices(std::function<bool(IMoniker*)> call
 		// 分类枚举器创建成功了，但是没有设备
 		if (res == S_FALSE) {
 			// OK
-			return StatusCode::STATUS_CODE_DSHOW_ERR_NOT_FOUND_DEVICE;
+			return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_FOUND;
 		}
 		// 设备枚举失败
 		std::cerr << "BecamDeviceEnum::EnumVideoDevices -> CreateClassEnumerator(CLSID_VideoInputDeviceCategory) "
 					 "failed, HRESULT: "
 				  << res << std::endl;
-		return StatusCode::STATUS_CODE_DSHOW_ERR_DEVICE_ENUM;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_ENUM_FAILED;
 	}
 
 	// 设备实例
@@ -366,7 +366,7 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	if (FAILED(res)) {
 		// 绑定设备实例失败
 		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> BindToObject failed, HRESULT: " << res << std::endl;
-		return StatusCode::STATUS_CODE_DSHOW_ERR_SELECTED_DEVICE;
+		return StatusCode::STATUS_CODE_ERR_DEVICE_OPEN_FAILED;
 	}
 
 	// 置零
@@ -436,7 +436,7 @@ StatusCode BecamDeviceEnum::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 	}
 
 	// 回调中的状态（默认为未找到对应的流能力信息）
-	auto errCode = StatusCode::STATUS_CODE_DSHOW_ERR_NOMATCH_STREAM_CAPS;
+	auto errCode = StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_NOT_FOUND;
 	// 遍历设备所有流能力
 	auto code = BecamDeviceEnum::GetDeviceStreamCaps(streamConfig, [streamConfig, frameInfo, &errCode](AM_MEDIA_TYPE* pmt) {
 		// 检查一下
@@ -461,7 +461,7 @@ StatusCode BecamDeviceEnum::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 			} else {
 				// 设定失败
 				std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> SetFormat failed, HRESULT: " << res << std::endl;
-				errCode = StatusCode::STATUS_CODE_DSHOW_ERR_SET_MEDIA_TYPE;
+				errCode = StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
 			}
 			// 不管是否成功都要结束枚举
 			return false;
