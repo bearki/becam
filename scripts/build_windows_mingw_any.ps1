@@ -23,7 +23,7 @@ try {
     # 遇到错误立即停止
     $ErrorActionPreference = 'Stop'
     # 版本号移除前置v、V
-    $BuildVersionNumber = $BuildVersion.TrimStart('v').TrimStart("V")
+    $buildVersionNumber = $BuildVersion.TrimStart('v').TrimStart("V")
     # 配置项目目录
     $projectDir = (Resolve-Path "${PSScriptRoot}\..\").Path
     # 配置构建目录
@@ -81,12 +81,12 @@ try {
 
     Write-Host "---------------------------------- 执行压缩 ----------------------------------"
     # 拷贝pkg-config配置文件，并赋值版本号
-    $dshowPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersionNumber}"
+    $dshowPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${buildVersionNumber}"
     $dshowPcContent | Set-Content -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\becam.pc" -Force
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_dshow\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_dshow_mingw.zip"
     # 拷贝pkg-config配置文件，并赋值版本号
-    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${BuildVersionNumber}"
+    $mfPcContent = (Get-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc") -creplace "ENV_LIBRARY_VERSION", "${buildVersionNumber}"
     $mfPcContent | Set-Content -Path "${installDir}\libbecam_windows_${BuildArch}_mf\becam.pc" -Force
     # 执行压缩
     Compress-Archive -Force -Path "${installDir}\libbecam_windows_${BuildArch}_mf\*" -DestinationPath "${publishDir}\libbecam_windows_${BuildArch}_mf_mingw.zip"
