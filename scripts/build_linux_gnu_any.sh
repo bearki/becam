@@ -39,7 +39,7 @@ gccVersion="gcc-${tmpGccVersion}"
 
 ######################## 内部变量声明 ########################
 # 版本号移除前置v、V
-buildVersionNumber="${BuildVersion//^[Vv]/}"
+buildVersionNumber="${BuildVersion#[Vv]}"
 # 项目目录
 projectDir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 # 构建目录
