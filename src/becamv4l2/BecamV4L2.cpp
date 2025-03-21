@@ -70,7 +70,7 @@ void BecamV4L2::FreeDeviceConfigList(GetDeviceConfigListReply& input) {
 /**
  * @implements 实现打开指定设备
  */
-StatusCode BecamV4L2::OpenDevice(const std::string& devicePath, const VideoFrameInfo& frameInfo) {
+StatusCode BecamV4L2::OpenDevice(const std::string& devicePath, const VideoFrameCaptureInfo& capInfo) {
 	// 检查参数
 	if (devicePath.empty()) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
@@ -88,7 +88,7 @@ StatusCode BecamV4L2::OpenDevice(const std::string& devicePath, const VideoFrame
 		return code;
 	}
 	// 激活设备源读取器
-	return this->openedDevice->ActivateDeviceStreaming(frameInfo);
+	return this->openedDevice->ActivateDeviceStreaming(capInfo);
 }
 
 /**

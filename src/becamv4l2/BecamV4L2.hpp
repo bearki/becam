@@ -64,10 +64,10 @@ public:
 	 * @brief 打开指定设备
 	 *
 	 * @param devicePath [in] 设备路径
-	 * @param frameInfo [in] 设置的视频帧信息
+	 * @param capInfo [in] 捕获信息
 	 * @return 状态码
 	 */
-	StatusCode OpenDevice(const std::string& devicePath, const VideoFrameInfo& frameInfo);
+	StatusCode OpenDevice(const std::string& devicePath, const VideoFrameCaptureInfo& capInfo);
 
 	/**
 	 * @brief 关闭设备

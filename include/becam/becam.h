@@ -21,18 +21,17 @@ typedef enum {
 	/**
 	 * 通用异常
 	 */
-	STATUS_CODE_ERR_HANDLE_EMPTY,					// Becam接口句柄未初始化
-	STATUS_CODE_ERR_INPUT_PARAM,					// 传入参数错误
-	STATUS_CODE_ERR_DEVICE_ENUM_FAILED,				// 设备枚举失败
-	STATUS_CODE_ERR_DEVICE_NOT_FOUND,				// 设备未找到
-	STATUS_CODE_ERR_DEVICE_OPEN_FAILED,				// 设备打开失败
-	STATUS_CODE_ERR_DEVICE_NOT_OPEN,				// 设备未打开
-	STATUS_CODE_ERR_DEVICE_FRAME_FMT_NOT_FOUND,		// 设备视频帧格式未找到
-	STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED,	// 设备视频帧格式配置失败
-	STATUS_CODE_ERR_DEVICE_RUN_FAILED,				// 设备运行失败
-	STATUS_CODE_ERR_DEVICE_NOT_RUN,					// 设备未运行
-	STATUS_CODE_ERR_GET_FRAME_FAILED,				// 获取视频帧失败
-	STATUS_CODE_ERR_GET_FRAME_EMPTY,				// 获取视频帧为空
+	STATUS_CODE_ERR_HANDLE_EMPTY,				 // Becam接口句柄未初始化
+	STATUS_CODE_ERR_INPUT_PARAM,				 // 传入参数错误
+	STATUS_CODE_ERR_DEVICE_ENUM_FAILED,			 // 设备枚举失败
+	STATUS_CODE_ERR_DEVICE_NOT_FOUND,			 // 设备未找到
+	STATUS_CODE_ERR_DEVICE_OPEN_FAILED,			 // 设备打开失败
+	STATUS_CODE_ERR_DEVICE_NOT_OPEN,			 // 设备未打开
+	STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED, // 设备视频帧格式配置失败
+	STATUS_CODE_ERR_DEVICE_RUN_FAILED,			 // 设备运行失败
+	STATUS_CODE_ERR_DEVICE_NOT_RUN,				 // 设备未运行
+	STATUS_CODE_ERR_GET_FRAME_FAILED,			 // 获取视频帧失败
+	STATUS_CODE_ERR_GET_FRAME_EMPTY,			 // 获取视频帧为空
 	/**
 	 * Direct Show 异常
 	 */
@@ -67,20 +66,12 @@ typedef enum {
 	/**
 	 * V4L2 异常
 	 */
-	STATUS_CODE_V4L2_ERR_REQUEST_BUF,		   // V4L2异常：申请内核缓冲区失败
-	STATUS_CODE_V4L2_ERR_QUERY_BUF,			   // V4L2异常：查询内核缓冲区失败
-	STATUS_CODE_V4L2_ERR_MMAP_BUF,			   // V4L2异常：映射内核缓冲区失败
-	STATUS_CODE_V4L2_ERR_LOCK_BUF,			   // V4L2异常：缓冲区加锁失败
-	STATUS_CODE_V4L2_ERR_UNLOCK_BUF,		   // V4L2异常：缓冲区解锁失败
+	STATUS_CODE_V4L2_ERR_REQUEST_BUF, // V4L2异常：申请内核缓冲区失败
+	STATUS_CODE_V4L2_ERR_QUERY_BUF,	  // V4L2异常：查询内核缓冲区失败
+	STATUS_CODE_V4L2_ERR_MMAP_BUF,	  // V4L2异常：映射内核缓冲区失败
+	STATUS_CODE_V4L2_ERR_LOCK_BUF,	  // V4L2异常：缓冲区加锁失败
+	STATUS_CODE_V4L2_ERR_UNLOCK_BUF,  // V4L2异常：缓冲区解锁失败
 } StatusCode;
-
-// VideoFrameInfo 视频帧信息
-typedef struct {
-	uint32_t format; // 格式（FOURCC表示）
-	uint32_t width;	 // 分辨率宽度
-	uint32_t height; // 分辨率高度
-	uint32_t fps;	 // 分辨率帧率
-} VideoFrameInfo;
 
 // DeviceInfo 设备信息
 typedef struct {
@@ -94,11 +85,109 @@ typedef struct {
 	DeviceInfo* deviceInfoList; // 设备信息列表
 } GetDeviceListReply;
 
+// VideoFrameCaptureType 视频帧捕获类型
+typedef enum {
+	VIDEO_FRAME_CAPTURE_TYPE_SP = 1, // 视频帧捕获类型: 单平面
+	VIDEO_FRAME_CAPTURE_TYPE_MP = 2, // 视频帧捕获类型: 多平面
+} VideoFrameCaptureType;
+
+// VideoFrameSizeType 视频帧分辨率类型
+typedef enum {
+	VIDEO_FRAME_SIZE_TYPE_DISCRETE = 1,	  // 视频帧分辨率类型: 离散型
+	VIDEO_FRAME_SIZE_TYPE_CONTINUOUS = 2, // 视频帧分辨率类型: 连续型
+	VIDEO_FRAME_SIZE_TYPE_STEPWISE = 3,	  // 视频帧分辨率类型: 步进型
+} VideoFrameSizeType;
+
+// VideoFrameFpsType 视频帧帧率类型
+typedef enum {
+	VIDEO_FRAME_FPS_TYPE_DISCRETE = 1,	 // 视频帧帧率类型: 离散型
+	VIDEO_FRAME_FPS_TYPE_CONTINUOUS = 2, // 视频帧帧率类型: 连续型
+	VIDEO_FRAME_FPS_TYPE_STEPWISE = 3,	 // 视频帧帧率类型: 步进型
+} VideoFrameFpsType;
+
+// VideoFrameFpsInfoUnion 视频帧离散型帧率信息
+typedef struct {
+	uint32_t numerator;	  // 一帧消耗的时间分子（单位：秒）
+	uint32_t denominator; // 一帧消耗的时间分母（单位：秒）
+} VideoFrameDiscreteFpsInfo;
+
+// VideoFrameFpsInfoUnion 视频帧连续型、步进型帧率信息
+typedef struct {
+	uint32_t minNumerator;	  // 一帧消耗的时间最小分子（单位：秒）
+	uint32_t minDenominator;  // 一帧消耗的时间最小分母（单位：秒）
+	uint32_t maxNumerator;	  // 一帧消耗的时间最大分子（单位：秒）
+	uint32_t maxDenominator;  // 一帧消耗的时间最大分母（单位：秒）
+	uint32_t stepNumerator;	  // 步进时间分子（单位：秒）
+	uint32_t stepDenominator; // 步进时间分母（单位：秒）
+} VideoFrameStepwiseFpsInfo;
+
+// VideoFrameFpsInfoUnion 视频帧帧率类型信息
+typedef union {
+	VideoFrameDiscreteFpsInfo discrete; // 离散型帧率信息
+	VideoFrameStepwiseFpsInfo stepwise; // 连续型、步进型帧率信息
+} VideoFrameFpsInfoUnion;
+
+// VideoFrameFpsInfo 视频帧帧率信息
+typedef struct {
+	VideoFrameFpsType fpsType;		// 帧率类型
+	VideoFrameFpsInfoUnion fpsInfo; // 帧率信息
+} VideoFrameFpsInfo;
+
+// VideoFrameSizeInfo 视频帧离散型分辨率信息
+typedef struct {
+	uint32_t width;					// 分辨率宽度
+	uint32_t height;				// 分辨率高度
+	size_t fpsInfoListSize;			// 帧率信息列表大小
+	VideoFrameFpsInfo* fpsInfoList; // 帧率信息列表
+} VideoFrameDiscreteSizeInfo;
+
+// VideoFrameSizeInfo 视频帧连续型、步进型分辨率信息
+typedef struct {
+	uint32_t minWidth;				// 分辨率最小宽度
+	uint32_t maxWidth;				// 分辨率最大宽度
+	uint32_t stepWidth;				// 分辨率步进宽度
+	uint32_t minHeight;				// 分辨率最小高度
+	uint32_t maxHeight;				// 分辨率最大高度
+	uint32_t stepHeight;			// 分辨率步进高度
+	size_t fpsInfoListSize;			// 帧率信息列表大小
+	VideoFrameFpsInfo* fpsInfoList; // 帧率信息列表
+} VideoFrameStepwiseSizeInfo;
+
+// VideoFrameSizeInfo 视频帧分辨率类型信息
+typedef union {
+	VideoFrameDiscreteSizeInfo discrete; // 离散型分辨率信息
+	VideoFrameStepwiseSizeInfo stepwise; // 连续型、步进型分辨率信息
+} VideoFrameSizeInfoUnion;
+
+// VideoFrameSizeInfo 视频帧分辨率信息
+typedef struct {
+	VideoFrameSizeType sizeType;	  // 分辨率类型
+	VideoFrameSizeInfoUnion sizeInfo; // 分辨率类型信息
+} VideoFrameSizeInfo;
+
+// VideoFrameInfo 视频帧信息
+typedef struct {
+	uint32_t format;				  // 格式（FOURCC表示）
+	VideoFrameCaptureType capType;	  // 捕获类型
+	size_t sizeInfoListSize;		  // 分辨率信息列表大小
+	VideoFrameSizeInfo* sizeInfoList; // 分辨率信息列表
+} VideoFrameInfo;
+
 // GetDeviceConfigListReply 获取设备配置列表响应参数
 typedef struct {
 	size_t videoFrameInfoListSize;		// 视频帧信息数量
 	VideoFrameInfo* videoFrameInfoList; // 视频帧信息列表
 } GetDeviceConfigListReply;
+
+// VideoFrameCaptureInfo 视频帧捕获信息
+typedef struct {
+	uint32_t format;			   // 格式（FOURCC表示）
+	VideoFrameCaptureType capType; // 捕获类型
+	uint32_t width;				   // 分辨率宽度
+	uint32_t height;			   // 分辨率高度
+	uint32_t numerator;			   // 一帧消耗的时间分子（单位：秒）
+	uint32_t denominator;		   // 一帧消耗的时间分母（单位：秒）
+} VideoFrameCaptureInfo;
 
 #ifdef __cplusplus
 extern "C" {
@@ -158,10 +247,10 @@ _BECAM_API_ void BecamFreeDeviceConfigList(BecamHandle handle, GetDeviceConfigLi
  *
  * @param handle Becam接口句柄
  * @param devicePath 设备路径
- * @param frameInfo 视频帧信息
+ * @param frameCaptureInfo 视频帧捕获信息
  * @return 状态码
  */
-_BECAM_API_ StatusCode BecamOpenDevice(BecamHandle handle, const char* devicePath, const VideoFrameInfo* frameInfo);
+_BECAM_API_ StatusCode BecamOpenDevice(BecamHandle handle, const char* devicePath, const VideoFrameCaptureInfo* frameCaptureInfo);
 
 /**
  * @brief 关闭设备

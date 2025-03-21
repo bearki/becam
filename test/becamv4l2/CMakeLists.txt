@@ -1,9 +1,9 @@
 # 编译为可执行文件
-add_executable(becamv4l2_init_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_init_test.cpp)
-add_executable(becamv4l2_get_list_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_get_list_test.cpp)
-add_executable(becamv4l2_open_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_open_test.cpp)
-add_executable(becamv4l2_frame_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_frame_test.cpp)
-add_executable(becamv4l2_all_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_all_test.cpp)
+add_executable(becamv4l2_init_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_init_test.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../common/custom_printf.cpp)
+add_executable(becamv4l2_get_list_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_get_list_test.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../common/custom_printf.cpp)
+add_executable(becamv4l2_open_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_open_test.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../common/custom_printf.cpp)
+add_executable(becamv4l2_frame_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_frame_test.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../common/custom_printf.cpp)
+add_executable(becamv4l2_all_test ${CMAKE_CURRENT_SOURCE_DIR}/../common/becam_all_test.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../common/custom_printf.cpp)
 
 # 指定需要链接的库
 # 链接到静态库（注意：库名需要填写cmake add_library函数的第一个参数name，否则找不到库）

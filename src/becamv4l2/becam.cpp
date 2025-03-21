@@ -103,20 +103,20 @@ void BecamFreeDeviceConfigList(BecamHandle handle, GetDeviceConfigListReply* inp
 /**
  * @implements 实现打开设备
  */
-StatusCode BecamOpenDevice(BecamHandle handle, const char* devicePath, const VideoFrameInfo* frameInfo) {
+StatusCode BecamOpenDevice(BecamHandle handle, const char* devicePath, const VideoFrameCaptureInfo* frameCaptureInfo) {
 	// 检查句柄
 	if (handle == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_HANDLE_EMPTY;
 	}
 	// 检查参数
-	if (devicePath == nullptr || frameInfo == nullptr) {
+	if (devicePath == nullptr || frameCaptureInfo == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
 
 	// 转换句柄类型
 	BecamV4L2* becamHandle = static_cast<BecamV4L2*>(handle);
 	// 执行相机打开
-	return becamHandle->OpenDevice(devicePath, *frameInfo);
+	return becamHandle->OpenDevice(devicePath, *frameCaptureInfo);
 }
 
 /**

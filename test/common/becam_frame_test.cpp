@@ -1,6 +1,8 @@
+#include "custom_printf.cpp"
 #include <becam/becam.h>
 #include <fstream>
 #include <iostream>
+#include <linux/videodev2.h>
 
 int main() {
 	// 初始化句柄
@@ -21,9 +23,15 @@ int main() {
 	}
 
 	// 选中的设备路径
-	std::string devicePath = "";
+	std::string devicePath = "/dev/video0";
 	// 选中的视频帧信息
-	VideoFrameInfo frameInfo = {0};
+	VideoFrameCaptureInfo capInfo = {0};
+	capInfo.capType = VideoFrameCaptureType::VIDEO_FRAME_CAPTURE_TYPE_MP;
+	capInfo.format = V4L2_PIX_FMT_RGB24;
+	capInfo.width = 1920;
+	capInfo.height = 1080;
+	capInfo.numerator = 1;
+	capInfo.denominator = 30;
 
 	// 打印一下设备列表
 	for (size_t i = 0; i < reply.deviceInfoListSize; i++) {
@@ -48,22 +56,8 @@ int main() {
 			return 1;
 		}
 
-		// 遍历视频帧信息
-		for (size_t j = 0; j < configReply.videoFrameInfoListSize; j++) {
-			// 获取帧信息
-			auto element = configReply.videoFrameInfoList[j];
-			// 打印一下
-			std::cout << "\t"
-					  << "width: " << element.width << ", "
-					  << "height: " << element.height << ", "
-					  << "fps: " << element.fps << ", "
-					  << "format: " << element.format << std::endl;
-			// 提取一个帧信息
-			if (devicePath.empty() && element.width == 1920 && element.format == 1196444237) {
-				devicePath = item.devicePath;
-				frameInfo = element;
-			}
-		}
+		// 打印视频帧格式信息
+		printVoidFrameFormatInfo(configReply.videoFrameInfoListSize, configReply.videoFrameInfoList);
 		// 释放支持的配置列表
 		BecamFreeDeviceConfigList(handle, &configReply);
 	}
@@ -72,11 +66,11 @@ int main() {
 
 	// 当前选中的设别路径和帧信息
 	std::cout << "\n\nSelected device path: " << devicePath << std::endl;
-	std::cout << "Selected frame info: " << frameInfo.width << "x" << frameInfo.height << ", " << frameInfo.fps << ", " << frameInfo.format
-			  << std::endl;
+	std::cout << "Selected frame info: " << capInfo.width << "x" << capInfo.height << ", " << capInfo.capType << ", "
+			  << capInfo.numerator << "/" << capInfo.denominator << ", " << capInfo.format << std::endl;
 
 	// 打开设备
-	res = BecamOpenDevice(handle, devicePath.c_str(), &frameInfo);
+	res = BecamOpenDevice(handle, devicePath.c_str(), &capInfo);
 	if (res != StatusCode::STATUS_CODE_SUCCESS) {
 		std::cerr << "Failed to open device. errno: " << res << std::endl;
 		BecamFree(&handle);

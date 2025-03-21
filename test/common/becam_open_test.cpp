@@ -1,3 +1,4 @@
+#include "custom_printf.cpp"
 #include <becam/becam.h>
 #include <fstream>
 #include <iostream>
@@ -23,7 +24,11 @@ int main() {
 	// 选中的设备路径
 	std::string devicePath = "";
 	// 选中的视频帧信息
-	VideoFrameInfo frameInfo = {0};
+	VideoFrameCaptureInfo frameInfo = {0};
+	frameInfo.capType = VideoFrameCaptureType::VIDEO_FRAME_CAPTURE_TYPE_MP;
+	frameInfo.format = 0x32424752;
+	frameInfo.width = 1920;
+	frameInfo.height = 1080;
 
 	// 打印一下设备列表
 	for (size_t i = 0; i < reply.deviceInfoListSize; i++) {
@@ -48,22 +53,8 @@ int main() {
 			return 1;
 		}
 
-		// 遍历视频帧信息
-		for (size_t j = 0; j < configReply.videoFrameInfoListSize; j++) {
-			// 获取帧信息
-			auto element = configReply.videoFrameInfoList[j];
-			// 打印一下
-			std::cout << "\t"
-					  << "width: " << element.width << ", "
-					  << "height: " << element.height << ", "
-					  << "fps: " << element.fps << ", "
-					  << "format: " << element.format << std::endl;
-			// 提取一个帧信息
-			if (devicePath.empty()) {
-				devicePath = item.devicePath;
-				frameInfo = element;
-			}
-		}
+		// 打印视频帧格式信息
+		printVoidFrameFormatInfo(configReply.videoFrameInfoListSize, configReply.videoFrameInfoList);
 		// 释放支持的配置列表
 		BecamFreeDeviceConfigList(handle, &configReply);
 	}
@@ -72,8 +63,8 @@ int main() {
 
 	// 当前选中的设别路径和帧信息
 	std::cout << "\n\nSelected device path: " << devicePath << std::endl;
-	std::cout << "Selected frame info: " << frameInfo.width << "x" << frameInfo.height << ", " << frameInfo.fps << ", " << frameInfo.format
-			  << std::endl;
+	std::cout << "Selected frame info: " << frameInfo.width << "x" << frameInfo.height << ", " << frameInfo.capType << ", "
+			  << frameInfo.numerator << "/" << frameInfo.denominator << ", " << frameInfo.format << std::endl;
 
 	// 来个死循环
 	while (true) {

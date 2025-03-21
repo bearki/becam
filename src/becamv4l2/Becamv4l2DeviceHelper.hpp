@@ -23,7 +23,7 @@ private:
 	// 用户缓冲区
 	void* userBuffers[Becamv4l2DeviceHelper::USER_BUFFER_COUNT] = {0};
 	// 用户缓冲区每个缓冲区对应的长度
-	uint32_t userBufferLengths[Becamv4l2DeviceHelper::USER_BUFFER_COUNT] = {0};
+	size_t userBufferLengths[Becamv4l2DeviceHelper::USER_BUFFER_COUNT] = {0};
 	// 是否已经开始取流
 	bool streamON = false;
 
@@ -33,7 +33,7 @@ private:
 	 * @param deviceName [in] 设备名称
 	 * @return 处理后的设备名称
 	 */
-	static std::string TrimDeviceName(const std::string& deviceName);
+	static std::string trimDeviceName(const std::string& deviceName);
 
 	/**
 	 * @brief 检查设备是否支持视频捕获能力
@@ -42,17 +42,17 @@ private:
 	 * @param deviceName [out] 设备名称（仅在设备支持视频捕获能力时返回）
 	 * @return 是否支持视频捕获能力
 	 */
-	static bool IsVideoCaptureDevice(const std::string& devicePath, std::string& deviceName);
+	static bool isVideoCaptureDevice(const std::string& devicePath, std::string& deviceName);
 
 	/**
 	 * @brief 关闭当前设备
 	 */
-	void CloseCurrentDevice();
+	void closeCurrentDevice();
 
 	/**
 	 * @brief 停止当前设备取流
 	 */
-	void StopCurrentDeviceStreaming();
+	void stopCurrentDeviceStreaming();
 
 public:
 	/**
@@ -111,10 +111,10 @@ public:
 	/**
 	 * @brief 激活设备取流
 	 *
-	 * @param frameInfo	[in] 要激活的视频帧信息
+	 * @param capInfo [in] 捕获信息
 	 * @return 状态码
 	 */
-	StatusCode ActivateDeviceStreaming(const VideoFrameInfo& frameInfo);
+	StatusCode ActivateDeviceStreaming(const VideoFrameCaptureInfo& capInfo);
 
 	/**
 	 * @brief 关闭设备
