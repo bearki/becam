@@ -2,6 +2,7 @@
 
 #include <becam/becam.h>
 #include <fcntl.h>
+#include <linux/videodev2.h>
 #include <mutex>
 #include <stddef.h>
 #include <string.h>
@@ -18,12 +19,33 @@ private:
 	std::mutex mtx;
 	// 已激活的设备（内部管理）
 	int activatedDevice = -1;
+
 	// 用户缓冲区数量
 	static const int USER_BUFFER_COUNT = 3;
-	// 用户缓冲区
-	void* userBuffers[Becamv4l2DeviceHelper::USER_BUFFER_COUNT] = {0};
-	// 用户缓冲区每个缓冲区对应的长度
-	size_t userBufferLengths[Becamv4l2DeviceHelper::USER_BUFFER_COUNT] = {0};
+
+	/**
+	 * @brief 单平面捕获用户缓冲区类型
+	 */
+	struct SingleplaneCaptureUserBuffer {
+		size_t length; // 缓冲区长度
+		void* address; // 缓冲区地址
+	};
+
+	/**
+	 * @brief 多平面捕获用户缓冲区类型
+	 */
+	struct MultiplaneCaptureUserBuffer {
+		size_t planeNum;										 // 平面数量
+		SingleplaneCaptureUserBuffer planeBuf[VIDEO_MAX_PLANES]; // 平面缓冲区
+	};
+
+	// 捕获缓冲区类型（默认为单平面）
+	v4l2_buf_type capBufType = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	// 单平面捕获缓冲区
+	SingleplaneCaptureUserBuffer spCapBufList[Becamv4l2DeviceHelper::USER_BUFFER_COUNT] = {0};
+	// 多平面捕获缓冲区
+	MultiplaneCaptureUserBuffer mpCapBufList[Becamv4l2DeviceHelper::USER_BUFFER_COUNT] = {0};
+
 	// 是否已经开始取流
 	bool streamON = false;
 

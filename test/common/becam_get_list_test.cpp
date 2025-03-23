@@ -1,7 +1,8 @@
 #include <becam/becam.h>
 #include <fstream>
 #include <iostream>
-#include "custom_printf.cpp"
+#include "custom_printf.hpp"
+
 
 
 int main() {

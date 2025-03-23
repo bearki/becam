@@ -4,3 +4,6 @@
 [submodule "include/libusb-cmake"]
 	path = include/libusb-cmake
 	url = https://github.com/libusb/libusb-cmake.git
+[submodule "include/cli11"]
+	path = include/cli11
+	url = https://github.com/CLIUtils/CLI11.git

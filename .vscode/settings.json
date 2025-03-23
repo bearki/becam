@@ -57,7 +57,17 @@
         "sstream": "cpp",
         "libuvc.h": "c",
         "cstring": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "bitset": "cpp",
+        "chrono": "cpp",
+        "complex": "cpp",
+        "forward_list": "cpp",
+        "list": "cpp",
+        "set": "cpp",
+        "unordered_set": "cpp",
+        "optional": "cpp",
+        "regex": "cpp",
+        "iomanip": "cpp"
     },
     "cmake.configureSettings": {
         "CMAKE_BUILD_TYPR": "${buildType}"

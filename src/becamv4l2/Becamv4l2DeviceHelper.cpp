@@ -51,13 +51,31 @@ void Becamv4l2DeviceHelper::stopCurrentDeviceStreaming() {
 		// 标记已停止取流
 		this->streamON = false;
 	}
-	// 取消内核缓冲区和用户缓冲区的映射
+	// 取消内核缓冲区映射
 	for (size_t i = 0; i < Becamv4l2DeviceHelper::USER_BUFFER_COUNT; i++) {
-		// 仅在缓冲区长度有效时进行解绑
-		if (this->userBufferLengths[i] > 0) {
-			munmap(this->userBuffers[i], this->userBufferLengths[i]);
-			this->userBuffers[i] = nullptr;
-			this->userBufferLengths[i] = 0;
+		// 单平面捕获缓冲区：仅在缓冲区长度有效时进行解绑
+		if (this->spCapBufList[i].length > 0) {
+			// 取消映射
+			munmap(this->spCapBufList[i].address, this->spCapBufList[i].length);
+			// 重置映射地址和长度
+			this->spCapBufList[i].address = nullptr;
+			this->spCapBufList[i].length = 0;
+		}
+		// 多平面捕获缓冲区：仅在平面数量有效时进行解绑
+		if (this->mpCapBufList[i].planeNum > 0) {
+			// 遍历平面
+			for (size_t j = 0; j < this->mpCapBufList[i].planeNum; j++) {
+				// 仅在缓冲区长度有效时进行解绑
+				if (this->mpCapBufList[i].planeBuf[j].length > 0) {
+					// 取消映射
+					munmap(this->mpCapBufList[i].planeBuf[j].address, this->mpCapBufList[i].planeBuf[j].length);
+					// 重置映射地址和长度
+					this->mpCapBufList[i].planeBuf[j].address = nullptr;
+					this->mpCapBufList[i].planeBuf[j].length = 0;
+				}
+			}
+			// 重置平面数量
+			this->mpCapBufList[i].planeNum = 0;
 		}
 	}
 }
@@ -114,7 +132,8 @@ bool Becamv4l2DeviceHelper::isVideoCaptureDevice(const std::string& devicePath, 
 	}
 
 	// 检查能力
-	if (cap.capabilities & V4L2_CAP_DEVICE_CAPS // 设备总体能力必须支持Device Capabilities，表示 device_caps 字段有效
+	if (cap.capabilities & V4L2_CAP_DEVICE_CAPS	 // 设备总体能力必须支持Device Capabilities，表示 device_caps 字段有效
+		&& cap.capabilities & V4L2_CAP_STREAMING // 设备需要支持流传输
 		&& (cap.device_caps & V4L2_CAP_VIDEO_CAPTURE ||
 			cap.device_caps & V4L2_CAP_VIDEO_CAPTURE_MPLANE) // 当前设备节点访问的能力必须支持视频捕获（单平面、多平面都可以）
 	) {
@@ -324,20 +343,36 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameCaptur
 		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
 	}
 
-	// 声明输出帧率
-	v4l2_streamparm streamparm = {0};
-	streamparm.type = format.type;											// 设置捕获类型
-	streamparm.parm.capture.timeperframe.numerator = capInfo.numerator;		// 帧率分子
-	streamparm.parm.capture.timeperframe.denominator = capInfo.denominator; // 帧率分母
-	// 设置输出帧率
-	if (xioctl(this->activatedDevice, VIDIOC_S_PARM, &streamparm) == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceStreaming -> xioctl(VIDIOC_S_PARM) Failed, " << strerror(errno)
-				  << ", errno: " << errno << std::endl;
-		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
+	// 打印一下获取到的平面数
+	std::cout << "num_planes: " << (int)format.fmt.pix_mp.num_planes << std::endl;
+
+	// 帧率大于0时需要配置帧率
+	if (capInfo.numerator > 0 && capInfo.denominator > 0) {
+		// 声明输出帧率
+		v4l2_streamparm streamparm = {0};
+		streamparm.type = format.type;											// 设置捕获类型
+		streamparm.parm.capture.timeperframe.numerator = capInfo.numerator;		// 帧率分子
+		streamparm.parm.capture.timeperframe.denominator = capInfo.denominator; // 帧率分母
+		// 设置输出帧率
+		if (xioctl(this->activatedDevice, VIDIOC_S_PARM, &streamparm) == -1) {
+			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceStreaming -> xioctl(VIDIOC_S_PARM) Failed, " << strerror(errno)
+					  << ", errno: " << errno << std::endl;
+			return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
+		}
 	}
 
-	// 请求缓冲区
+	// 释放所有已申请的缓冲区
 	v4l2_requestbuffers reqBuf = {0};
+	reqBuf.count = 0; // 为0表示释放所有已申请的缓冲区
+	reqBuf.type = format.type;
+	reqBuf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
+	if (xioctl(this->activatedDevice, VIDIOC_REQBUFS, &reqBuf) == -1) {
+		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceStreaming -> xioctl(VIDIOC_REQBUFS) Count equal Zero Failed, " << strerror(errno)
+				  << ", errno: " << errno << std::endl;
+		return StatusCode::STATUS_CODE_V4L2_ERR_REQUEST_BUF;
+	}
+	// 申请缓冲区
+	reqBuf = {0};
 	reqBuf.count = Becamv4l2DeviceHelper::USER_BUFFER_COUNT;
 	reqBuf.type = format.type;
 	reqBuf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
@@ -347,39 +382,84 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameCaptur
 		return StatusCode::STATUS_CODE_V4L2_ERR_REQUEST_BUF;
 	}
 
+	// 赋值捕获缓冲区类型
+	this->capBufType = (v4l2_buf_type)format.type;
 	// 声明内核缓冲区查询参数
 	v4l2_buffer buf = {0};
+	buf.type = format.type;
+	buf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
 	// 查询内核缓冲区，并将其映射到用户缓冲区
-	for (int i = 0; i < Becamv4l2DeviceHelper::USER_BUFFER_COUNT; i++) {
-		// 查询内核缓冲区
-		buf.type = format.type;
-		buf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
+	for (int i = 0; i < reqBuf.count; i++) {
+		// 缓冲区下标切换
 		buf.index = i;
-		if (xioctl(this->activatedDevice, VIDIOC_QUERYBUF, &buf) == -1) {
-			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceStreaming -> xioctl(VIDIOC_QUERYBUF) Failed, " << strerror(errno)
-					  << ", errno: " << errno << std::endl;
-			return StatusCode::STATUS_CODE_V4L2_ERR_QUERY_BUF;
-		}
-		// 映射内核缓冲区
-		this->userBuffers[i] = mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, this->activatedDevice, buf.m.offset);
-		if (this->userBuffers[i] == MAP_FAILED) {
-			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceStreaming -> xioctl(VIDIOC_QUERYBUF) Failed, " << strerror(errno)
-					  << ", errno: " << errno << std::endl;
-			return StatusCode::STATUS_CODE_V4L2_ERR_MMAP_BUF;
-		}
-		// 储存缓冲区的长度
-		this->userBufferLengths[i] = buf.length;
-	}
+		// 区分捕获缓冲区类型
+		switch (this->capBufType) {
+			// 单平面捕获缓冲区
+			case v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE: {
+				// 查询内核缓冲区
+				if (xioctl(this->activatedDevice, VIDIOC_QUERYBUF, &buf) == -1) {
+					std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceStreaming -> xioctl(VIDIOC_QUERYBUF) Failed, " << strerror(errno)
+							  << ", errno: " << errno << std::endl;
+					return StatusCode::STATUS_CODE_V4L2_ERR_QUERY_BUF;
+				}
+				// 映射内核缓冲区
+				this->spCapBufList[i].address =
+					mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, this->activatedDevice, buf.m.offset);
+				// 检查映射结果
+				if (this->spCapBufList[i].address == MAP_FAILED) {
+					std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceStreaming -> mmap(V4L2_BUF_TYPE_VIDEO_CAPTURE) Failed, "
+							  << strerror(errno) << ", errno: " << errno << std::endl;
+					return StatusCode::STATUS_CODE_V4L2_ERR_MMAP_BUF;
+				}
+				// 储存缓冲区的长度
+				this->spCapBufList[i].length = buf.length;
+				// 将缓冲区加入到设备的输出队列（就是缓冲区解锁的意思）
+				if (xioctl(this->activatedDevice, VIDIOC_QBUF, &buf) == -1) {
+					std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QBUF) Failed, " << strerror(errno)
+							  << ", errno: " << errno << std::endl;
+					return StatusCode::STATUS_CODE_V4L2_ERR_UNLOCK_BUF;
+				}
+				// OK
+				break;
+			}
 
-	// 将缓冲区加入到设备的输出队列（就是缓冲区解锁的意思）
-	for (int i = 0; i < Becamv4l2DeviceHelper::USER_BUFFER_COUNT; i++) {
-		buf.type = format.type;
-		buf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
-		buf.index = i;
-		if (xioctl(this->activatedDevice, VIDIOC_QBUF, &buf) == -1) {
-			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QBUF) Failed, " << strerror(errno)
-					  << ", errno: " << errno << std::endl;
-			return StatusCode::STATUS_CODE_V4L2_ERR_UNLOCK_BUF;
+			// 多平面捕获缓冲区
+			case v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE: {
+				// 多平面需要额外添加查询参数
+				buf.length = format.fmt.pix_mp.num_planes;
+				v4l2_plane planes[VIDEO_MAX_PLANES] = {0};
+				buf.m.planes = planes;
+				// 查询内核缓冲区
+				if (xioctl(this->activatedDevice, VIDIOC_QUERYBUF, &buf) == -1) {
+					std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceStreaming -> xioctl(VIDIOC_QUERYBUF) Failed, " << strerror(errno)
+							  << ", errno: " << errno << std::endl;
+					return StatusCode::STATUS_CODE_V4L2_ERR_QUERY_BUF;
+				}
+				// 赋值平面数量
+				this->mpCapBufList[i].planeNum = buf.length;
+				// 遍历所有平面
+				for (size_t j = 0; j < buf.length; j++) {
+					// 映射内核缓冲区
+					this->mpCapBufList[i].planeBuf[j].address = mmap(NULL, buf.m.planes[j].length, PROT_READ | PROT_WRITE, MAP_SHARED,
+																	 this->activatedDevice, buf.m.planes[j].data_offset);
+					// 检查映射结果
+					if (this->mpCapBufList[i].planeBuf[j].address == MAP_FAILED) {
+						std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceStreaming -> mmap(V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE) Failed, "
+								  << strerror(errno) << ", errno: " << errno << std::endl;
+						return StatusCode::STATUS_CODE_V4L2_ERR_MMAP_BUF;
+					}
+					// 储存缓冲区的长度
+					this->mpCapBufList[i].planeBuf[j].length = buf.m.planes[j].length;
+				}
+				// 将缓冲区加入到设备的输出队列（就是缓冲区解锁的意思）
+				if (xioctl(this->activatedDevice, VIDIOC_QBUF, &buf) == -1) {
+					std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QBUF) Failed, " << strerror(errno)
+							  << ", errno: " << errno << std::endl;
+					return StatusCode::STATUS_CODE_V4L2_ERR_UNLOCK_BUF;
+				}
+				// OK
+				break;
+			}
 		}
 	}
 
@@ -429,21 +509,67 @@ StatusCode Becamv4l2DeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 
 	// 声明缓冲区队列查询参数
 	v4l2_buffer buf = {0};
-	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	buf.memory = V4L2_MEMORY_MMAP;
-	// 消费队列中的缓冲区（就是缓冲区加锁）
-	if (xioctl(this->activatedDevice, VIDIOC_DQBUF, &buf) == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::GetFrame -> xioctl(VIDIOC_DQBUF) Failed, " << strerror(errno) << ", errno: " << errno
-				  << std::endl;
-		return StatusCode::STATUS_CODE_V4L2_ERR_LOCK_BUF;
-	}
 
-	// 是否读取到有效帧
-	if (buf.bytesused > 0) {
-		// 拷贝帧
-		replySize = buf.bytesused;
-		reply = new uint8_t[replySize];
-		memcpy(reply, this->userBuffers[buf.index], replySize);
+	// 区分捕获缓冲区类型
+	switch (this->capBufType) {
+			// 单平面捕获
+		case v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE: {
+			// 修改缓冲区队列查询参数
+			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+			// 消费队列中的缓冲区（就是缓冲区加锁）
+			if (xioctl(this->activatedDevice, VIDIOC_DQBUF, &buf) == -1) {
+				std::cerr << "Becamv4l2DeviceHelper::GetFrame -> xioctl(VIDIOC_DQBUF) Failed, " << strerror(errno) << ", errno: " << errno
+						  << std::endl;
+				return StatusCode::STATUS_CODE_V4L2_ERR_LOCK_BUF;
+			}
+			// 是否读取到有效帧
+			if (buf.bytesused > 0) {
+				// 拷贝帧
+				replySize = buf.bytesused;
+				reply = new uint8_t[replySize];
+				memcpy(reply, this->spCapBufList[buf.index].address, replySize);
+			}
+			break;
+		}
+
+		// 多平面捕获
+		case v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE: {
+			// 修改缓冲区队列查询参数
+			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+			buf.length = VIDEO_MAX_PLANES; // 使用最大平面数防止溢出
+			v4l2_plane planes[VIDEO_MAX_PLANES] = {0}; 
+			buf.m.planes = planes;
+			// 消费队列中的缓冲区（就是缓冲区加锁）
+			if (xioctl(this->activatedDevice, VIDIOC_DQBUF, &buf) == -1) {
+				std::cerr << "Becamv4l2DeviceHelper::GetFrame -> xioctl(VIDIOC_DQBUF) Failed, " << strerror(errno) << ", errno: " << errno
+						  << std::endl;
+				return StatusCode::STATUS_CODE_V4L2_ERR_LOCK_BUF;
+			}
+			// 暂时只处理只有一个平面的（多个平面的需要修改返回参数，太麻烦了）
+			if (this->mpCapBufList[buf.index].planeNum == 1) {
+				// 是否读取到有效帧
+				if (buf.m.planes[0].bytesused > 0) {
+					// 拷贝帧
+					replySize = buf.m.planes[0].bytesused;
+					reply = new uint8_t[replySize];
+					memcpy(reply, this->mpCapBufList[buf.index].planeBuf[0].address, replySize);
+					// // 遍历平面
+					// for (size_t i = 0; i < this->mpCapBufList[buf.index].planeNum; i++) {
+					// 	// 拷贝帧
+					// 	replySize = buf.m.planes[i].bytesused;
+					// 	reply = new uint8_t[replySize];
+					// 	memcpy(reply, this->mpCapBufList[buf.index].planeBuf[i].address, replySize);
+					// }
+				}
+			}
+			break;
+		}
+
+		// 默认处理
+		default:
+			// 默认直接失败（没实现，不失败怎么办？）
+			return StatusCode::STATUS_CODE_ERR_GET_FRAME_FAILED;
 	}
 
 	// 重新将缓冲区加入队列（就是缓冲区解锁）

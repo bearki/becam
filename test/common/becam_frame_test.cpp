@@ -1,4 +1,4 @@
-#include "custom_printf.cpp"
+#include "custom_printf.hpp"
 #include <becam/becam.h>
 #include <fstream>
 #include <iostream>
@@ -23,15 +23,15 @@ int main() {
 	}
 
 	// 选中的设备路径
-	std::string devicePath = "/dev/video0";
+	std::string devicePath = "/dev/video11";
 	// 选中的视频帧信息
 	VideoFrameCaptureInfo capInfo = {0};
 	capInfo.capType = VideoFrameCaptureType::VIDEO_FRAME_CAPTURE_TYPE_MP;
-	capInfo.format = V4L2_PIX_FMT_RGB24;
-	capInfo.width = 1920;
-	capInfo.height = 1080;
-	capInfo.numerator = 1;
-	capInfo.denominator = 30;
+	capInfo.format = V4L2_PIX_FMT_NV12;
+	capInfo.width = 1280;
+	capInfo.height = 720;
+	capInfo.numerator = 0;
+	capInfo.denominator = 0;
 
 	// 打印一下设备列表
 	for (size_t i = 0; i < reply.deviceInfoListSize; i++) {
@@ -66,8 +66,8 @@ int main() {
 
 	// 当前选中的设别路径和帧信息
 	std::cout << "\n\nSelected device path: " << devicePath << std::endl;
-	std::cout << "Selected frame info: " << capInfo.width << "x" << capInfo.height << ", " << capInfo.capType << ", "
-			  << capInfo.numerator << "/" << capInfo.denominator << ", " << capInfo.format << std::endl;
+	std::cout << "Selected frame info: " << capInfo.width << "x" << capInfo.height << ", " << capInfo.capType << ", " << capInfo.numerator
+			  << "/" << capInfo.denominator << ", " << capInfo.format << std::endl;
 
 	// 打开设备
 	res = BecamOpenDevice(handle, devicePath.c_str(), &capInfo);
