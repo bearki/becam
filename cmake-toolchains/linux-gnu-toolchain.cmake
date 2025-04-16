@@ -1,6 +1,9 @@
 # 设置目标系统
 set(CMAKE_SYSTEM_NAME Linux)
 
+# 设置编译器供应商
+set(TOOLCHAIN_VENDER gnu)
+
 # 打印信息
 message(STATUS "TOOLCHAIN_PATH: ${TOOLCHAIN_PATH}")
 message(STATUS "TOOLCHAIN_COMPILER_NAME: ${TOOLCHAIN_COMPILER_NAME}")

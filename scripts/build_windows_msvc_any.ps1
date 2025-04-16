@@ -121,8 +121,8 @@ try {
     # # 执行CMake
     Write-Host "------------------------------- 执行CMake:配置 -------------------------------"
     cmake -G "${VsVersion}" `
-        -DCMAKE_SYSTEM_NAME="Windows" `
         -DCMAKE_SYSTEM_PROCESSOR="${BuildArch}" `
+        -DCMAKE_TOOLCHAIN_FILE="${projectDir}/cmake-toolchains/windows-msvc-toolchain.cmake" `
         -S"${projectDir}" `
         -B"${buildDir}" `
         -T host="${vcHost}" `

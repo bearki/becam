@@ -1,0 +1,9 @@
+# 设置目标系统
+set(CMAKE_SYSTEM_NAME Windows)
+
+# 设置编译器供应商
+set(TOOLCHAIN_VENDER msvc)
+
+# 打印信息
+message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
