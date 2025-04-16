@@ -13,7 +13,7 @@ set(CMAKE_CXX_COMPILER ${TOOLCHAIN_PATH}/bin/${TOOLCHAIN_COMPILER_NAME}-g++)
 
 # 指定工具链根目录
 # 通常可以这样查询：${TOOLCHAIN_PATH}/bin/${CMAKE_SYSTEM_PROCESSOR}-linux-gnueabihf-gcc -print-sysroot
-set(CMAKE_FIND_ROOT_PATH ${TOOLCHAIN_PATH}/${CMAKE_SYSTEM_PROCESSOR}-linux-gnueabihf/libc)
+# set(CMAKE_FIND_ROOT_PATH ${TOOLCHAIN_PATH}/${CMAKE_SYSTEM_PROCESSOR}-linux-gnueabihf/libc)
 
 # 只在工具链目录中查找库和头文件
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
