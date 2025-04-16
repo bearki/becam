@@ -15,7 +15,7 @@ set_target_properties(becamdshow_shared PROPERTIES OUTPUT_NAME "becamdshow")
 set(INSTALL_PATH libbecam_${BUILD_OS}_${BUILD_ARCH}_dshow)
 # 头文件
 install(FILES ${CMAKE_SOURCE_DIR}/include/becam/becam.h DESTINATION ${INSTALL_PATH}/include)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/becam.pc DESTINATION ${INSTALL_PATH})
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/becam_${TOOLCHAIN_VENDER}.pc DESTINATION ${INSTALL_PATH} RENAME "becam.pc")
 # ARCHIVE-静态库，LIBRARY-动态库，RUNTIME-可执行二进制文件
 install(TARGETS becamdshow_static ARCHIVE DESTINATION ${INSTALL_PATH}/lib)
 install(TARGETS becamdshow_shared LIBRARY DESTINATION ${INSTALL_PATH}/lib
