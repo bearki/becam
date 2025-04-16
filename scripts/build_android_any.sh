@@ -6,7 +6,7 @@ set -e
 
 ######################## 外部变量声明 ########################
 # 声明系统架构（arm64-v8a、armeabi-v7a、armeabi-v6、armeabi、mips、mips64、x86、x86_64）
-BuildArch=${2:-"arm64-v8a"}
+BuildArch=${1:-"arm64-v8a"}
 # 声明库版本号
 BuildVersion=${2:-"2.0.0.0"}
 # 声明工具链所在位置

@@ -13,6 +13,8 @@ BuildVersion=${2:-"2.0.0.0"}
 Toolchain=${3:-"$HOME/build-tools/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu"}
 # 工具链中编译器的名称（可选：默认会自动查找）（例如：arm-linux-gnueabihf，arm-none-linux-gnueabihf，aarch64-none-linux-gnu）
 ToolchainCompilerName=${4:-""}
+# 工具链供应商（可选：默认会自动查找, 例如：gnu, musl）
+ToolchainVender=${5:-"gnu"}
 
 
 ######################## 编译器准备 ##########################
@@ -33,6 +35,15 @@ if [[ -z $ToolchainCompilerName ]]; then
       exit 1
   fi
 fi
+# 提取编译器供应商
+if [[ $ToolchainCompilerName == *"gnu"* ]]; then
+  ToolchainVender="gnu"
+elif [[ $ToolchainCompilerName == *"musl"* ]]; then
+  ToolchainVender="musl"
+else
+  echo "无法识别编译器供应商，请手动指定。"
+  exit 1
+fi
 # 提取GCC版本号，提取前两位版本号
 tmpGccVersion=$($Toolchain/bin/$ToolchainCompilerName-gcc --version | grep -oP '\d+\.\d+\.\d+' | cut -d. -f1-2)
 gccVersion="gcc-${tmpGccVersion}"
@@ -45,7 +56,7 @@ projectDir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 # 构建目录
 buildDir="${projectDir}/build"
 # 安装目录
-installDir="${projectDir}/install/gnu"
+installDir="${projectDir}/install/${ToolchainVender}"
 # 发布目录
 publishDir="${projectDir}/publish"
 # 编译类型（Debug、Release）
@@ -78,7 +89,7 @@ cmake -G "Unix Makefiles" \
     -DTOOLCHAIN_PATH="${Toolchain}" \
     -DTOOLCHAIN_COMPILER_NAME="${ToolchainCompilerName}" \
     -DCMAKE_SYSTEM_PROCESSOR="${BuildArch}" \
-    -DCMAKE_TOOLCHAIN_FILE="${projectDir}/cmake-toolchains/linux-gnu-toolchain.cmake" \
+    -DCMAKE_TOOLCHAIN_FILE="${projectDir}/cmake-toolchains/linux-${ToolchainVender}-toolchain.cmake" \
     -DCMAKE_BUILD_TYPE="${buildType}" \
     -S "${projectDir}" \
     -B "${buildDir}"
@@ -97,7 +108,7 @@ echo "---------------------------------- 执行压缩 --------------------------
 # 赋值pkg-config配置信息版本号
 sed -i "s@ENV_LIBRARY_VERSION@${buildVersionNumber}@g" "${installDir}/libbecam_linux_${BuildArch}_v4l2/becam.pc"
 # 压缩库
-tar -czvf "${publishDir}/libbecam_linux_${BuildArch}_v4l2_gnu.tar.gz" -C "${installDir}/libbecam_linux_${BuildArch}_v4l2" .
+tar -czvf "${publishDir}/libbecam_linux_${BuildArch}_v4l2_${ToolchainVender}.tar.gz" -C "${installDir}/libbecam_linux_${BuildArch}_v4l2" .
 
 # 构建结束
 echo "--------------------------------- 构建:结束 ----------------------------------"
