@@ -6,5 +6,5 @@ includedir=${prefix}/include
 Name: Becam V4L2
 Description: Becam V4L2 Library
 Version: ENV_LIBRARY_VERSION
-Libs: -L${libdir} -Wl,-Bstatic -lbecamv4l2 -Wl,-Bdynamic
+Libs: -L${libdir} -Wl,-Bstatic -lbecamv4l2 -lstdc++ -lgcc -Wl,-Bdynamic
 Cflags: -I${includedir}
