@@ -347,7 +347,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 	// 声明内核缓冲区查询参数
 	v4l2_buffer buf = {0};
 	// 查询内核缓冲区，并将其映射到用户缓冲区
-	for (int i = 0; i < Becamv4l2DeviceHelper::USER_BUFFER_COUNT; i++) {
+	for (int i = 0; i < reqBuf.count; i++) {
 		// 查询内核缓冲区
 		buf.type = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
@@ -367,7 +367,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 	}
 
 	// 将缓冲区加入到设备的输出队列（就是缓冲区解锁的意思）
-	for (int i = 0; i < v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE; i++) {
+	for (int i = 0; i < reqBuf.count; i++) {
 		buf.type = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
 		buf.index = i;
