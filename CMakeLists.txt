@@ -25,9 +25,9 @@ if(MSVC)
 endif()
 
 # 设置编译后的静态库文件的输出目录
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib/static)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
 # 设置编译后的动态库文件的输出目录
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib/shared)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/lib)
 # 设置编译后的可执行文件的输出成目录
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
 # 命令行未设置安装前缀时内部主动设置
@@ -126,8 +126,11 @@ endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Windows") # windows环境下需要编译的内容
     # 增加子目录
     if(MINGW) # 仅在MINGW环境下编译Direct Show
+        set(TOOLCHAIN_VENDER mingw)
         add_subdirectory(${CMAKE_SOURCE_DIR}/src/becamdshow)
         add_subdirectory(${CMAKE_SOURCE_DIR}/test/becamdshow)
+    else()
+        set(TOOLCHAIN_VENDER msvc)
     endif()
     add_subdirectory(${CMAKE_SOURCE_DIR}/src/becammf)
     add_subdirectory(${CMAKE_SOURCE_DIR}/test/becammf)

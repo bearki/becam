@@ -1,10 +1,10 @@
 # Package Information for pkg-config
 prefix=ENV_LIBRARY_PATH
-libdir=${prefix}/lib/static
+libdir=${prefix}/lib
 includedir=${prefix}/include
 
 Name: Becam Media Foundation
 Description: Becam Media Foundation Library
 Version: ENV_LIBRARY_VERSION
-Libs: -L${libdir} -Wl,-Bstatic -lbecammf -lstdc++ -Wl,-Bdynamic -lole32 -lmfplat -lmf -lmfreadwrite -lmfuuid
+Libs: -L${libdir} -Wl,-Bstatic -lbecammf-static -lstdc++ -Wl,-Bdynamic -lole32 -lmfplat -lmf -lmfreadwrite -lmfuuid
 Cflags: -I${includedir}

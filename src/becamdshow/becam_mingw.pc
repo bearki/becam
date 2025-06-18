@@ -1,10 +1,10 @@
 # Package Information for pkg-config
 prefix=ENV_LIBRARY_PATH
-libdir=${prefix}/lib/static
+libdir=${prefix}/lib
 includedir=${prefix}/include
 
 Name: Becam Direct Show
 Description: Becam Direct Show Library
 Version: ENV_LIBRARY_VERSION
-Libs: -L${libdir} -Wl,-Bstatic -lbecamdshow -lstdc++ -Wl,-Bdynamic -lstrmiids -lole32 -loleaut32
+Libs: -L${libdir} -Wl,-Bstatic -lbecamdshow-static -lstdc++ -Wl,-Bdynamic -lstrmiids -lole32 -loleaut32
 Cflags: -I${includedir}
