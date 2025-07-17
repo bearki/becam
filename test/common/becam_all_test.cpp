@@ -46,7 +46,7 @@ int main() {
 			if (res != StatusCode::STATUS_CODE_SUCCESS) {
 				DEBUG_LOG("Failed to get device config list. errno: " << res);
 				// 释放列表
-				BecamFreeDeviceList(handle, &reply);
+				BecamFreeDeviceList(&reply);
 				BecamFree(&handle);
 				return 1;
 			}
@@ -68,10 +68,10 @@ int main() {
 				}
 			}
 			// 释放支持的配置列表
-			BecamFreeDeviceConfigList(handle, &configReply);
+			BecamFreeDeviceConfigList(&configReply);
 		}
 		// 释放设备列表
-		BecamFreeDeviceList(handle, &reply);
+		BecamFreeDeviceList(&reply);
 
 		// 当前选中的设别路径和帧信息
 		std::cout << "\n\nSelected device path: " << devicePath << std::endl;
@@ -115,7 +115,7 @@ int main() {
 				DEBUG_LOG("Unable to open file for writing.");
 			}
 			// 释放帧
-			BecamFreeFrame(handle, &data);
+			BecamFreeFrame(&data);
 		}
 		// 关闭设备
 		BecamCloseDevice(handle);

@@ -40,7 +40,7 @@ int main() {
 			if (res != StatusCode::STATUS_CODE_SUCCESS) {
 				DEBUG_LOG("Failed to get device config list. errno: " << res);
 				// 释放列表
-				BecamFreeDeviceList(handle, &reply);
+				BecamFreeDeviceList(&reply);
 				BecamFree(&handle);
 				return 1;
 			}
@@ -57,10 +57,10 @@ int main() {
 						  << "format: " << element.format << std::endl;
 			}
 			// 释放支持的配置列表
-			BecamFreeDeviceConfigList(handle, &configReply);
+			BecamFreeDeviceConfigList(&configReply);
 		}
 		// 释放设备列表
-		BecamFreeDeviceList(handle, &reply);
+		BecamFreeDeviceList(&reply);
 	}
 	// 释放句柄
 	BecamFree(&handle);
