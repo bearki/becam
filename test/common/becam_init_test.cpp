@@ -1,6 +1,6 @@
 #include <becam/becam.h>
 #include <fstream>
-#include <iostream>
+#include <pkg/LogOutput.hpp>
 
 int main() {
 	// 来个死循环
@@ -8,11 +8,11 @@ int main() {
 		// 初始化句柄
 		auto handle = BecamNew();
 		if (handle == nullptr) {
-			std::cerr << "Failed to initialize handle." << std::endl;
+			DEBUG_LOG("Failed to initialize handle.");
 			return 1;
 		}
 		// OK
-		std::cout << "OK" << std::endl;
+		DEBUG_LOG("OK");
 		// 释放句柄
 		BecamFree(&handle);
 	}

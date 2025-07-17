@@ -6,6 +6,7 @@
 #include <glob.h>
 #include <iostream>
 #include <linux/videodev2.h>
+#include <pkg/LogOutput.hpp>
 #include <pkg/StringConvert.hpp>
 #include <sstream>
 #include <sys/mman.h>
@@ -96,7 +97,7 @@ bool Becamv4l2DeviceHelper::IsVideoCaptureDevice(const std::string& devicePath, 
 	// 只读方式打开设备句柄
 	auto fd = open(devicePath.c_str(), O_RDONLY);
 	if (fd == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::IsVideoCaptureDevice -> open(" << devicePath << ") Failed" << std::endl;
+		DEBUG_LOG("Becamv4l2DeviceHelper::IsVideoCaptureDevice -> open(" << devicePath << ") Failed");
 		return false;
 	}
 
@@ -140,7 +141,7 @@ StatusCode Becamv4l2DeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& repl
 		if (res == GLOB_NOMATCH) {
 			return StatusCode::STATUS_CODE_SUCCESS;
 		}
-		std::cerr << "Becamv4l2DeviceHelper::GetDeviceList -> lob(/dev/video*, GLOB_TILDE) Failed, RESULT:" << res << std::endl;
+		DEBUG_LOG("Becamv4l2DeviceHelper::GetDeviceList -> lob(/dev/video*, GLOB_TILDE) Failed, RESULT:" << res);
 		return StatusCode::STATUS_CODE_ERR_DEVICE_ENUM_FAILED;
 	}
 
@@ -235,7 +236,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDevice(const std::string& devicePath, 
 	// 激活设备
 	this->activatedDevice = open(devicePath.c_str(), oflags);
 	if (this->activatedDevice == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::ActivateDevice -> open(" << devicePath << ") Failed" << std::endl;
+		DEBUG_LOG("Becamv4l2DeviceHelper::ActivateDevice -> open(" << devicePath << ") Failed");
 		return StatusCode::STATUS_CODE_ERR_DEVICE_OPEN_FAILED;
 	}
 
@@ -293,7 +294,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 	fmt.fmt.pix.field = v4l2_field::V4L2_FIELD_NONE;	   // 指定场模式，通常为：V4L2_FIELD_NONE
 	// 设置分辨率和格式
 	if (xioctl(this->activatedDevice, VIDIOC_S_FMT, &fmt) == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_S_FMT) Failed" << std::endl;
+		DEBUG_LOG("Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_S_FMT) Failed");
 		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
 	}
 
@@ -330,7 +331,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 	}
 	// 设置输出帧率
 	if (xioctl(this->activatedDevice, VIDIOC_S_PARM, &streamparm) == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_S_PARM) Failed" << std::endl;
+		DEBUG_LOG("Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_S_PARM) Failed");
 		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
 	}
 
@@ -340,7 +341,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 	reqBuf.type = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	reqBuf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
 	if (xioctl(this->activatedDevice, VIDIOC_REQBUFS, &reqBuf) == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_REQBUFS) Failed" << std::endl;
+		DEBUG_LOG("Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_REQBUFS) Failed");
 		return StatusCode::STATUS_CODE_V4L2_ERR_REQUEST_BUF;
 	}
 
@@ -353,13 +354,13 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 		buf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
 		buf.index = i;
 		if (xioctl(this->activatedDevice, VIDIOC_QUERYBUF, &buf) == -1) {
-			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QUERYBUF) Failed" << std::endl;
+			DEBUG_LOG("Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QUERYBUF) Failed");
 			return StatusCode::STATUS_CODE_V4L2_ERR_QUERY_BUF;
 		}
 		// 映射内核缓冲区
 		this->userBuffers[i] = mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, this->activatedDevice, buf.m.offset);
 		if (this->userBuffers[i] == MAP_FAILED) {
-			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QUERYBUF) Failed" << std::endl;
+			DEBUG_LOG("Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QUERYBUF) Failed");
 			return StatusCode::STATUS_CODE_V4L2_ERR_MMAP_BUF;
 		}
 		// 储存缓冲区的长度
@@ -372,7 +373,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 		buf.memory = v4l2_memory::V4L2_MEMORY_MMAP;
 		buf.index = i;
 		if (xioctl(this->activatedDevice, VIDIOC_QBUF, &buf) == -1) {
-			std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QBUF) Failed" << std::endl;
+			DEBUG_LOG("Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_QBUF) Failed");
 			return StatusCode::STATUS_CODE_V4L2_ERR_UNLOCK_BUF;
 		}
 	}
@@ -380,7 +381,7 @@ StatusCode Becamv4l2DeviceHelper::ActivateDeviceStreaming(const VideoFrameInfo& 
 	// 启动视频流
 	auto bufType = v4l2_buf_type::V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	if (xioctl(this->activatedDevice, VIDIOC_STREAMON, &bufType) == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_STREAMON) Failed" << std::endl;
+		DEBUG_LOG("Becamv4l2DeviceHelper::ActivateDeviceRender -> xioctl(VIDIOC_STREAMON) Failed");
 		return StatusCode::STATUS_CODE_ERR_DEVICE_RUN_FAILED;
 	}
 	// 标记已经开始取流
@@ -426,7 +427,7 @@ StatusCode Becamv4l2DeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 	buf.memory = V4L2_MEMORY_MMAP;
 	// 消费队列中的缓冲区（就是缓冲区加锁）
 	if (xioctl(this->activatedDevice, VIDIOC_DQBUF, &buf) == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::GetFrame -> xioctl(VIDIOC_DQBUF) Failed" << std::endl;
+		DEBUG_LOG("Becamv4l2DeviceHelper::GetFrame -> xioctl(VIDIOC_DQBUF) Failed");
 		return StatusCode::STATUS_CODE_V4L2_ERR_LOCK_BUF;
 	}
 
@@ -440,7 +441,7 @@ StatusCode Becamv4l2DeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 
 	// 重新将缓冲区加入队列（就是缓冲区解锁）
 	if (xioctl(this->activatedDevice, VIDIOC_QBUF, &buf) == -1) {
-		std::cerr << "Becamv4l2DeviceHelper::GetFrame -> xioctl(VIDIOC_QBUF) Failed" << std::endl;
+		DEBUG_LOG("Becamv4l2DeviceHelper::GetFrame -> xioctl(VIDIOC_QBUF) Failed");
 		return StatusCode::STATUS_CODE_V4L2_ERR_UNLOCK_BUF;
 	}
 

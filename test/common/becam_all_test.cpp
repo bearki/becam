@@ -1,12 +1,13 @@
 #include <becam/becam.h>
 #include <fstream>
-#include <iostream>
+#include <pkg/LogOutput.hpp>
+#include <windows.h>
 
 int main() {
 	// 初始化句柄
 	auto handle = BecamNew();
 	if (handle == nullptr) {
-		std::cerr << "Failed to initialize handle." << std::endl;
+		DEBUG_LOG("Failed to initialize handle.");
 		return 1;
 	}
 
@@ -17,7 +18,7 @@ int main() {
 		// 获取设备列表
 		auto res = BecamGetDeviceList(handle, &reply);
 		if (res != StatusCode::STATUS_CODE_SUCCESS) {
-			std::cerr << "Failed to get device list. errno: " << res << std::endl;
+			DEBUG_LOG("Failed to get device list. errno: " << res);
 			BecamFree(&handle);
 			return 1;
 		}
@@ -43,7 +44,7 @@ int main() {
 			GetDeviceConfigListReply configReply = {0};
 			res = BecamGetDeviceConfigList(handle, item.devicePath, &configReply);
 			if (res != StatusCode::STATUS_CODE_SUCCESS) {
-				std::cerr << "Failed to get device config list. errno: " << res << std::endl;
+				DEBUG_LOG("Failed to get device config list. errno: " << res);
 				// 释放列表
 				BecamFreeDeviceList(handle, &reply);
 				BecamFree(&handle);
@@ -80,7 +81,7 @@ int main() {
 		// 打开设备
 		res = BecamOpenDevice(handle, devicePath.c_str(), &frameInfo);
 		if (res != StatusCode::STATUS_CODE_SUCCESS) {
-			std::cerr << "Failed to open device. errno: " << res << std::endl;
+			DEBUG_LOG("Failed to open device. errno: " << res);
 			return 1;
 		}
 
@@ -106,12 +107,12 @@ int main() {
 				ofs.write((char*)data, static_cast<std::streamsize>(size));
 				// 检查是否所有数据都已成功写入
 				if (!ofs) {
-					std::cerr << "Error writing to file!" << std::endl;
+					DEBUG_LOG("Error writing to file!");
 				}
 				// 关闭文件流
 				ofs.close();
 			} else {
-				std::cerr << "Unable to open file for writing." << std::endl;
+				DEBUG_LOG("Unable to open file for writing.");
 			}
 			// 释放帧
 			BecamFreeFrame(handle, &data);

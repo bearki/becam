@@ -1,9 +1,9 @@
 #include "BecamDirectShow.hpp"
 #include "BecamAmMediaType.hpp"
-#include "BecamMonikerPropReader.hpp"
-#include <pkg/StringConvert.hpp>
-
 #include "BecamDeviceEnum.hpp"
+#include "BecamMonikerPropReader.hpp"
+#include <pkg/LogOutput.hpp>
+#include <pkg/StringConvert.hpp>
 #include <vector>
 
 /**
@@ -73,7 +73,7 @@ StatusCode BecamDirectShow::GetDeviceList(GetDeviceListReply& reply) {
 	});
 	// 是否枚举失败
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamDirectShow::GetDeviceList -> EnumVideoDevices failed, CODE: " << code << std::endl;
+		DEBUG_LOG("BecamDirectShow::GetDeviceList -> EnumVideoDevices failed, CODE: " << code);
 		return code;
 	}
 	// 是否有枚举到设备
@@ -204,7 +204,7 @@ StatusCode BecamDirectShow::OpenDevice(const std::string& devicePath, const Vide
 		// 打开失败，关闭实例
 		delete this->openedDevice;
 		this->openedDevice = nullptr;
-		std::cerr << "OpenDevice -> Open failed, CODE: " << code << std::endl;
+		DEBUG_LOG("OpenDevice -> Open failed, CODE: " << code);
 	}
 
 	// 返回结果
@@ -248,19 +248,11 @@ StatusCode BecamDirectShow::GetFrame(uint8_t*& data, size_t& size) {
  * @implements 实现释放视频帧
  */
 void BecamDirectShow::FreeFrame(uint8_t*& data) {
-	// 加个锁先
-	std::unique_lock<std::mutex> lock(this->mtx);
-
 	// 检查入参
 	if (data == nullptr) {
 		return;
 	}
 
-	// 检查设备是否打开
-	if (this->openedDevice == nullptr) {
-		return;
-	}
-
 	// 释放视频帧
-	this->openedDevice->FreeFrame(data);
+	BecamOpenedDevice::FreeFrame(data);
 }

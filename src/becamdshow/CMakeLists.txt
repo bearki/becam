@@ -10,6 +10,7 @@ set_target_properties(becamdshow_static PROPERTIES OUTPUT_NAME "becamdshow-stati
 # 配置动态库生成参数
 add_library(becamdshow_shared SHARED ${SOURCES})
 set_target_properties(becamdshow_shared PROPERTIES OUTPUT_NAME "becamdshow")
+target_compile_definitions(becamdshow_shared PRIVATE BECAM_SHARED BECAM_SHARED_EXPORT)
 
 # 指定make install后头文件、静态库，动态库，可执行文件存放目录
 set(INSTALL_PATH libbecam_${BUILD_OS}_${BUILD_ARCH}_dshow)

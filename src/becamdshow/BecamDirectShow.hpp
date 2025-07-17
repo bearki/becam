@@ -44,7 +44,7 @@ public:
 	 *
 	 * @param input [in && out] 输入参数
 	 */
-	void FreeDeviceList(GetDeviceListReply& input);
+	static void FreeDeviceList(GetDeviceListReply& input);
 
 	/**
 	 * @brief 获取设备配置列表
@@ -60,7 +60,7 @@ public:
 	 *
 	 * @param input [in && out] 输入参数
 	 */
-	void FreeDeviceConfigList(GetDeviceConfigListReply& input);
+	static void FreeDeviceConfigList(GetDeviceConfigListReply& input);
 
 	/**
 	 * @brief 打开指定设备
@@ -90,7 +90,7 @@ public:
 	 *
 	 * @param data [in && out] 视频帧流
 	 */
-	void FreeFrame(uint8_t*& data);
+	static void FreeFrame(uint8_t*& data);
 };
 
 #endif

@@ -2,7 +2,7 @@
 #include "BecamDeviceEnum.hpp"
 #include "BecamAmMediaType.hpp"
 #include "BecamMonikerPropReader.hpp"
-#include <iostream>
+#include <pkg/LogOutput.hpp>
 #include <pkg/StringConvert.hpp>
 #include <vector>
 
@@ -17,7 +17,7 @@ BecamDeviceEnum::BecamDeviceEnum(bool initCom) {
 		if (FAILED(res)) {
 			// COM库初始化失败了
 			this->comInited = false;
-			std::cerr << "COM library init failed, HRESULT: " << res << std::endl;
+			DEBUG_LOG("COM library init failed, HRESULT: " << res);
 		} else {
 			// COM库初始化成功了
 			this->comInited = true;
@@ -68,7 +68,7 @@ StatusCode BecamDeviceEnum::EnumVideoDevices(std::function<bool(IMoniker*)> call
 	res = CoCreateInstance(CLSID_SystemDeviceEnum, nullptr, CLSCTX_INPROC_SERVER, IID_ICreateDevEnum, (void**)&this->devEnumInstance);
 	if (FAILED(res)) {
 		// 创建设备枚举器失败
-		std::cerr << "BecamDeviceEnum::EnumVideoDevices -> CoCreateInstance(CLSID_SystemDeviceEnum) failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::EnumVideoDevices -> CoCreateInstance(CLSID_SystemDeviceEnum) failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_DSHOW_ERR_CREATE_ENUMERATOR;
 	}
 
@@ -82,9 +82,9 @@ StatusCode BecamDeviceEnum::EnumVideoDevices(std::function<bool(IMoniker*)> call
 			return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_FOUND;
 		}
 		// 设备枚举失败
-		std::cerr << "BecamDeviceEnum::EnumVideoDevices -> CreateClassEnumerator(CLSID_VideoInputDeviceCategory) "
-					 "failed, HRESULT: "
-				  << res << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::EnumVideoDevices -> CreateClassEnumerator(CLSID_VideoInputDeviceCategory) "
+				  "failed, HRESULT: "
+				  << res);
 		return StatusCode::STATUS_CODE_ERR_DEVICE_ENUM_FAILED;
 	}
 
@@ -124,7 +124,7 @@ StatusCode BecamDeviceEnum::GetMonikerFriendlyName(IMoniker* moniker, std::strin
 	auto res = reader.read(moniker);
 	if (res.first != StatusCode::STATUS_CODE_SUCCESS) {
 		// 失败
-		std::cerr << "BecamDeviceEnum::GetMonikerFriendlyName -> read failed, CODE: " << res.first << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetMonikerFriendlyName -> read failed, CODE: " << res.first);
 		return res.first;
 	}
 
@@ -150,7 +150,7 @@ StatusCode BecamDeviceEnum::GetMonikerDevicePath(IMoniker* moniker, std::string&
 	auto res = reader.read(moniker);
 	if (res.first != StatusCode::STATUS_CODE_SUCCESS) {
 		// 失败
-		std::cerr << "BecamDeviceEnum::GetMonikerDevicePath -> read failed, CODE: " << res.first << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetMonikerDevicePath -> read failed, CODE: " << res.first);
 		return res.first;
 	}
 
@@ -193,11 +193,11 @@ StatusCode BecamDeviceEnum::GetDeviceRef(const std::string devicePath, IMoniker*
 
 	// 是否异常
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamDeviceEnum::GetDeviceRef -> EnumVideoDevices failed, CODE: " << code << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetDeviceRef -> EnumVideoDevices failed, CODE: " << code);
 		return code;
 	}
 	if (errCode != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamDeviceEnum::GetDeviceRef -> EnumVideoDevices callback failed, CODE: " << errCode << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetDeviceRef -> EnumVideoDevices callback failed, CODE: " << errCode);
 		return errCode;
 	}
 
@@ -212,7 +212,7 @@ IPin* BecamDeviceEnum::GetPin(IBaseFilter* captureFilter, PIN_DIRECTION dir) {
 	IEnumPins* enumPins;
 	auto res = captureFilter->EnumPins(&enumPins);
 	if (FAILED(res)) {
-		std::cerr << "BecamDeviceEnum::GetPin -> EnumPins failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetPin -> EnumPins failed, HRESULT: " << res);
 		return nullptr;
 	}
 
@@ -247,7 +247,7 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IAMStreamConfig* streamConfig, s
 	auto res = streamConfig->GetNumberOfCapabilities(&count, &size);
 	if (FAILED(res)) {
 		// 获取流能力总数量失败
-		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> GetNumberOfCapabilities failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetDeviceStreamCaps -> GetNumberOfCapabilities failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS;
 	}
 
@@ -259,7 +259,7 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IAMStreamConfig* streamConfig, s
 		res = streamConfig->GetStreamCaps(i, &pmt, reinterpret_cast<BYTE*>(&scc));
 		if (FAILED(res)) {
 			// 分析失败，继续下一个
-			std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> GetStreamCaps failed, HRESULT: " << res << std::endl;
+			DEBUG_LOG("BecamDeviceEnum::GetDeviceStreamCaps -> GetStreamCaps failed, HRESULT: " << res);
 			continue;
 		}
 
@@ -304,7 +304,7 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IPin* captureOuputPin, std::func
 	auto res = captureOuputPin->QueryInterface(IID_IAMStreamConfig, (void**)&streamConfig);
 	if (FAILED(res)) {
 		// 获取流配置失败
-		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetDeviceStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS;
 	}
 
@@ -333,7 +333,7 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IBaseFilter* captureFilter, std:
 	auto captureOuputPin = BecamDeviceEnum::GetPin(captureFilter, PINDIR_OUTPUT);
 	if (captureOuputPin == nullptr) {
 		// 获取捕获筛选器的输出端点失败
-		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> GetPin failed" << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetDeviceStreamCaps -> GetPin failed");
 		return StatusCode::STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS;
 	}
 
@@ -365,7 +365,7 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	// 检查是否绑定成功
 	if (FAILED(res)) {
 		// 绑定设备实例失败
-		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> BindToObject failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetDeviceStreamCaps -> BindToObject failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_ERR_DEVICE_OPEN_FAILED;
 	}
 
@@ -399,7 +399,7 @@ StatusCode BecamDeviceEnum::GetDeviceStreamCaps(IMoniker* moniker, VideoFrameInf
 	// 是否失败了
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
 		// 失败了
-		std::cerr << "BecamDeviceEnum::GetDeviceStreamCaps -> GetDeviceStreamCaps failed, CODE: " << code << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::GetDeviceStreamCaps -> GetDeviceStreamCaps failed, CODE: " << code);
 		return code;
 	}
 
@@ -430,8 +430,7 @@ StatusCode BecamDeviceEnum::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 	auto res = captureOuputPin->QueryInterface(IID_IAMStreamConfig, (void**)&streamConfig);
 	if (FAILED(res)) {
 		// 获取流配置失败
-		std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res
-				  << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> QueryInterface(IID_IAMStreamConfig) failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS;
 	}
 
@@ -460,7 +459,7 @@ StatusCode BecamDeviceEnum::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 				errCode = StatusCode::STATUS_CODE_SUCCESS;
 			} else {
 				// 设定失败
-				std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> SetFormat failed, HRESULT: " << res << std::endl;
+				DEBUG_LOG("BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> SetFormat failed, HRESULT: " << res);
 				errCode = StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
 			}
 			// 不管是否成功都要结束枚举
@@ -477,11 +476,11 @@ StatusCode BecamDeviceEnum::SetCaptureOuputPinStreamCaps(IPin* captureOuputPin, 
 
 	// 检查结果
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> GetDeviceStreamCaps failed, CODE: " << code << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> GetDeviceStreamCaps failed, CODE: " << code);
 		return code;
 	}
 	if (errCode != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> GetDeviceStreamCaps callback failed, CODE: " << errCode << std::endl;
+		DEBUG_LOG("BecamDeviceEnum::SetCaptureOuputPinStreamCaps -> GetDeviceStreamCaps callback failed, CODE: " << errCode);
 		return errCode;
 	}
 

@@ -1,8 +1,8 @@
 #include "BecammfDeviceHelper.hpp"
 #include "BecammfAttributesHelper.hpp"
 #include "BecammfDeviceConfigHelper.hpp"
-#include <iostream>
 #include <mfapi.h>
+#include <pkg/LogOutput.hpp>
 #include <pkg/StringConvert.hpp>
 #include <vector>
 
@@ -72,17 +72,17 @@ StatusCode BecammfDeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& replyS
 	// 创建属性存储器
 	HRESULT res = MFCreateAttributes(attributesHelper.AttributesAddress(), 1);
 	if (FAILED(res)) {
-		std::cerr << "BecamMediaFoundation::GetDeviceList -> MFCreateAttributes(attributesHelper.AttributesAddress(), 1) failed, HRESULT: "
-				  << res << std::endl;
+		DEBUG_LOG(
+			"BecamMediaFoundation::GetDeviceList -> MFCreateAttributes(attributesHelper.AttributesAddress(), 1) failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_MF_ERR_CREATE_ATTR_STORE;
 	}
 
 	// 赋值设备属性类型
 	res = attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
 	if (FAILED(res)) {
-		std::cerr << "BecamMediaFoundation::GetDeviceList -> attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE) "
-					 "failed, HRESULT: "
-				  << res << std::endl;
+		DEBUG_LOG("BecamMediaFoundation::GetDeviceList -> attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE) "
+				  "failed, HRESULT: "
+				  << res);
 		return StatusCode::STATUS_CODE_MF_ERR_SET_ATTR_STORE;
 	}
 
@@ -91,7 +91,7 @@ StatusCode BecammfDeviceHelper::GetDeviceList(DeviceInfo*& reply, size_t& replyS
 	UINT32 count = 0;
 	res = MFEnumDeviceSources(attributesHelper.Attributes(), &ppDevices, &count);
 	if (FAILED(res)) {
-		std::cerr << "BecamMediaFoundation::GetDeviceList -> MFEnumDeviceSources() failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecamMediaFoundation::GetDeviceList -> MFEnumDeviceSources() failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_ERR_DEVICE_ENUM_FAILED;
 	}
 	if (count == 0) {
@@ -213,35 +213,35 @@ StatusCode BecammfDeviceHelper::ActivateDevice(const std::string& devicePath) {
 	// 创建属性存储器
 	HRESULT res = MFCreateAttributes(attributesHelper.AttributesAddress(), 1);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::ActivateDevice -> MFCreateAttributes() failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecammfDeviceHelper::ActivateDevice -> MFCreateAttributes() failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_MF_ERR_CREATE_ATTR_STORE;
 	}
 
 	// 赋值设备属性类型
 	res = attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
 	if (FAILED(res)) {
-		std::cerr
-			<< "BecammfDeviceHelper::ActivateDevice -> attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE) failed, "
-			   "HRESULT: "
-			<< res << std::endl;
+		DEBUG_LOG(
+			"BecammfDeviceHelper::ActivateDevice -> attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE) failed, "
+			"HRESULT: "
+			<< res);
 		return StatusCode::STATUS_CODE_MF_ERR_SET_ATTR_STORE;
 	}
 	// 赋值设备属性符号链接
 	auto devicePathW = StringToWString(devicePath);
 	res = attributesHelper.Attributes()->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, (LPCWSTR)devicePathW.c_str());
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::ActivateDevice -> "
-					 "attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK) "
-					 "failed, HRESULT: "
-				  << res << std::endl;
+		DEBUG_LOG("BecammfDeviceHelper::ActivateDevice -> "
+				  "attributesHelper.Attributes()->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK) "
+				  "failed, HRESULT: "
+				  << res);
 		return StatusCode::STATUS_CODE_MF_ERR_SET_ATTR_STORE;
 	}
 
 	// 激活设备
 	res = MFCreateDeviceSource(attributesHelper.Attributes(), &this->activatedDevice);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::ActivateDevice -> MFCreateDeviceSource() failed, HRESULT: " << res << std::endl;
-		if(res == ERROR_DEVICE_NOT_AVAILABLE || res == ERROR_DEV_NOT_EXIST) {
+		DEBUG_LOG("BecammfDeviceHelper::ActivateDevice -> MFCreateDeviceSource() failed, HRESULT: " << res);
+		if (res == ERROR_DEVICE_NOT_AVAILABLE || res == ERROR_DEV_NOT_EXIST) {
 			return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_FOUND;
 		}
 		return StatusCode::STATUS_CODE_ERR_DEVICE_OPEN_FAILED;
@@ -283,13 +283,13 @@ void BecammfDeviceHelper::FreeDeviceConfigList(VideoFrameInfo*& input, size_t& i
 StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameInfo frameInfo) {
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
-
+	
 	// 检查设备是否已激活
 	if (this->activatedDevice == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
 	}
 
-	// 释放已存在的设备源读取器
+	// 释放已激活的源读取器
 	this->StopCurrentDeviceStreaming();
 
 	// 托管属性存储器，使其自动释放
@@ -297,7 +297,7 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 	// 创建属性对象
 	auto res = MFCreateAttributes(attributesHelper.AttributesAddress(), 1);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> MFCreateAttributes() failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecammfDeviceHelper::ActivateDeviceReader -> MFCreateAttributes() failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_MF_ERR_CREATE_ATTR_STORE;
 	}
 
@@ -306,9 +306,9 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 	// 设置低延迟模式
 	res = attributesHelper.Attributes()->SetUINT32(MF_LOW_LATENCY, true);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> attributesHelper.Attributes()->SetUINT32(MF_LOW_LATENCY, true) failed, "
-					 "HRESULT: "
-				  << res << std::endl;
+		DEBUG_LOG("BecammfDeviceHelper::ActivateDeviceReader -> attributesHelper.Attributes()->SetUINT32(MF_LOW_LATENCY, true) failed, "
+				  "HRESULT: "
+				  << res);
 		return StatusCode::STATUS_CODE_MF_ERR_SET_ATTR_STORE;
 	}
 #endif
@@ -316,8 +316,7 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 	// 激活源读取器
 	res = MFCreateSourceReaderFromMediaSource(this->activatedDevice, attributesHelper.Attributes(), &this->activatedReader);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> MFCreateSourceReaderFromMediaSource() failed, HRESULT: " << res
-				  << std::endl;
+		DEBUG_LOG("BecammfDeviceHelper::ActivateDeviceReader -> MFCreateSourceReaderFromMediaSource() failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_ERR_DEVICE_RUN_FAILED;
 	}
 
@@ -337,9 +336,9 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 		if (FAILED(res)) {
 			// 释放媒体资源类型
 			SafeRelease(&pType);
-			std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> pType->GetGUID(MF_MT_SUBTYPE, &subtype) "
-						 "failed, HRESULT: "
-					  << res << std::endl;
+			DEBUG_LOG("BecammfDeviceHelper::ActivateDeviceReader -> pType->GetGUID(MF_MT_SUBTYPE, &subtype) "
+					  "failed, HRESULT: "
+					  << res);
 			// 忽略，继续下一个
 			continue;
 		}
@@ -358,9 +357,9 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 		if (FAILED(res)) {
 			// 释放媒体资源类型
 			SafeRelease(&pType);
-			std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> MFGetAttributeRatio(pType, MF_MT_FRAME_SIZE) "
-						 "failed, HRESULT: "
-					  << res << std::endl;
+			DEBUG_LOG("BecammfDeviceHelper::ActivateDeviceReader -> MFGetAttributeRatio(pType, MF_MT_FRAME_SIZE) "
+					  "failed, HRESULT: "
+					  << res);
 			// 忽略，继续下一个
 			continue;
 		}
@@ -379,8 +378,7 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 		if (FAILED(res)) {
 			// 释放媒体资源类型
 			SafeRelease(&pType);
-			std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> MFGetAttributeRatio(pType, MF_MT_FRAME_RATE) failed, HRESULT: "
-					  << res << std::endl;
+			DEBUG_LOG("BecammfDeviceHelper::ActivateDeviceReader -> MFGetAttributeRatio(pType, MF_MT_FRAME_RATE) failed, HRESULT: " << res);
 			// 忽略，继续下一个
 			continue;
 		}
@@ -406,11 +404,14 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 	if (FAILED(res)) {
 		// 释放引用的媒体资源类型
 		SafeRelease(&pType);
-		std::cerr << "BecammfDeviceHelper::ActivateDeviceReader -> SetCurrentMediaType() failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecammfDeviceHelper::ActivateDeviceReader -> SetCurrentMediaType() failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_ERR_DEVICE_FRAME_FMT_SET_FAILED;
 	}
 	// 释放引用的媒体资源类型
 	SafeRelease(&pType);
+
+	// 刷新一下
+	this->activatedReader->Flush(MF_SOURCE_READER_FIRST_VIDEO_STREAM);
 
 	// OK
 	return StatusCode::STATUS_CODE_SUCCESS;
@@ -422,7 +423,6 @@ StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameI
 void BecammfDeviceHelper::CloseDevice() {
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
-
 	// 关闭当前设备
 	this->CloseCurrentDevice();
 }
@@ -431,8 +431,12 @@ void BecammfDeviceHelper::CloseDevice() {
  * @implements 实现获取视频帧
  */
 StatusCode BecammfDeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
-	// 加个锁先
-	std::unique_lock<std::mutex> lock(this->mtx);
+	// 尝试加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx, std::try_to_lock);
+	// 是否加锁成功
+	if (!lock.owns_lock()) {
+		return StatusCode::STATUS_CODE_ERR_GET_FRAME_FAILED;
+	}
 
 	// 检查设备是否已激活
 	if (this->activatedDevice == nullptr) {
@@ -449,9 +453,9 @@ StatusCode BecammfDeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 	// 读取一帧
 	auto res = this->activatedReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, &streamIndex, &sampleFlags, &timestamp, &pSample);
 	if (FAILED(res)) {
-		std::cerr
-			<< "BecammfDeviceHelper::GetFrame -> this->activatedReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM) failed, HRESULT: "
-			<< res << std::endl;
+		DEBUG_LOG(
+			"BecammfDeviceHelper::GetFrame -> this->activatedReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM) failed, HRESULT: "
+			<< res);
 		return StatusCode::STATUS_CODE_ERR_GET_FRAME_FAILED;
 	}
 
@@ -466,7 +470,7 @@ StatusCode BecammfDeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 	if (FAILED(res)) {
 		// 安全释放帧
 		SafeRelease(&pSample);
-		std::cerr << "BecammfDeviceHelper::GetFrame -> pSample->ConvertToContiguousBuffer() failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecammfDeviceHelper::GetFrame -> pSample->ConvertToContiguousBuffer() failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_MF_ERR_CONVERT_FRAME_BUFFER;
 	}
 
@@ -479,7 +483,7 @@ StatusCode BecammfDeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 		SafeRelease(&pBuffer);
 		// 安全释放帧
 		SafeRelease(&pSample);
-		std::cerr << "BecammfDeviceHelper::GetFrame -> pBuffer->Lock() failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecammfDeviceHelper::GetFrame -> pBuffer->Lock() failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_MF_ERR_LOCK_FRAME_BUFFER;
 	}
 

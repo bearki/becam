@@ -1,6 +1,7 @@
 #include "BecamOpenedDevice.hpp"
 #include "BecamDeviceEnum.hpp"
 #include "BecamDirectShow.hpp"
+#include <pkg/LogOutput.hpp>
 
 /**
  * @implements 实现构造函数
@@ -95,7 +96,7 @@ StatusCode BecamOpenedDevice::Open(const std::string& devicePath, const VideoFra
 	// 筛选设备
 	auto code = deviceEnum.GetDeviceRef(devicePath, moniker);
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
-		std::cerr << "BecamOpenedDevice::Open -> GetDeviceRef failed, CODE: " << code << std::endl;
+		DEBUG_LOG("BecamOpenedDevice::Open -> GetDeviceRef failed, CODE: " << code);
 		return code;
 	}
 
@@ -106,7 +107,7 @@ StatusCode BecamOpenedDevice::Open(const std::string& devicePath, const VideoFra
 	// 检查是否绑定成功
 	if (FAILED(res)) {
 		// 绑定设备实例失败
-		std::cerr << "BecamOpenedDevice::Open -> BindToObject failed, HRESULT: " << res << std::endl;
+		DEBUG_LOG("BecamOpenedDevice::Open -> BindToObject failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_ERR_DEVICE_OPEN_FAILED;
 	}
 
@@ -114,7 +115,7 @@ StatusCode BecamOpenedDevice::Open(const std::string& devicePath, const VideoFra
 	this->captureOuputPin = BecamDeviceEnum::GetPin(this->captureFilter, PINDIR_OUTPUT);
 	if (this->captureOuputPin == nullptr) {
 		// 获取PIN接口失败
-		std::cerr << "BecamOpenedDevice::Open -> GetPin failed" << std::endl;
+		DEBUG_LOG("BecamOpenedDevice::Open -> GetPin failed");
 		return StatusCode::STATUS_CODE_DSHOW_ERR_GET_STREAM_CAPS;
 	}
 
@@ -122,7 +123,7 @@ StatusCode BecamOpenedDevice::Open(const std::string& devicePath, const VideoFra
 	code = BecamDeviceEnum::SetCaptureOuputPinStreamCaps(this->captureOuputPin, frameInfo);
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
 		// 配置设备流能力失败
-		std::cerr << "BecamOpenedDevice::Open -> SetCaptureOuputPinStreamCaps failed, CODE: " << code << std::endl;
+		DEBUG_LOG("BecamOpenedDevice::Open -> SetCaptureOuputPinStreamCaps failed, CODE: " << code);
 		return code;
 	}
 
@@ -295,12 +296,6 @@ void BecamOpenedDevice::FreeFrame(uint8_t*& data) {
 		return;
 	}
 
-	// 检查样品采集器回调是否赋值
-	if (this->sampleGrabberCallback == nullptr) {
-		// 没有回调
-		return;
-	}
-
 	// 释放帧
-	this->sampleGrabberCallback->FreeFrame(data);
+	BecamSampleGrabberCallback::FreeFrame(data);
 }

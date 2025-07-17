@@ -5,7 +5,7 @@ param (
     # 编译架构（i686 | x86_64 | arm | aarch64
     [Parameter(Mandatory = $false)]
     [ValidateSet("i686", "x86_64", "arm", "aarch64")]
-    [string] $BuildArch = "i686",
+    [string] $BuildArch = "x86_64",
     # 编译版本号
     [Parameter(Mandatory = $true)]
     [string] $BuildVersion = "2.0.0.0",

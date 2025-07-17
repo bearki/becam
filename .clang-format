@@ -28,4 +28,4 @@ ColumnLimit: 140 # 每行字符数限制为140
 SortIncludes: true # 保证Include文件排序
 PointerAlignment: Left # 指针或引用的星号（*）或尖括号（&）相对于变量名称的位置
 AccessModifierOffset: -4 # 控制访问限定符（如 public、private、protected）与变量或函数名称之间的空格数
-NamespaceIndentation: All # 控制命名空间中包含的定义是否缩进
+NamespaceIndentation: All # 控制命名空间中包含的定义是否缩进 

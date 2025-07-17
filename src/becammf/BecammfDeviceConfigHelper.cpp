@@ -1,6 +1,6 @@
 #include "BecammfDeviceConfigHelper.hpp"
-#include <iostream>
 #include <mfreadwrite.h>
+#include <pkg/LogOutput.hpp>
 #include <vector>
 
 /**
@@ -59,9 +59,9 @@ StatusCode BecammfDeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply
 	// 获取演示文稿描述符
 	auto res = this->pSource->CreatePresentationDescriptor(&this->pPD);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pSource->CreatePresentationDescriptor(&this->pPD)() failed, "
-					 "HRESULT: "
-				  << res << std::endl;
+		DEBUG_LOG("BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pSource->CreatePresentationDescriptor(&this->pPD)() failed, "
+				  "HRESULT: "
+				  << res);
 		return StatusCode::STATUS_CODE_MF_ERR_CREATE_PRESENT_DESC;
 	}
 
@@ -70,17 +70,17 @@ StatusCode BecammfDeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply
 	// TODO：不想遍历流索引，先固定为0吧
 	res = this->pPD->GetStreamDescriptorByIndex(0, &fSelected, &this->pSD);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pPD->GetStreamDescriptorByIndex(0, &fSelected, &this->pSD) "
-					 "failed, HRESULT: "
-				  << res << std::endl;
+		DEBUG_LOG("BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pPD->GetStreamDescriptorByIndex(0, &fSelected, &this->pSD) "
+				  "failed, HRESULT: "
+				  << res);
 		return StatusCode::STATUS_CODE_MF_ERR_GET_STREAM_DESC;
 	}
 
 	// 获取媒体类型处理器
 	res = this->pSD->GetMediaTypeHandler(&this->pHandler);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pSD->GetMediaTypeHandler(&this->pHandler) failed, HRESULT: "
-				  << res << std::endl;
+		DEBUG_LOG(
+			"BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pSD->GetMediaTypeHandler(&this->pHandler) failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_MF_ERR_GET_MEDIA_TYPE_HANDLER;
 	}
 
@@ -88,8 +88,7 @@ StatusCode BecammfDeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply
 	DWORD cTypes = 0;
 	res = this->pHandler->GetMediaTypeCount(&cTypes);
 	if (FAILED(res)) {
-		std::cerr << "BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pHandler->GetMediaTypeCount(&cTypes) failed, HRESULT: " << res
-				  << std::endl;
+		DEBUG_LOG("BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pHandler->GetMediaTypeCount(&cTypes) failed, HRESULT: " << res);
 		return StatusCode::STATUS_CODE_MF_ERR_GET_MEDIA_TYPE_COUNT;
 	}
 
@@ -101,9 +100,8 @@ StatusCode BecammfDeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply
 		// 通过索引获取媒体资源类型
 		res = this->pHandler->GetMediaTypeByIndex(i, &pType);
 		if (FAILED(res)) {
-			std::cerr
-				<< "BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pHandler->GetMediaTypeByIndex(i, &pType) failed, HRESULT: "
-				<< res << std::endl;
+			DEBUG_LOG("BecammfDeviceConfigHelper::GetDeviceConfigList -> this->pHandler->GetMediaTypeByIndex(i, &pType) failed, HRESULT: "
+					  << res);
 			return StatusCode::STATUS_CODE_MF_ERR_GET_MEDIA_TYPE;
 		}
 
@@ -113,9 +111,9 @@ StatusCode BecammfDeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply
 		if (FAILED(res)) {
 			// 释放媒体资源类型
 			SafeRelease(&pType);
-			std::cerr << "BecammfDeviceConfigHelper::GetDeviceConfigList -> pType->GetGUID(MF_MT_SUBTYPE, &subtype) "
-						 "failed, HRESULT: "
-					  << res << std::endl;
+			DEBUG_LOG("BecammfDeviceConfigHelper::GetDeviceConfigList -> pType->GetGUID(MF_MT_SUBTYPE, &subtype) "
+					  "failed, HRESULT: "
+					  << res);
 			// 忽略，继续下一个
 			continue;
 		}
@@ -128,9 +126,9 @@ StatusCode BecammfDeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply
 		if (FAILED(res)) {
 			// 释放媒体资源类型
 			SafeRelease(&pType);
-			std::cerr << "BecammfDeviceConfigHelper::GetDeviceConfigList -> MFGetAttributeRatio(pType, MF_MT_FRAME_SIZE) "
-						 "failed, HRESULT: "
-					  << res << std::endl;
+			DEBUG_LOG("BecammfDeviceConfigHelper::GetDeviceConfigList -> MFGetAttributeRatio(pType, MF_MT_FRAME_SIZE) "
+					  "failed, HRESULT: "
+					  << res);
 			// 忽略，继续下一个
 			continue;
 		}
@@ -142,8 +140,8 @@ StatusCode BecammfDeviceConfigHelper::GetDeviceConfigList(VideoFrameInfo*& reply
 		if (FAILED(res)) {
 			// 释放媒体资源类型
 			SafeRelease(&pType);
-			std::cerr << "BecammfDeviceConfigHelper::GetDeviceConfigList -> MFGetAttributeRatio(pType, MF_MT_FRAME_RATE) failed, HRESULT: "
-					  << res << std::endl;
+			DEBUG_LOG(
+				"BecammfDeviceConfigHelper::GetDeviceConfigList -> MFGetAttributeRatio(pType, MF_MT_FRAME_RATE) failed, HRESULT: " << res);
 			// 忽略，继续下一个
 			continue;
 		}

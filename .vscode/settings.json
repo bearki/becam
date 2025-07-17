@@ -57,7 +57,8 @@
         "sstream": "cpp",
         "libuvc.h": "c",
         "cstring": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "list": "cpp"
     },
     "cmake.configureSettings": {
         "CMAKE_BUILD_TYPR": "${buildType}"

@@ -1,6 +1,7 @@
 #include "BecamMediaFoundation.hpp"
 #include <mfapi.h>
 #include <mfidl.h>
+#include <pkg/LogOutput.hpp>
 #include <pkg/SafeRelease.hpp>
 #include <pkg/StringConvert.hpp>
 
@@ -52,7 +53,7 @@ StatusCode BecamMediaFoundation::GetDeviceConfigList(const std::string& devicePa
 	if (devicePath.empty()) {
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
-
+	
 	// 初始化设备助手类
 	BecammfDeviceHelper deviceHelper;
 	// 激活指定设备
@@ -82,17 +83,18 @@ StatusCode BecamMediaFoundation::OpenDevice(const std::string& devicePath, const
 		return StatusCode::STATUS_CODE_ERR_INPUT_PARAM;
 	}
 
+	// 关闭已打开的设备
+	this->CloseDevice();
+
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
-
-	// 关闭已打开的设备
-	this->openedDevice->CloseDevice();
 
 	// 激活设备
 	auto code = this->openedDevice->ActivateDevice(devicePath);
 	if (code != StatusCode::STATUS_CODE_SUCCESS) {
 		return code;
 	}
+
 	// 激活设备源读取器
 	return this->openedDevice->ActivateCurrentDeviceStreaming(frameInfo);
 }
@@ -103,7 +105,6 @@ StatusCode BecamMediaFoundation::OpenDevice(const std::string& devicePath, const
 void BecamMediaFoundation::CloseDevice() {
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
-
 	// 关闭已打开的设备
 	if (this->openedDevice != nullptr) {
 		this->openedDevice->CloseDevice();
@@ -114,10 +115,14 @@ void BecamMediaFoundation::CloseDevice() {
  * @implements 实现获取视频帧
  */
 StatusCode BecamMediaFoundation::GetFrame(uint8_t*& data, size_t& size) {
-	// 加个锁先
-	std::unique_lock<std::mutex> lock(this->mtx);
+	// 尝试加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx, std::try_to_lock);
+	// 是否加锁成功
+	if (!lock.owns_lock()) {
+		return StatusCode::STATUS_CODE_ERR_GET_FRAME_FAILED;
+	}
 
-	// 检查设备是否已打开
+	// 获取视频帧
 	return this->openedDevice->GetFrame(data, size);
 }
 

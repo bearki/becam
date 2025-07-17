@@ -74,7 +74,7 @@ public:
 	 *
 	 * @param data [in && out] 视频帧流
 	 */
-	void FreeFrame(uint8_t*& data);
+	static void FreeFrame(uint8_t*& data);
 };
 
 #endif
