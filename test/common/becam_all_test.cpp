@@ -1,7 +1,6 @@
 #include <becam/becam.h>
 #include <fstream>
 #include <pkg/LogOutput.hpp>
-#include <windows.h>
 
 int main() {
 	// 初始化句柄
