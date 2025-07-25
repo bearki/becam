@@ -6,6 +6,7 @@
 #include <mutex>
 #include <pkg/SafeRelease.hpp>
 #include <string>
+#include "AutoCOM.hpp"
 
 #ifndef _BECAMMF_DEVICE_HELPER_H_
 #define _BECAMMF_DEVICE_HELPER_H_
@@ -17,8 +18,8 @@ class BecammfDeviceHelper {
 private:
 	// 互斥锁
 	std::mutex mtx;
-	// COM库初始化结果
-	HRESULT _ComInitResult;
+	// COM库Rall
+	AutoCOM _com;
 	// Media Foundation库初始化结果
 	HRESULT _MFStartupResult;
 	// 已激活的设备（内部管理）

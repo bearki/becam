@@ -10,25 +10,18 @@
  * @implements 实现构造函数
  */
 BecammfDeviceHelper::BecammfDeviceHelper() {
-	// 初始化Com库
-	this->_ComInitResult = CoInitializeEx(NULL, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
-	if (SUCCEEDED(this->_ComInitResult)) {
-		// 初始化Media Foundation库
-		this->_MFStartupResult = MFStartup(MF_VERSION);
-	}
+	// 初始化Media Foundation库
+	this->_MFStartupResult = MFStartup(MF_VERSION);
 }
 
 /**
  * @implements 实现析构函数
  */
 BecammfDeviceHelper::~BecammfDeviceHelper() {
+	// 加个锁先
+	std::unique_lock<std::mutex> lock(this->mtx);
 	// 释放当前设备
 	this->CloseCurrentDevice();
-	// COM库初始化成功时需要释放
-	if (SUCCEEDED(this->_ComInitResult)) {
-		// 释放Com库
-		CoUninitialize();
-	}
 	// Media Foundation库初始化成功时需要关闭
 	if (SUCCEEDED(this->_MFStartupResult)) {
 		// 关闭Media Foundation库
@@ -283,7 +276,7 @@ void BecammfDeviceHelper::FreeDeviceConfigList(VideoFrameInfo*& input, size_t& i
 StatusCode BecammfDeviceHelper::ActivateCurrentDeviceStreaming(const VideoFrameInfo frameInfo) {
 	// 加个锁先
 	std::unique_lock<std::mutex> lock(this->mtx);
-	
+
 	// 检查设备是否已激活
 	if (this->activatedDevice == nullptr) {
 		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_OPEN;
@@ -446,12 +439,16 @@ StatusCode BecammfDeviceHelper::GetFrame(uint8_t*& reply, size_t& replySize) {
 		return StatusCode::STATUS_CODE_ERR_DEVICE_NOT_RUN;
 	}
 
+	// 自动选择是否需要COM
+	AutoCOM com;
+
 	// 声明一些要用的东西
 	DWORD streamIndex, sampleFlags;
 	LONGLONG timestamp;
 	IMFSample* pSample = nullptr;
 	// 读取一帧
-	auto res = this->activatedReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, &streamIndex, &sampleFlags, &timestamp, &pSample);
+	auto res =
+		this->activatedReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 500, &streamIndex, &sampleFlags, &timestamp, &pSample);
 	if (FAILED(res)) {
 		DEBUG_LOG(
 			"BecammfDeviceHelper::GetFrame -> this->activatedReader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM) failed, HRESULT: "
